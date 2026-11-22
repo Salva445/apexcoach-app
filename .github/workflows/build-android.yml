@@ -1,47 +1,63 @@
 name: Build APEXCOACH Android APK
 
 on:
-push:
-branches: [ main, master ]
-workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-build-apk:
-runs-on: ubuntu-latest
-steps:
-- name: Checkout repository
-uses: actions/checkout@v4
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Set up Node.js 20
-    uses: actions/setup-node@v4
-    with:
-      node-version: '20'
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  - name: Set up Java 17
-    uses: actions/setup-java@v4
-    with:
-      distribution: 'temurin'
-      java-version: '17'
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  - name: Prepare APEXCOACH Web Bundle & Capacitor Android
-    run: |
-      mkdir -p www
-      cp index.html www/index.html
-      npm init -y
-      npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/geolocation@6
-      node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.apexcoach.pro",appName:"APEXCOACH PRO",webDir:"www",server:{androidScheme:"https"}},null,2))'
-      npx cap add android
-      node -e "const fs=require('fs');const p='android/app/src/main/AndroidManifest.xml';let x=fs.readFileSync(p,'utf8');const perms='<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />\n    <uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />\n    <uses-permission android:name=\"android.permission.WAKE_LOCK\" />';if(!x.includes('ACCESS_FINE_LOCATION'))x=x.replace('<uses-permission android:name=\"android.permission.INTERNET\" />','<uses-permission android:name=\"android.permission.INTERNET\" />\n    '+perms);fs.writeFileSync(p,x);"
-      npx cap sync android
+      - name: Prepare APEXCOACH Web Bundle & Capacitor Android
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/geolocation@6
+          node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.apexcoach.pro",appName:"APEXCOACH PRO",webDir:"www",server:{androidScheme:"https"}},null,2))'
+          npx cap add android
+          node << 'EOF'
+          const fs = require('fs');
+          const p = 'android/app/src/main/AndroidManifest.xml';
+          let x = fs.readFileSync(p, 'utf8');
+          const perms = [
+            '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+            '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
+            '<uses-permission android:name="android.permission.WAKE_LOCK" />'
+          ].join('\n    ');
+          if (!x.includes('ACCESS_FINE_LOCATION')) {
+            x = x.replace(
+              '<uses-permission android:name="android.permission.INTERNET" />',
+              '<uses-permission android:name="android.permission.INTERNET" />\n    ' + perms
+            );
+          }
+          fs.writeFileSync(p, x);
+          EOF
+          npx cap sync android
 
-  - name: Compile Android Debug APK
-    run: |
-      cd android
-      chmod +x gradlew
-      ./gradlew assembleDebug
+      - name: Compile Android Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-  - name: Upload Downloadable Android APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: apexcoach-android-apk
-      path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload Downloadable Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexcoach-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

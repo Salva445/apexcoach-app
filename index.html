@@ -573,6 +573,66 @@
     </div>
   </div>
 
+  <!-- MODAL: STUDIO WHITE-LABEL BRAND SETTINGS -->
+  <div id="brand-modal" onclick="if(event.target===this) toggleModal('brand-modal', false)" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="hud-panel chamfer-card max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">STUDIO WHITE-LABEL</span>
+          <h3 class="font-display text-lg font-extrabold uppercase">BRAND IDENTITY</h3>
+        </div>
+        <button type="button" onclick="toggleModal('brand-modal', false)" class="px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
+      </div>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+        Customize your studio name, 2-letter monogram badge, and primary HUD accent color across the command deck, PR cards, and client reports.
+      </p>
+      <form onsubmit="saveBrandSettings(event)" class="space-y-3 text-xs font-mono-num">
+        <div>
+          <label for="brand-name-input" class="block mb-1 opacity-75">STUDIO NAME</label>
+          <input id="brand-name-input" type="text" maxlength="24" class="hud-input w-full uppercase" placeholder="APEXCOACH" required />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="brand-mono-input" class="block mb-1 opacity-75">MONOGRAM (2 CHARS)</label>
+            <input id="brand-mono-input" type="text" maxlength="2" class="hud-input w-full uppercase" placeholder="AP" required />
+          </div>
+          <div>
+            <label for="brand-color-input" class="block mb-1 opacity-75">ACCENT COLOR</label>
+            <input id="brand-color-input" type="color" class="hud-input w-full h-[38px] p-1 cursor-pointer" value="#a3e635" />
+          </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" class="flex-1 py-2.5 rounded-xl btn-accent cursor-pointer">SAVE BRAND</button>
+          <button type="button" onclick="resetBrandAccent()" class="px-3.5 py-2.5 rounded-xl border cursor-pointer" style="border-color: var(--border-strong);">RESET ACCENT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PERSONAL RECORD (PR) CELEBRATION & SHARE CARD -->
+  <div id="pr-modal" onclick="if(event.target===this) toggleModal('pr-modal', false)" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="hud-panel chamfer-card max-w-lg w-full p-6 space-y-4 my-auto text-center">
+      <div class="flex items-center justify-between text-left">
+        <div>
+          <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">🏆 NEW ALL-TIME RECORD</span>
+          <h3 id="pr-modal-exercise" class="font-display text-lg font-extrabold uppercase">PERSONAL RECORD</h3>
+        </div>
+        <button type="button" onclick="toggleModal('pr-modal', false)" class="px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
+      </div>
+      <div class="p-4 rounded-xl border space-y-1" style="border-color: var(--accent); background: var(--surface-solid);">
+        <div id="pr-modal-metric" class="font-mono-num text-3xl sm:text-4xl font-extrabold" style="color: var(--accent);">—</div>
+        <div id="pr-modal-delta" class="text-[11px] font-mono-num uppercase tracking-wide" style="color: var(--text-secondary);">NEW PERSONAL BEST</div>
+      </div>
+      <div>
+        <canvas id="pr-share-canvas" width="600" height="340" class="w-full h-auto rounded-xl border" style="border-color: var(--border-strong);"></canvas>
+      </div>
+      <div class="flex gap-2 pt-1 text-xs font-mono-num">
+        <button type="button" onclick="downloadPRCard()" class="flex-1 py-2.5 rounded-xl btn-accent cursor-pointer">⬇ DOWNLOAD PR CARD (PNG)</button>
+        <button type="button" onclick="toggleModal('pr-modal', false)" class="px-4 py-2.5 rounded-xl border cursor-pointer" style="border-color: var(--border-strong);">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: CLOUD REAL-TIME CHAT SYNC (SUPABASE) -->
   <div id="cloud-modal" onclick="if(event.target===this) toggleModal('cloud-modal', false)" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
     <div class="hud-panel chamfer-card max-w-lg w-full p-6 space-y-4 my-auto">
@@ -2931,6 +2991,51 @@ alter publication supabase_realtime add table messages;</pre>
       if (supabaseClient) loadCloudMessages(id);
       renderWorkspace();
     }
+
+    function setChatRole(role) {
+      const nextRole = role === "client" ? "client" : "trainer";
+      state.chatRole = nextRole;
+      triggerHaptic(15);
+      saveState();
+      renderWorkspace();
+      const feed = document.getElementById("chat-feed");
+      if (feed) feed.scrollTop = feed.scrollHeight;
+      const isPt = state.lang === "pt";
+      showToast(nextRole === "trainer"
+        ? (isPt ? "CHAT // MODO TREINADOR" : "CHAT // COACH PERSPECTIVE")
+        : (isPt ? "CHAT // MODO CLIENTE" : "CHAT // CLIENT PERSPECTIVE"));
+    }
+
+    function logClientSession(clientId) {
+      const c = state.clients.find(cl => cl.id === clientId);
+      if (!c) return;
+      const isPt = state.lang === "pt";
+      if (c.sessionsUsed >= c.sessionsTotal) {
+        triggerHaptic([20, 20]);
+        showToast(isPt
+          ? `${c.name.toUpperCase()} // PACOTE COMPLETO (${c.sessionsUsed}/${c.sessionsTotal})`
+          : `${c.name.toUpperCase()} // PACKAGE FULL (${c.sessionsUsed}/${c.sessionsTotal}) — RENEWAL DUE`);
+        return;
+      }
+      c.sessionsUsed += 1;
+      c.lastActive = isPt ? "Agora" : "Just now";
+      c.compliance = Math.min(100, (c.compliance || 0) + 2);
+      if (c.status === "red" && c.compliance >= 75) c.status = "amber";
+      else if (c.status === "amber" && c.compliance >= 85) c.status = "green";
+      triggerHaptic(18);
+      playTone(680, 0.1);
+      saveState();
+      updateHeroHUD();
+      renderWorkspace();
+      const completedMsg = c.sessionsUsed >= c.sessionsTotal
+        ? (isPt
+            ? `${c.name.toUpperCase()} // PACOTE CONCLUÍDO (${c.sessionsUsed}/${c.sessionsTotal})`
+            : `${c.name.toUpperCase()} // PACKAGE COMPLETE (${c.sessionsUsed}/${c.sessionsTotal}) — RENEWAL DUE`)
+        : (isPt
+            ? `SESSÃO REGISTRADA: ${c.name.toUpperCase()} (${c.sessionsUsed}/${c.sessionsTotal})`
+            : `SESSION LOGGED: ${c.name.toUpperCase()} (${c.sessionsUsed}/${c.sessionsTotal})`);
+      showToast(completedMsg);
+    }
     async function sendChatMessage(e) {
       e.preventDefault();
       const input = document.getElementById("chat-input");
@@ -3238,7 +3343,23 @@ jobs:
           }
           EOF
           npx cap add android
-          node -e "const fs=require('fs');const p='android/app/src/main/AndroidManifest.xml';let x=fs.readFileSync(p,'utf8');const perms='<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />\\n    <uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />\\n    <uses-permission android:name=\"android.permission.WAKE_LOCK\" />';if(!x.includes('ACCESS_FINE_LOCATION'))x=x.replace('<uses-permission android:name=\"android.permission.INTERNET\" />','<uses-permission android:name=\"android.permission.INTERNET\" />\\n    '+perms);fs.writeFileSync(p,x);"
+          node << 'EOF'
+          const fs = require('fs');
+          const p = 'android/app/src/main/AndroidManifest.xml';
+          let x = fs.readFileSync(p, 'utf8');
+          const perms = [
+            '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
+            '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',
+            '<uses-permission android:name="android.permission.WAKE_LOCK" />'
+          ].join('\\n    ');
+          if (!x.includes('ACCESS_FINE_LOCATION')) {
+            x = x.replace(
+              '<uses-permission android:name="android.permission.INTERNET" />',
+              '<uses-permission android:name="android.permission.INTERNET" />\\n    ' + perms
+            );
+          }
+          fs.writeFileSync(p, x);
+          EOF
           npx cap sync android
 
       - name: Build Debug APK
