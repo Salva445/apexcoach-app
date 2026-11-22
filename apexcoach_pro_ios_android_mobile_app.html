@@ -1,0 +1,3289 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#06080c" />
+  <title>APEXCOACH PRO — Personal Trainer & Client Performance OS</title>
+
+  <!-- Tailwind CSS, Supabase Real-Time SDK & Modern Tactical Typography -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================================
+       PHASE 1: SEMANTIC DESIGN TOKENS (DARK OBSIDIAN / BLUE MIDNIGHT / WHITE)
+       ===================================================================== */
+    :root,
+    [data-theme="dark"] {
+      --bg-canvas: #06080c;
+      --bg-grid: rgba(148, 163, 184, 0.06);
+      --surface-1: rgba(15, 20, 30, 0.78);
+      --surface-2: rgba(24, 32, 48, 0.72);
+      --surface-solid: #0f1522;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-hairline: rgba(255, 255, 255, 0.09);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --accent: #a3e635;
+      --accent-contrast: #071005;
+      --accent-2: #38bdf8;
+      --accent-3: #f43f5e;
+      --dock-bg: rgba(10, 14, 22, 0.92);
+      --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 18px 40px -18px rgba(0, 0, 0, 0.55);
+      --dock-shadow: 0 -14px 40px rgba(0, 0, 0, 0.55);
+      --muscle-base: #1e293b;
+      --muscle-stroke: #64748b;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    [data-theme="blue"] {
+      --bg-canvas: #051126;
+      --bg-grid: rgba(56, 189, 248, 0.08);
+      --surface-1: rgba(11, 27, 56, 0.8);
+      --surface-2: rgba(16, 40, 82, 0.75);
+      --surface-solid: #0b1d3d;
+      --text-primary: #f0f9ff;
+      --text-secondary: #93c5fd;
+      --text-muted: #60a5fa;
+      --border-hairline: rgba(56, 189, 248, 0.16);
+      --border-strong: rgba(56, 189, 248, 0.32);
+      --accent: #38bdf8;
+      --accent-contrast: #031326;
+      --accent-2: #fb7185;
+      --accent-3: #fbbf24;
+      --dock-bg: rgba(7, 18, 40, 0.94);
+      --panel-shadow: inset 0 1px 0 rgba(56, 189, 248, 0.15), 0 18px 40px -18px rgba(2, 10, 28, 0.65);
+      --dock-shadow: 0 -14px 40px rgba(2, 10, 28, 0.65);
+      --muscle-base: #17305c;
+      --muscle-stroke: #38bdf8;
+    }
+
+    [data-theme="white"] {
+      --bg-canvas: #f1f5f9;
+      --bg-grid: rgba(15, 23, 42, 0.05);
+      --surface-1: rgba(255, 255, 255, 0.88);
+      --surface-2: rgba(241, 245, 249, 0.92);
+      --surface-solid: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-hairline: rgba(15, 23, 42, 0.1);
+      --border-strong: rgba(15, 23, 42, 0.22);
+      --accent: #0f172a;
+      --accent-contrast: #ffffff;
+      --accent-2: #2563eb;
+      --accent-3: #e11d48;
+      --dock-bg: rgba(255, 255, 255, 0.95);
+      --panel-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06);
+      --dock-shadow: 0 -8px 28px rgba(15, 23, 42, 0.12);
+      --muscle-base: #e2e8f0;
+      --muscle-stroke: #475569;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      transition: background-color 0.28s ease, color 0.28s ease;
+    }
+
+    button, a, label {
+      touch-action: manipulation;
+    }
+
+    .font-display { font-family: "Space Grotesk", "Inter", sans-serif; }
+    .font-mono-num {
+      font-family: "JetBrains Mono", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Tactical subtle grid canvas */
+    .telemetry-bg {
+      background-image:
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Glassmorphism HUD Panel */
+    .hud-panel {
+      background: var(--surface-1);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--border-hairline);
+      box-shadow: var(--panel-shadow);
+      transition: border-color 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .hud-panel:hover { border-color: var(--border-strong); }
+
+    /* Chamfered tactical card accent */
+    .chamfer-card {
+      border-radius: 1.25rem;
+      position: relative;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: var(--accent-contrast);
+      font-weight: 800;
+      transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease, filter 0.18s ease;
+    }
+    .btn-accent:hover { filter: brightness(1.06); }
+    .btn-accent:active { transform: scale(0.96); }
+
+    .hud-input {
+      background: var(--surface-solid);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+      border-radius: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hud-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    /* Left Vertical Telemetry Spine (Desktop) / Sticky Top App Bar (Mobile) */
+    .telemetry-spine {
+      background: var(--dock-bg);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--border-hairline);
+      padding-top: calc(0.5rem + var(--safe-top));
+    }
+    @media (min-width: 1024px) {
+      .telemetry-spine {
+        border-bottom: none;
+        border-right: 1px solid var(--border-hairline);
+        padding-top: 1.25rem;
+      }
+    }
+
+    .vertical-brand {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      letter-spacing: 0.22em;
+    }
+
+    /* Floating VisionOS-Style Bottom Command Dock */
+    .mobile-dock {
+      background: var(--dock-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border-strong);
+      padding-bottom: calc(8px + var(--safe-bottom));
+      box-shadow: var(--dock-shadow);
+    }
+    @media (min-width: 1024px) {
+      .mobile-dock {
+        left: 50%;
+        right: auto;
+        bottom: 18px;
+        transform: translateX(calc(-50% + 34px));
+        border: 1px solid var(--border-strong);
+        border-radius: 1.5rem;
+        padding: 6px 10px;
+      }
+    }
+
+    .dock-tab {
+      color: var(--text-secondary);
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.16s ease;
+    }
+    .dock-tab.active {
+      background: var(--accent);
+      color: var(--accent-contrast);
+      box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+
+    /* Muscle Heat Map SVG interactivity */
+    .muscle-zone {
+      cursor: pointer;
+      stroke: var(--muscle-stroke);
+      stroke-width: 1.35;
+      stroke-linejoin: round;
+      transition: filter 0.18s ease, stroke-width 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+    }
+    .muscle-zone:hover {
+      filter: brightness(1.18) drop-shadow(0 0 6px var(--accent));
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+    .muscle-zone.selected {
+      stroke: var(--accent);
+      stroke-width: 2.6;
+      filter: drop-shadow(0 0 9px var(--accent));
+    }
+
+    /* Animations */
+    @keyframes pulseRing {
+      0% { transform: scale(0.85); opacity: 0.9; }
+      100% { transform: scale(1.75); opacity: 0; }
+    }
+    .beacon-ring {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: pulseRing 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .view-enter {
+      animation: fadeSlideUp 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; }
+
+    /* Print styling for Client Progress Report */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff !important; color: #0f172a !important; }
+      #print-report-modal {
+        position: static !important;
+        display: block !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="telemetry-bg min-h-screen">
+  <!-- Full-screen Canvas for PR Confetti Celebrations -->
+  <canvas id="confetti-canvas" class="no-print fixed inset-0 pointer-events-none z-[60]"></canvas>
+
+  <!-- 1. MOBILE TOP APP BAR / DESKTOP LEFT VERTICAL TELEMETRY SPINE -->
+  <aside class="telemetry-spine no-print sticky top-0 lg:fixed lg:left-0 lg:top-0 lg:bottom-0 w-full lg:w-[68px] z-40 flex lg:flex-col items-center justify-between gap-2 px-2.5 sm:px-3 py-2 lg:px-0 lg:py-5">
+    <div class="flex lg:flex-col items-center gap-2 min-w-0">
+      <div id="brand-monogram" onclick="switchTab('overview')" class="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0 rounded-xl flex items-center justify-center font-display font-extrabold text-sm shadow-lg cursor-pointer active:scale-95 transition" style="background: var(--accent); color: var(--accent-contrast);">
+        AP
+      </div>
+      <div class="lg:hidden min-w-0">
+        <div id="mobile-studio-title" class="font-display text-[11px] sm:text-xs font-extrabold tracking-wider uppercase truncate">APEXCOACH PRO</div>
+        <div class="hidden sm:flex text-[9px] font-mono-num opacity-70 items-center gap-1.5">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>iOS / ANDROID OS</span>
+        </div>
+      </div>
+      <span id="vertical-studio-label" class="hidden lg:block vertical-brand font-mono-num text-[10px] font-extrabold uppercase opacity-75">
+        APEXCOACH // OS
+      </span>
+    </div>
+
+    <!-- Desktop Live BPM & Clock Telemetry -->
+    <div class="hidden lg:flex flex-col items-center gap-2 text-[9px] font-mono-num">
+      <button onclick="connectBLEHeartRate()" title="Pair BLE Heart-Rate Strap" class="flex flex-col items-center gap-0.5 px-1.5 py-2 rounded-xl border cursor-pointer hover:opacity-90" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+        <span id="spine-bpm" class="font-extrabold text-[11px]">68</span>
+        <span class="opacity-60 text-[8px]">BPM</span>
+      </button>
+      <span id="spine-clock" class="opacity-70">19:48</span>
+    </div>
+
+    <!-- Utility Controls: Install App, 3 Themes, EN/PT, Units, White-Label -->
+    <div class="flex lg:flex-col items-center gap-1 sm:gap-1.5 flex-shrink-0">
+      <button onclick="handleAppInstall()" id="install-app-btn" title="Install on iOS / Android" class="px-2 py-1.5 rounded-lg text-[10px] font-mono-num font-extrabold btn-accent cursor-pointer min-h-[34px]">
+        📲<span class="hidden sm:inline lg:hidden"> APP</span>
+      </button>
+
+      <!-- 3 Theme Swatches (Dark, Blue, White) -->
+      <div class="flex lg:flex-col items-center gap-1 p-1 rounded-full border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+        <button onclick="setTheme('dark')" aria-label="Dark Obsidian Theme" title="Dark Obsidian" class="w-4 h-4 rounded-full bg-[#090d16] border border-slate-500 cursor-pointer"></button>
+        <button onclick="setTheme('blue')" aria-label="Blue Midnight Theme" title="Blue Midnight" class="w-4 h-4 rounded-full bg-[#0284c7] border border-sky-300 cursor-pointer"></button>
+        <button onclick="setTheme('white')" aria-label="White Alabaster Theme" title="White Alabaster" class="w-4 h-4 rounded-full bg-[#f8fafc] border border-slate-400 cursor-pointer"></button>
+      </div>
+
+      <button onclick="toggleLanguage()" id="lang-btn" title="Switch English / Português" class="px-1.5 sm:px-2 py-1.5 rounded-lg text-[10px] font-mono-num font-extrabold border cursor-pointer" style="border-color: var(--border-strong);">EN</button>
+      <button onclick="toggleUnits()" id="unit-btn" title="Switch lbs/mi or kg/km" class="px-1.5 sm:px-2 py-1.5 rounded-lg text-[10px] font-mono-num font-extrabold border cursor-pointer" style="border-color: var(--border-strong);">LBS</button>
+
+      <button onclick="toggleModal('brand-modal', true)" aria-label="Studio White-Label Settings" title="Studio White-Label" class="w-8 h-8 rounded-lg flex items-center justify-center border cursor-pointer" style="border-color: var(--border-hairline);">
+        ⚙️
+      </button>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN APPLICATION CANVAS -->
+  <div class="no-print lg:pl-[68px] pb-28 lg:pb-28">
+    <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-7 pt-4 sm:pt-6 space-y-5">
+
+      <!-- HERO COMMAND DECK (Asymmetric HUD + 3-Ring Orbital Telemetry Core) -->
+      <header class="hud-panel chamfer-card p-4 sm:p-6 overflow-hidden relative">
+        <div id="ambient-readiness-glow" class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-15" style="background: var(--accent);"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
+          <!-- Left Telemetry Identity & Quick Controls -->
+          <div class="lg:col-span-7 space-y-3.5">
+            <div class="flex flex-wrap items-center gap-2 text-[10px] font-mono-num">
+              <span class="px-2.5 py-1 rounded-full border font-bold flex items-center gap-1.5" style="border-color: var(--border-strong); background: var(--surface-solid);">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span id="hero-athlete-name">MARCUS VANCE</span>
+              </span>
+              <span id="hero-streak-pill" class="px-2.5 py-1 rounded-full font-extrabold" style="background: var(--surface-2); color: var(--accent);">🔥 18-DAY STREAK</span>
+              <button onclick="toggleModal('wearable-modal', true)" class="px-2.5 py-1 rounded-full border cursor-pointer hover:opacity-90" style="border-color: var(--accent-2); color: var(--accent-2);">
+                ⌚ <span data-i18n="wearableSync">WEARABLE SYNC</span>
+              </button>
+              <button onclick="startVoiceCoach()" class="px-2.5 py-1 rounded-full border cursor-pointer hover:opacity-90" style="border-color: var(--border-strong);">
+                🎙️ <span data-i18n="voiceCoach">VOICE</span>
+              </button>
+            </div>
+
+            <h1 id="hero-studio-heading" class="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight uppercase">
+              APEXCOACH <span style="color: var(--accent);">COMMAND DECK</span>
+            </h1>
+
+            <!-- Quick Action Telemetry Strip: Calories, Water, Protein, Miles -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono-num">
+              <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="text-[9px] uppercase opacity-65" data-i18n="caloriesBurnt">CALORIES BURNT</div>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                  <span id="hud-cal-val" class="text-base sm:text-lg font-extrabold" style="color: var(--accent);">1840</span>
+                  <span id="hud-cal-goal" class="text-[10px] opacity-60">/ 2400</span>
+                </div>
+                <button onclick="addQuickBurn(150)" class="mt-1.5 text-[10px] font-bold underline cursor-pointer" style="color: var(--accent);">+150 kcal</button>
+              </div>
+
+              <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="text-[9px] uppercase opacity-65" data-i18n="hydration">HYDRATION</div>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                  <span id="hud-water-val" class="text-base sm:text-lg font-extrabold" style="color: var(--accent-2);">2.5L</span>
+                  <span id="hud-water-goal" class="text-[10px] opacity-60">/ 3.5L</span>
+                </div>
+                <button onclick="addWater(250)" class="mt-1.5 text-[10px] font-bold underline cursor-pointer" style="color: var(--accent-2);">+250 ml</button>
+              </div>
+
+              <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="text-[9px] uppercase opacity-65" data-i18n="protein">PROTEIN</div>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                  <span id="hud-protein-val" class="text-base sm:text-lg font-extrabold">145g</span>
+                  <span id="hud-protein-goal" class="text-[10px] opacity-60">/ 180g</span>
+                </div>
+                <button onclick="addProtein(25)" class="mt-1.5 text-[10px] font-bold underline cursor-pointer" style="color: var(--accent);">+25g</button>
+              </div>
+
+              <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="text-[9px] uppercase opacity-65" data-i18n="milesToday">DIST TODAY</div>
+                <div class="flex items-baseline gap-1 mt-0.5">
+                  <span id="hud-dist-val" class="text-base sm:text-lg font-extrabold">4.20 mi</span>
+                </div>
+                <button onclick="switchTab('endurance')" class="mt-1.5 text-[10px] font-bold underline cursor-pointer" style="color: var(--accent-2);" data-i18n="openGps">GPS RUN →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive 3-Ring Orbital Telemetry Core -->
+          <div class="lg:col-span-5 flex items-center justify-center sm:justify-end gap-4 sm:gap-6">
+            <div class="relative w-36 h-36 sm:w-44 sm:h-44 flex-shrink-0">
+              <svg viewBox="0 0 160 160" class="w-full h-full -rotate-90">
+                <!-- Outer Track & Progress: Calories -->
+                <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border-hairline)" stroke-width="9" />
+                <circle id="ring-cal" cx="80" cy="80" r="68" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" stroke-dasharray="427.25" stroke-dashoffset="100" style="transition: stroke-dashoffset 0.5s ease;" />
+
+                <!-- Middle Track & Progress: Readiness -->
+                <circle cx="80" cy="80" r="54" fill="none" stroke="var(--border-hairline)" stroke-width="8" />
+                <circle id="ring-readiness" cx="80" cy="80" r="54" fill="none" stroke="var(--accent-2)" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.29" stroke-dashoffset="50" style="transition: stroke-dashoffset 0.5s ease;" />
+
+                <!-- Inner Track & Progress: Protein & Hydration -->
+                <circle cx="80" cy="80" r="41" fill="none" stroke="var(--border-hairline)" stroke-width="7" />
+                <circle id="ring-macros" cx="80" cy="80" r="41" fill="none" stroke="var(--accent-3)" stroke-width="7" stroke-linecap="round" stroke-dasharray="257.61" stroke-dashoffset="65" style="transition: stroke-dashoffset 0.5s ease;" />
+              </svg>
+
+              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span class="text-[8px] font-mono-num uppercase tracking-widest opacity-65" data-i18n="readiness">READINESS</span>
+                <span id="orbital-readiness-val" class="font-mono-num text-2xl sm:text-3xl font-extrabold">88</span>
+                <span id="orbital-readiness-status" class="text-[9px] font-mono-num font-extrabold" style="color: var(--accent);">OPTIMAL</span>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-[10px] sm:text-xs font-mono-num">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent);"></span>
+                <span class="opacity-70" data-i18n="ringBurn">BURN</span>
+                <strong id="ring-cal-pct" class="ml-auto">77%</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent-2);"></span>
+                <span class="opacity-70" data-i18n="ringReady">READY</span>
+                <strong id="ring-ready-pct" class="ml-auto">88%</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent-3);"></span>
+                <span class="opacity-70" data-i18n="ringFuel">FUEL</span>
+                <strong id="ring-fuel-pct" class="ml-auto">76%</strong>
+              </div>
+              <div class="pt-1.5 border-t flex items-center gap-2" style="border-color: var(--border-hairline);">
+                <span class="opacity-65">STEPS:</span>
+                <strong id="hud-steps-val">9,420</strong>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="opacity-65">LIVE HR:</span>
+                <strong id="hud-live-hr" style="color: var(--accent-3);">68 BPM</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- 3. DYNAMIC WORKSPACE CONTAINER (01 - 06) -->
+      <main id="workspace-container" class="view-enter"></main>
+    </div>
+  </div>
+
+  <!-- 4. NATIVE BOTTOM TAB BAR (iOS & Android Ergonomic Thumb Dock + Quick-Log '+') -->
+  <nav aria-label="Mobile Bottom Tab Bar" class="mobile-dock no-print fixed bottom-0 left-0 right-0 z-40">
+    <div class="flex items-center justify-around lg:justify-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 pt-1.5 lg:pt-0">
+      <button onclick="switchTab('overview')" data-tab="overview" class="dock-tab active flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>📊</span>
+        <span class="truncate" data-i18n="navOverview">HOME</span>
+      </button>
+      <button onclick="switchTab('strength')" data-tab="strength" class="dock-tab flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>💪</span>
+        <span class="truncate" data-i18n="navStrength">MUSCLE</span>
+      </button>
+
+      <!-- Center Native Mobile Quick-Log '+' Action Sheet Button -->
+      <button onclick="toggleModal('quicklog-modal', true)" aria-label="Quick Log Action Sheet" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl btn-accent flex items-center justify-center text-xl font-extrabold shadow-lg flex-shrink-0 mx-0.5 cursor-pointer">
+        +
+      </button>
+
+      <button onclick="switchTab('endurance')" data-tab="endurance" class="dock-tab flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>🛰️</span>
+        <span class="truncate" data-i18n="navEndurance">GPS</span>
+      </button>
+      <button onclick="switchTab('body')" data-tab="body" class="dock-tab flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>📐</span>
+        <span class="truncate" data-i18n="navBody">BODY</span>
+      </button>
+      <button onclick="switchTab('roster')" data-tab="roster" class="dock-tab relative flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>💬</span>
+        <span class="truncate" data-i18n="navRoster">CHAT</span>
+        <span id="unread-badge" class="absolute top-0.5 right-1 lg:static px-1 rounded-full text-[8px] font-extrabold bg-rose-500 text-white">2</span>
+      </button>
+      <button onclick="switchTab('vault')" data-tab="vault" class="dock-tab flex-1 lg:flex-initial min-w-0 px-1 sm:px-3 py-1.5 lg:py-2 rounded-xl flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
+        <span>📲</span>
+        <span class="truncate" data-i18n="navVault">APP/CSV</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- FLOATING REST TIMER PILL -->
+  <div id="rest-timer-pill" class="no-print fixed bottom-24 right-4 z-40 hidden hud-panel rounded-2xl p-3.5 border-2 shadow-2xl items-center gap-3" style="border-color: var(--accent);">
+    <div>
+      <div class="text-[9px] font-mono-num uppercase tracking-widest opacity-70" data-i18n="restTimer">REST TIMER</div>
+      <div id="rest-timer-display" class="font-mono-num text-xl font-extrabold" style="color: var(--accent);">01:30</div>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button onclick="adjustRest(-15)" class="px-2.5 py-1.5 rounded-lg text-xs font-mono-num border cursor-pointer" style="border-color: var(--border-strong);">-15s</button>
+      <button onclick="adjustRest(15)" class="px-2.5 py-1.5 rounded-lg text-xs font-mono-num border cursor-pointer" style="border-color: var(--border-strong);">+15s</button>
+      <button onclick="stopRestTimer()" aria-label="Close Rest Timer" class="px-2.5 py-1.5 rounded-lg text-xs font-mono-num border cursor-pointer" style="border-color: var(--accent-3); color: var(--accent-3);">✕</button>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION BANNER -->
+  <div id="toast-box" class="no-print fixed top-16 lg:top-6 right-4 z-[70] hidden max-w-xs sm:max-w-sm px-4 py-3 rounded-2xl border font-mono-num text-xs font-bold shadow-2xl" style="background: var(--surface-solid); border-color: var(--accent); color: var(--text-primary);"></div>
+
+  <!-- =====================================================================
+       MODALS: QUICK LOG, WEARABLE SYNC, WHITE-LABEL BRAND, PR CARD, PRINT
+       ===================================================================== -->
+
+  <!-- MODAL: QUICK-LOG ACTION SHEET -->
+  <div id="quicklog-modal" onclick="if(event.target===this) toggleModal('quicklog-modal', false)" class="no-print fixed inset-0 z-50 hidden items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4">
+    <div class="hud-panel chamfer-card max-w-md w-full p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-base font-extrabold uppercase" data-i18n="quickLogTitle">QUICK TELEMETRY LOG</h3>
+        <button onclick="toggleModal('quicklog-modal', false)" class="px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5 text-xs font-mono-num">
+        <button onclick="addWater(250); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl border text-left space-y-1 cursor-pointer hover:opacity-90" style="border-color: var(--accent-2); background: var(--surface-solid);">
+          <div class="text-base">💧</div>
+          <div class="font-bold">+250ml Water</div>
+        </button>
+        <button onclick="addProtein(25); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl border text-left space-y-1 cursor-pointer hover:opacity-90" style="border-color: var(--accent); background: var(--surface-solid);">
+          <div class="text-base">🥩</div>
+          <div class="font-bold">+25g Protein</div>
+        </button>
+        <button onclick="addQuickBurn(200); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl border text-left space-y-1 cursor-pointer hover:opacity-90" style="border-color: var(--border-strong); background: var(--surface-solid);">
+          <div class="text-base">🔥</div>
+          <div class="font-bold">+200 kcal Burn</div>
+        </button>
+        <button onclick="startRestTimer(90); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl border text-left space-y-1 cursor-pointer hover:opacity-90" style="border-color: var(--border-strong); background: var(--surface-solid);">
+          <div class="text-base">⏱️</div>
+          <div class="font-bold">90s Rest Timer</div>
+        </button>
+        <button onclick="switchTab('strength'); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl btn-accent text-left space-y-1 cursor-pointer">
+          <div class="text-base">💪</div>
+          <div class="font-bold">Log Strength Set</div>
+        </button>
+        <button onclick="switchTab('endurance'); toggleModal('quicklog-modal', false)" class="p-3.5 rounded-xl border text-left space-y-1 cursor-pointer" style="border-color: var(--accent-2); background: var(--surface-solid);">
+          <div class="text-base">🛰️</div>
+          <div class="font-bold">Start GPS Run</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WEARABLE SYNC (APPLE HEALTH, GARMIN, BLE STRAP) -->
+  <div id="wearable-modal" onclick="if(event.target===this) toggleModal('wearable-modal', false)" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="hud-panel chamfer-card max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent-2);">BIOMETRIC BRIDGE</span>
+          <h3 class="font-display text-lg font-extrabold uppercase" data-i18n="wearableSync">WEARABLE SYNC</h3>
+        </div>
+        <button onclick="toggleModal('wearable-modal', false)" class="px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
+      </div>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+        Pull live steps, active calories, sleep recovery, and resting heart rate from Apple Health, Garmin Connect, or pair a Bluetooth Low Energy (BLE) chest strap.
+      </p>
+      <div class="space-y-2.5 text-xs font-mono-num">
+        <button onclick="syncWearable('Apple Health')" class="w-full p-3.5 rounded-xl border flex items-center justify-between cursor-pointer hover:opacity-90" style="border-color: var(--border-strong); background: var(--surface-solid);">
+          <span class="font-bold">🍎 Apple Health (Watch Ultra / iOS)</span>
+          <span style="color: var(--accent);">SYNC →</span>
+        </button>
+        <button onclick="syncWearable('Garmin Connect')" class="w-full p-3.5 rounded-xl border flex items-center justify-between cursor-pointer hover:opacity-90" style="border-color: var(--border-strong); background: var(--surface-solid);">
+          <span class="font-bold">⌚ Garmin Connect (Fenix / Forerunner)</span>
+          <span style="color: var(--accent-2);">SYNC →</span>
+        </button>
+        <button onclick="connectBLEHeartRate(); toggleModal('wearable-modal', false)" class="w-full p-3.5 rounded-xl btn-accent flex items-center justify-between cursor-pointer">
+          <span class="font-bold">📡 Pair Live BLE Heart-Rate Strap</span>
+          <span>CONNECT</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CLOUD REAL-TIME CHAT SYNC (SUPABASE) -->
+  <div id="cloud-modal" onclick="if(event.target===this) toggleModal('cloud-modal', false)" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="hud-panel chamfer-card max-w-lg w-full p-6 space-y-4 my-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent-2);">☁️ SUPABASE REAL-TIME ENGINE</span>
+          <h3 class="font-display text-lg font-extrabold uppercase">LIVE TWO-WAY CLIENT CHAT</h3>
+        </div>
+        <button onclick="toggleModal('cloud-modal', false)" class="px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
+      </div>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+        Connect a free <strong>supabase.com</strong> project so messages &amp; workout plans sync live across Trainer and Client Android APKs.
+      </p>
+
+      <div class="p-3 rounded-xl border space-y-2 text-[10px] font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+        <div class="flex items-center justify-between">
+          <span style="color: var(--accent);">STEP 1: RUN THIS IN SUPABASE SQL EDITOR</span>
+          <button type="button" onclick="copySupabaseSQL()" class="px-2 py-1 rounded-lg border font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);">COPY SQL</button>
+        </div>
+        <pre id="supabase-sql-snippet" class="overflow-x-auto opacity-80 whitespace-pre-wrap">create table if not exists messages (
+  id bigint generated by default as identity primary key,
+  client_id text not null,
+  sender text not null,
+  text text not null,
+  plan_id text,
+  time_label text,
+  created_at timestamptz default now()
+);
+alter table messages enable row level security;
+create policy "Public demo chat" on messages for all using (true) with check (true);
+alter publication supabase_realtime add table messages;</pre>
+      </div>
+
+      <form onsubmit="saveCloudSettings(event)" class="space-y-3 text-xs font-mono-num">
+        <div>
+          <label class="block mb-1 opacity-75">STEP 2: SUPABASE PROJECT URL</label>
+          <input id="cloud-url-input" type="url" class="hud-input w-full" placeholder="https://your-project-id.supabase.co" required />
+        </div>
+        <div>
+          <label class="block mb-1 opacity-75">SUPABASE ANON PUBLIC KEY</label>
+          <input id="cloud-key-input" type="text" class="hud-input w-full" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required />
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button type="submit" class="flex-1 py-2.5 rounded-xl btn-accent cursor-pointer">CONNECT LIVE CHAT</button>
+          <button type="button" onclick="disconnectCloud()" class="px-3.5 py-2.5 rounded-xl border cursor-pointer" style="border-color: var(--border-strong);">DISCONNECT</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PRINTABLE CLIENT PROGRESS REPORT -->
+  <div id="print-report-modal" onclick="if(event.target===this) toggleModal('print-report-modal', false)" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-2xl w-full p-6 sm:p-8 space-y-5 shadow-2xl my-auto">
+      <div class="flex items-start justify-between border-b border-slate-200 pb-4">
+        <div>
+          <div id="report-studio-name" class="text-xs font-mono-num font-bold tracking-widest text-slate-500 uppercase">APEXCOACH PRO // CLIENT PROGRESS REPORT</div>
+          <h2 id="report-client-name" class="font-display text-2xl font-extrabold mt-1">MARCUS VANCE</h2>
+          <p id="report-client-goal" class="text-xs text-slate-600 mt-0.5">Hybrid Strength & 10K Speed</p>
+        </div>
+        <button onclick="toggleModal('print-report-modal', false)" class="no-print px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="report-body-content" class="space-y-4 text-xs"></div>
+      <div class="no-print flex justify-end gap-2 pt-3 border-t border-slate-200">
+        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-slate-900 text-white font-mono-num text-xs font-bold cursor-pointer">🖨️ PRINT / SAVE PDF</button>
+        <button onclick="toggleModal('print-report-modal', false)" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold cursor-pointer">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 0. DYNAMIC PWA MANIFEST & APPLE TOUCH ICON (iOS / Android Home Screen)
+    // =========================================================================
+    let deferredInstallPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+
+    (function initPWAShell() {
+      try {
+        const iconCanvas = document.createElement("canvas");
+        iconCanvas.width = 192;
+        iconCanvas.height = 192;
+        const ictx = iconCanvas.getContext("2d");
+        ictx.fillStyle = "#06080c";
+        ictx.fillRect(0, 0, 192, 192);
+        ictx.strokeStyle = "#a3e635";
+        ictx.lineWidth = 10;
+        ictx.strokeRect(14, 14, 164, 164);
+        ictx.fillStyle = "#a3e635";
+        ictx.font = "bold 74px sans-serif";
+        ictx.textAlign = "center";
+        ictx.textBaseline = "middle";
+        ictx.fillText("AP", 96, 102);
+        const iconUrl = iconCanvas.toDataURL("image/png");
+
+        const manifest = {
+          name: "APEXCOACH PRO — Personal Training OS",
+          short_name: "APEXCOACH",
+          start_url: "./",
+          display: "standalone",
+          background_color: "#06080c",
+          theme_color: "#06080c",
+          icons: [{ src: iconUrl, sizes: "192x192", type: "image/png" }]
+        };
+        const mBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        const mLink = document.createElement("link");
+        mLink.rel = "manifest";
+        mLink.href = URL.createObjectURL(mBlob);
+        document.head.appendChild(mLink);
+
+        const appleIcon = document.createElement("link");
+        appleIcon.rel = "apple-touch-icon";
+        appleIcon.href = iconUrl;
+        document.head.appendChild(appleIcon);
+
+        if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+          fetch("./sw.js", { method: "HEAD" }).then(res => {
+            if (res.ok) navigator.serviceWorker.register("./sw.js").catch(() => {});
+          }).catch(() => {});
+        }
+      } catch (err) {}
+    })();
+
+    // =========================================================================
+    // 1. BILINGUAL DICTIONARY (EN / PT) & ANATOMICAL MUSCLE WORKOUT DATABASE
+    //    (Curated from SuperPhysio, MuscleWiki & BellyProof biomechanics)
+    // =========================================================================
+    const I18N = {
+      en: {
+        wearableSync: "WEARABLE SYNC",
+        voiceCoach: "VOICE",
+        caloriesBurnt: "CALORIES BURNT",
+        hydration: "HYDRATION",
+        protein: "PROTEIN",
+        milesToday: "DIST TODAY",
+        openGps: "GPS RUN →",
+        readiness: "READINESS",
+        ringBurn: "BURN",
+        ringReady: "READY",
+        ringFuel: "FUEL",
+        navOverview: "HOME",
+        navStrength: "MUSCLE",
+        navEndurance: "GPS",
+        navBody: "BODY",
+        navRoster: "CHAT",
+        navVault: "APP/CSV",
+        restTimer: "REST TIMER",
+        quickLogTitle: "QUICK TELEMETRY LOG"
+      },
+      pt: {
+        wearableSync: "SINCRONIZAR RELÓGIO",
+        voiceCoach: "VOZ",
+        caloriesBurnt: "CALORIAS QUEIMADAS",
+        hydration: "HIDRATAÇÃO",
+        protein: "PROTEÍNA",
+        milesToday: "DIST. HOJE",
+        openGps: "CORRIDA GPS →",
+        readiness: "PRONTIDÃO",
+        ringBurn: "QUEIMA",
+        ringReady: "PRONTO",
+        ringFuel: "NUTRI",
+        navOverview: "INÍCIO",
+        navStrength: "MÚSCULO",
+        navEndurance: "GPS",
+        navBody: "CORPO",
+        navRoster: "CHAT",
+        navVault: "APP/CSV",
+        restTimer: "DESCANSO",
+        quickLogTitle: "REGISTRO RÁPIDO"
+      }
+    };
+
+    const MUSCLE_PT = {
+      Chest: "Peitoral",
+      Shoulders: "Ombros",
+      Biceps: "Bíceps",
+      Forearms: "Antebraços",
+      Core: "Abdômen",
+      Obliques: "Oblíquos",
+      Quads: "Quadríceps",
+      Traps: "Trapézio",
+      Back: "Dorsais",
+      Triceps: "Tríceps",
+      Glutes: "Glúteos",
+      Hamstrings: "Posteriores",
+      Calves: "Panturrilhas"
+    };
+
+    const MUSCLE_WORKOUT_DB = {
+      Chest: {
+        latin: "Pectoralis Major & Minor",
+        fnEn: "Horizontal adduction, flexion, and internal rotation of the humerus.",
+        fnPt: "Adução horizontal, flexão e rotação interna do úmero.",
+        workouts: [
+          { name: "Barbell Bench Press", sets: "4 × 6-8", cue: "Retract scapulae, lower to mid-sternum, explosive drive." },
+          { name: "Incline Dumbbell Press", sets: "3 × 8-10", cue: "30° bench angle for upper clavicular fibers." },
+          { name: "Cable Chest Flye", sets: "3 × 12-15", cue: "Soft elbows, squeeze across midline for 1s peak contraction." }
+        ]
+      },
+      Shoulders: {
+        latin: "Deltoideus (Anterior / Lateral / Posterior)",
+        fnEn: "Shoulder abduction, flexion, and multi-planar arm stabilization.",
+        fnPt: "Abdução do ombro, flexão e estabilização multiplanar.",
+        workouts: [
+          { name: "Overhead Barbell Press", sets: "4 × 6-8", cue: "Brace core & glutes, press vertically past chin." },
+          { name: "Dumbbell Lateral Raise", sets: "4 × 12-15", cue: "Lead with elbows in scapular plane, control descent." },
+          { name: "Face Pull (Rope)", sets: "3 × 15", cue: "Pull to forehead with external rotation for rear delts." }
+        ]
+      },
+      Biceps: {
+        latin: "Biceps Brachii & Brachialis",
+        fnEn: "Elbow flexion and forearm supination.",
+        fnPt: "Flexão do cotovelo e supinação do antebraço.",
+        workouts: [
+          { name: "EZ-Bar Preacher Curl", sets: "3 × 8-10", cue: "Full stretch at bottom, zero torso swing." },
+          { name: "Incline Dumbbell Curl", sets: "3 × 10-12", cue: "Elbows behind torso to bias the long head." },
+          { name: "Hammer Curl", sets: "3 × 12", cue: "Neutral grip targeting brachialis thickness." }
+        ]
+      },
+      Forearms: {
+        latin: "Brachioradialis & Wrist Flexors/Extensors",
+        fnEn: "Grip force, wrist flexion/extension, and elbow stabilization.",
+        fnPt: "Força de pegada, flexão/extensão do punho e estabilização.",
+        workouts: [
+          { name: "Heavy Farmer's Carry", sets: "4 × 40m", cue: "Crush handles, tall posture, controlled stride." },
+          { name: "Reverse Barbell Curl", sets: "3 × 12-15", cue: "Pronated grip isolating the brachioradialis." },
+          { name: "Behind-Back Wrist Curl", sets: "3 × 15-20", cue: "Roll bar to fingertips then curl firmly." }
+        ]
+      },
+      Core: {
+        latin: "Rectus Abdominis & Transverse Abdominis",
+        fnEn: "Spinal flexion, anti-extension bracing, and force transfer.",
+        fnPt: "Flexão espinhal, anti-extensão e transferência de força.",
+        workouts: [
+          { name: "Hanging Leg Raise", sets: "3 × 10-15", cue: "Posteriorly tilt pelvis at the top, avoid swinging." },
+          { name: "Kneeling Cable Crunch", sets: "3 × 12-15", cue: "Round thoracic spine toward knees under load." },
+          { name: "Ab-Wheel Rollout", sets: "3 × 10", cue: "Keep ribs tucked and glutes tight throughout." }
+        ]
+      },
+      Obliques: {
+        latin: "Obliquus Externus & Internus Abdominis",
+        fnEn: "Trunk rotation, anti-rotation stability, and lateral flexion.",
+        fnPt: "Rotação do tronco, anti-rotação e flexão lateral.",
+        workouts: [
+          { name: "Cable Woodchopper", sets: "3 × 12 / side", cue: "Rotate smoothly through torso while keeping hips squared." },
+          { name: "Pallof Anti-Rotation Press", sets: "3 × 12 / side", cue: "Press straight out and resist cable pull for 2s." },
+          { name: "Weighted Side Plank", sets: "3 × 40s / side", cue: "Drive bottom hip high, straight body line." }
+        ]
+      },
+      Quads: {
+        latin: "Quadriceps Femoris (Rectus, Vastus Medialis/Lateralis)",
+        fnEn: "Knee extension and hip flexion during squatting and sprinting.",
+        fnPt: "Extensão do joelho e flexão do quadril no agachamento e corrida.",
+        workouts: [
+          { name: "Barbell Back Squat", sets: "4 × 5-8", cue: "Brace deep, break knees & hips together, drive through mid-foot." },
+          { name: "Bulgarian Split Squat", sets: "3 × 10 / leg", cue: "Slight forward torso lean, vertical shin descent." },
+          { name: "Leg Extension", sets: "3 × 12-15", cue: "Pause 1 second at full knee lockout." }
+        ]
+      },
+      Traps: {
+        latin: "Trapezius (Upper, Middle & Lower Fibers)",
+        fnEn: "Scapular elevation, retraction, and upward rotation.",
+        fnPt: "Elevação, retração e rotação superior da escápula.",
+        workouts: [
+          { name: "Barbell Power Shrug", sets: "4 × 10-12", cue: "Elevate straight toward ears, hold 1s peak squeeze." },
+          { name: "Chest-Supported T-Bar Row", sets: "3 × 10", cue: "Squeeze shoulder blades together for mid-trap density." },
+          { name: "Prone Y-T-W Raises", sets: "3 × 12", cue: "Light load activating lower traps for shoulder health." }
+        ]
+      },
+      Back: {
+        latin: "Latissimus Dorsi & Rhomboids",
+        fnEn: "Shoulder extension, adduction, and powerful pulling mechanics.",
+        fnPt: "Extensão e adução do ombro e mecânica de puxada.",
+        workouts: [
+          { name: "Weighted Pull-Up", sets: "4 × 6-10", cue: "Drive elbows down to ribs, chest toward bar." },
+          { name: "Pendlay Barbell Row", sets: "4 × 8", cue: "Torso parallel to floor, explosive pull from dead stop." },
+          { name: "Single-Arm Lat Pulldown", sets: "3 × 10-12", cue: "Full overhead stretch, pull elbow into hip pocket." }
+        ]
+      },
+      Triceps: {
+        latin: "Triceps Brachii (Long, Lateral & Medial Heads)",
+        fnEn: "Primary elbow extensor and pressing lockout powerhouse.",
+        fnPt: "Extensor primário do cotovelo e potência de bloqueio.",
+        workouts: [
+          { name: "Overhead Cable Extension", sets: "3 × 10-12", cue: "Maximizes long-head stretch behind head." },
+          { name: "Close-Grip Bench Press", sets: "4 × 6-8", cue: "Hands shoulder-width, keep elbows tucked 30°." },
+          { name: "Rope Triceps Pushdown", sets: "3 × 12-15", cue: "Flare rope apart at full bottom extension." }
+        ]
+      },
+      Glutes: {
+        latin: "Gluteus Maximus, Medius & Minimus",
+        fnEn: "Hip extension, external rotation, and pelvic stabilization.",
+        fnPt: "Extensão do quadril, rotação externa e estabilização pélvica.",
+        workouts: [
+          { name: "Barbell Hip Thrust", sets: "4 × 8-10", cue: "Chin tucked, full posterior pelvic tilt at lockout." },
+          { name: "Conventional Deadlift", sets: "4 × 5", cue: "Push floor away, lock hips through with glutes." },
+          { name: "Cable Glute Kickback", sets: "3 × 15 / leg", cue: "Controlled hip extension without lumbar hyperextension." }
+        ]
+      },
+      Hamstrings: {
+        latin: "Biceps Femoris, Semitendinosus & Semimembranosus",
+        fnEn: "Hip extension, knee flexion, and sprint deceleration.",
+        fnPt: "Extensão do quadril, flexão do joelho e desaceleração no sprint.",
+        workouts: [
+          { name: "Romanian Deadlift (RDL)", sets: "4 × 8-10", cue: "Push hips straight back with soft knees until deep stretch." },
+          { name: "Seated Leg Curl", sets: "3 × 10-12", cue: "Hip flexed position produces maximum hamstring hypertrophy." },
+          { name: "Nordic Hamstring Curl", sets: "3 × 6-8", cue: "Slow 4-second eccentric lowering for injury resilience." }
+        ]
+      },
+      Calves: {
+        latin: "Gastrocnemius & Soleus",
+        fnEn: "Ankle plantarflexion, sprint propulsion, and Achilles elasticity.",
+        fnPt: "Flexão plantar do tornozelo, propulsão e elasticidade do tendão.",
+        workouts: [
+          { name: "Standing Calf Raise", sets: "4 × 10-15", cue: "2-second pause in deep bottom stretch, explode up." },
+          { name: "Seated Calf Raise", sets: "3 × 15-20", cue: "Bent knee biases the deeper soleus muscle." },
+          { name: "Pogo Plyometric Hops", sets: "3 × 20", cue: "Stiff ankles, minimal ground contact time." }
+        ]
+      }
+    };
+
+    // =========================================================================
+    // 2. APPLICATION STATE & LOCALSTORAGE PERSISTENCE
+    // =========================================================================
+    function cloneObj(o) {
+      return typeof structuredClone === "function" ? structuredClone(o) : JSON.parse(JSON.stringify(o));
+    }
+
+    const DEFAULT_STATE = {
+      theme: "dark",
+      lang: "en",
+      units: "lbs",
+      activeTab: "overview",
+      selectedMuscle: "Chest",
+      selectedClientId: "c1",
+      chatRole: "trainer",
+      gpsDemoMode: false,
+      cloud: { url: "", anonKey: "", connected: false },
+      brand: { name: "APEXCOACH", mono: "AP", accent: "" },
+      biometrics: {
+        caloriesBurnt: 1840,
+        calorieGoal: 2400,
+        waterMl: 2500,
+        waterGoal: 3500,
+        proteinG: 145,
+        proteinGoal: 180,
+        steps: 9420,
+        liveHR: 68,
+        sleepHours: 7.8,
+        restingHR: 54,
+        soreness: 3,
+        streakDays: 18,
+        weeklyBurn: [1720, 2150, 1490, 2380, 1960, 2240, 1840],
+        hrZonesMin: [28, 44, 31, 18, 7]
+      },
+      workedMuscles: {
+        Chest: 84, Shoulders: 68, Biceps: 52, Forearms: 40, Core: 74, Obliques: 58,
+        Quads: 90, Traps: 62, Back: 78, Triceps: 66, Glutes: 86, Hamstrings: 72, Calves: 48
+      },
+      exercises: [
+        { id: "ex1", name: "Barbell Back Squat", muscle: "Quads", bestLbs: 315, reps: 5, rpe: 8.5, historyLbs: [285, 295, 305, 315] },
+        { id: "ex2", name: "Barbell Bench Press", muscle: "Chest", bestLbs: 225, reps: 6, rpe: 8.0, historyLbs: [205, 210, 220, 225] },
+        { id: "ex3", name: "Conventional Deadlift", muscle: "Glutes", bestLbs: 385, reps: 5, rpe: 9.0, historyLbs: [355, 365, 375, 385] },
+        { id: "ex4", name: "Weighted Pull-Up", muscle: "Back", bestLbs: 215, reps: 8, rpe: 8.0, historyLbs: [195, 200, 210, 215] }
+      ],
+      workoutTemplates: [
+        { id: "tpl1", title: "Mon // Upper Power Hypertrophy", focus: "Chest, Back & Shoulders", duration: "55m", estBurn: 420 },
+        { id: "tpl2", title: "Wed // Lower Strength & Glutes", focus: "Quads, Hamstrings & Glutes", duration: "60m", estBurn: 510 },
+        { id: "tpl3", title: "Fri // Hybrid Conditioning & Core", focus: "Core, Obliques & Zone 4", duration: "45m", estBurn: 480 }
+      ],
+      runs: [
+        { id: "r1", date: "Today", route: "Lakeside Tempo Loop", distMiles: 4.20, paceSecPerMile: 448, avgHr: 164, bestPace: true },
+        { id: "r2", date: "2 days ago", route: "Harbor Zone 2 Cruise", distMiles: 6.10, paceSecPerMile: 512, avgHr: 142, bestPace: false },
+        { id: "r3", date: "5 days ago", route: "Track 400m Repeats", distMiles: 3.50, paceSecPerMile: 462, avgHr: 171, bestPace: false }
+      ],
+      fitnessTests: [
+        { date: "Nov 15", run15Mi: "09:42", pushups: 54, situps: 62, grade: "ELITE" },
+        { date: "Oct 28", run15Mi: "10:08", pushups: 48, situps: 55, grade: "EXCELLENT" }
+      ],
+      measurements: [
+        { date: "Today", weightLbs: 181.5, waistIn: 31.4, chestIn: 42.2, armsIn: 16.1 },
+        { date: "4 wks ago", weightLbs: 185.0, waistIn: 32.8, chestIn: 41.6, armsIn: 15.8 }
+      ],
+      macroProfile: { phase: "recomp" },
+      photos: {
+        before: "https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE+WEEK+1",
+        after: "https://placehold.co/600x800/0f172a/a3e635?text=AFTER+WEEK+12"
+      },
+      clients: [
+        {
+          id: "c1", name: "Marcus Vance", goal: "Hybrid Strength & 10K Speed", status: "green",
+          lastActive: "2h ago", sessionsUsed: 9, sessionsTotal: 12, compliance: 94,
+          checkin: { sleep: "7.8h", stress: "Low", soreness: "Quads 3/10" }
+        },
+        {
+          id: "c2", name: "Sofia Almeida", goal: "Fat Loss & Half-Marathon", status: "amber",
+          lastActive: "2d ago", sessionsUsed: 11, sessionsTotal: 12, compliance: 82,
+          checkin: { sleep: "6.4h", stress: "Medium", soreness: "Calves 5/10" }
+        },
+        {
+          id: "c3", name: "Daniel Rocha", goal: "Hypertrophy & Mobility", status: "red",
+          lastActive: "5d ago", sessionsUsed: 4, sessionsTotal: 10, compliance: 61,
+          checkin: { sleep: "5.8h", stress: "High", soreness: "Lower Back 7/10" }
+        }
+      ],
+      messages: {
+        c1: [
+          { sender: "client", time: "09:12", text: "Hit 315 lbs on squat today! Legs feel strong for tomorrow's tempo run." },
+          { sender: "trainer", time: "09:18", text: "Massive PR Marcus! Keep hydration above 3.5L and hit 180g protein tonight." }
+        ],
+        c2: [
+          { sender: "client", time: "Yesterday", text: "Calves felt a bit tight after the 10K progression run." },
+          { sender: "trainer", time: "Yesterday", text: "Let's swap tomorrow's intervals for Zone 2 recovery + seated soleus work." }
+        ],
+        c3: [
+          { sender: "trainer", time: "2d ago", text: "Hey Daniel, noticed 4 days off the tracker—how is your lower back feeling?" }
+        ]
+      }
+    };
+
+    function normalizeState(parsed) {
+      const base = cloneObj(DEFAULT_STATE);
+      if (!parsed || typeof parsed !== "object") return base;
+      return {
+        ...base,
+        ...parsed,
+        cloud: { ...base.cloud, ...(parsed.cloud || {}) },
+        brand: { ...base.brand, ...(parsed.brand || {}) },
+        biometrics: { ...base.biometrics, ...(parsed.biometrics || {}) },
+        workedMuscles: { ...base.workedMuscles, ...(parsed.workedMuscles || {}) },
+        macroProfile: { ...base.macroProfile, ...(parsed.macroProfile || {}) },
+        photos: { ...base.photos, ...(parsed.photos || {}) }
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem("apexcoach_mobile_os_v2");
+        if (!raw) return cloneObj(DEFAULT_STATE);
+        return normalizeState(JSON.parse(raw));
+      } catch (e) {
+        return cloneObj(DEFAULT_STATE);
+      }
+    }
+
+    let state = loadState();
+    let confirmResetArmed = false;
+
+    function saveState() {
+      try { localStorage.setItem("apexcoach_mobile_os_v2", JSON.stringify(state)); } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // =========================================================================
+    // 3. UNIT CONVERSION, AUDIO CHIMES, HAPTICS, TOAST & CONFETTI
+    // =========================================================================
+    function fmtWeight(lbs) {
+      return state.units === "kg" ? `${(lbs * 0.453592).toFixed(1)} kg` : `${Math.round(lbs * 10) / 10} lbs`;
+    }
+    function fmtWeightNum(lbs) {
+      return state.units === "kg" ? (lbs * 0.453592).toFixed(1) : (Math.round(lbs * 10) / 10);
+    }
+    function toLbs(val) {
+      return state.units === "kg" ? parseFloat(val) / 0.453592 : parseFloat(val);
+    }
+    function fmtDist(miles) {
+      return state.units === "kg" ? `${(miles * 1.60934).toFixed(2)} km` : `${miles.toFixed(2)} mi`;
+    }
+    function fmtPace(secPerMile) {
+      const sec = state.units === "kg" ? Math.round(secPerMile / 1.60934) : Math.round(secPerMile);
+      const m = Math.floor(sec / 60);
+      const s = String(sec % 60).padStart(2, "0");
+      return `${m}:${s} /${state.units === "kg" ? "km" : "mi"}`;
+    }
+    function fmtLength(inches) {
+      return state.units === "kg" ? `${(inches * 2.54).toFixed(1)} cm` : `${inches.toFixed(1)} in`;
+    }
+    function fmtLengthNum(inches) {
+      return state.units === "kg" ? (inches * 2.54).toFixed(1) : inches.toFixed(1);
+    }
+    function toInches(val) {
+      return state.units === "kg" ? parseFloat(val) / 2.54 : parseFloat(val);
+    }
+    function fmtWeightDelta(deltaLbs) {
+      const v = state.units === "kg" ? deltaLbs * 0.453592 : deltaLbs;
+      return `${v > 0 ? "+" : ""}${v.toFixed(1)} ${state.units === "kg" ? "kg" : "lbs"}`;
+    }
+    function fmtLengthDelta(deltaIn) {
+      const v = state.units === "kg" ? deltaIn * 2.54 : deltaIn;
+      return `${v > 0 ? "+" : ""}${v.toFixed(1)} ${state.units === "kg" ? "cm" : "in"}`;
+    }
+    function formatClock(totalSec) {
+      const m = String(Math.floor(totalSec / 60)).padStart(2, "0");
+      const s = String(totalSec % 60).padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    function triggerHaptic(pattern = 20) {
+      try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+    }
+
+    function playTone(freq = 660, duration = 0.14) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById("toast-box");
+      if (!box) return;
+      box.textContent = msg;
+      box.classList.remove("hidden");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => box.classList.add("hidden"), 3000);
+    }
+
+    function launchConfetti() {
+      const canvas = document.getElementById("confetti-canvas");
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const ctx = canvas.getContext("2d");
+      const colors = ["#a3e635", "#38bdf8", "#f43f5e", "#fbbf24", "#ffffff"];
+      const parts = Array.from({ length: 75 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -15 - Math.random() * 120,
+        vx: (Math.random() - 0.5) * 6,
+        vy: 3 + Math.random() * 5,
+        size: 5 + Math.random() * 5,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.25,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
+
+      let frames = 0;
+      function step() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        parts.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vrot;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+          ctx.restore();
+        });
+        frames++;
+        if (frames < 110) requestAnimationFrame(step);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // =========================================================================
+    // 4. CORE HUD, READINESS, THEME, BRAND, LANGUAGE & UNIT ENGINE
+    // =========================================================================
+    function computeReadiness() {
+      const b = state.biometrics;
+      const sleepScore = Math.min(40, (b.sleepHours / 8.0) * 40);
+      const hrScore = Math.max(0, Math.min(35, ((80 - b.restingHR) / 30) * 35));
+      const soreScore = Math.max(0, ((11 - b.soreness) / 10) * 25);
+      return Math.max(25, Math.min(100, Math.round(sleepScore + hrScore + soreScore)));
+    }
+
+    function applyThemeAndBrand() {
+      document.documentElement.setAttribute("data-theme", state.theme);
+      if (state.brand.accent) {
+        document.documentElement.style.setProperty("--accent", state.brand.accent);
+      } else {
+        document.documentElement.style.removeProperty("--accent");
+      }
+
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute("content", state.theme === "white" ? "#f1f5f9" : state.theme === "blue" ? "#051126" : "#06080c");
+      }
+
+      document.getElementById("brand-monogram").textContent = (state.brand.mono || "AP").toUpperCase();
+      document.getElementById("vertical-studio-label").textContent = `${(state.brand.name || "APEXCOACH").toUpperCase()} // OS`;
+      document.getElementById("mobile-studio-title").textContent = `${(state.brand.name || "APEXCOACH").toUpperCase()} PRO`;
+      document.getElementById("hero-studio-heading").innerHTML = `${escapeHtml(state.brand.name || "APEXCOACH")} <span style="color: var(--accent);">COMMAND DECK</span>`;
+      document.getElementById("lang-btn").textContent = state.lang.toUpperCase();
+      document.getElementById("unit-btn").textContent = state.units === "kg" ? "KG" : "LBS";
+
+      const dict = I18N[state.lang] || I18N.en;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (dict[key]) el.textContent = dict[key];
+      });
+    }
+
+    function updateHeroHUD() {
+      const b = state.biometrics;
+      const readiness = computeReadiness();
+      const calPct = Math.min(100, Math.round((b.caloriesBurnt / b.calorieGoal) * 100));
+      const waterPct = Math.min(100, (b.waterMl / b.waterGoal) * 100);
+      const proPct = Math.min(100, (b.proteinG / b.proteinGoal) * 100);
+      const fuelPct = Math.round((waterPct + proPct) / 2);
+
+      document.getElementById("orbital-readiness-val").textContent = readiness;
+      const statusEl = document.getElementById("orbital-readiness-status");
+      const glowEl = document.getElementById("ambient-readiness-glow");
+      const isPt = state.lang === "pt";
+      if (readiness >= 75) {
+        statusEl.textContent = isPt ? "ÓTIMO" : "OPTIMAL";
+        statusEl.style.color = "var(--accent)";
+        if (glowEl) glowEl.style.background = "var(--accent)";
+      } else if (readiness >= 60) {
+        statusEl.textContent = isPt ? "MODERADO" : "MODERATE";
+        statusEl.style.color = "#fbbf24";
+        if (glowEl) glowEl.style.background = "#fbbf24";
+      } else {
+        statusEl.textContent = isPt ? "RECUPERAR" : "DELOAD";
+        statusEl.style.color = "var(--accent-3)";
+        if (glowEl) glowEl.style.background = "var(--accent-3)";
+      }
+
+      document.getElementById("ring-cal").style.strokeDashoffset = (427.25 * (1 - calPct / 100)).toFixed(1);
+      document.getElementById("ring-readiness").style.strokeDashoffset = (339.29 * (1 - readiness / 100)).toFixed(1);
+      document.getElementById("ring-macros").style.strokeDashoffset = (257.61 * (1 - fuelPct / 100)).toFixed(1);
+
+      document.getElementById("ring-cal-pct").textContent = `${calPct}%`;
+      document.getElementById("ring-ready-pct").textContent = `${readiness}%`;
+      document.getElementById("ring-fuel-pct").textContent = `${fuelPct}%`;
+
+      document.getElementById("hud-cal-val").textContent = b.caloriesBurnt;
+      document.getElementById("hud-cal-goal").textContent = `/ ${b.calorieGoal}`;
+      document.getElementById("hud-water-val").textContent = `${(b.waterMl / 1000).toFixed(2)}L`;
+      document.getElementById("hud-water-goal").textContent = `/ ${(b.waterGoal / 1000).toFixed(1)}L`;
+      document.getElementById("hud-protein-val").textContent = `${b.proteinG}g`;
+      document.getElementById("hud-protein-goal").textContent = `/ ${b.proteinGoal}g`;
+
+      const todayMiles = state.runs.filter(r => r.date === "Today" || r.date === "Just now").reduce((s, r) => s + r.distMiles, 0);
+      document.getElementById("hud-dist-val").textContent = fmtDist(todayMiles);
+      document.getElementById("hud-steps-val").textContent = b.steps.toLocaleString();
+      document.getElementById("hud-live-hr").textContent = `${b.liveHR} BPM`;
+      document.getElementById("spine-bpm").textContent = b.liveHR;
+      document.getElementById("hero-streak-pill").textContent = `🔥 ${b.streakDays}-${isPt ? "DIAS SEGUIDOS" : "DAY STREAK"}`;
+
+      const activeClient = state.clients.find(c => c.id === state.selectedClientId) || state.clients[0];
+      if (activeClient) document.getElementById("hero-athlete-name").textContent = activeClient.name.toUpperCase();
+    }
+
+    function setTheme(theme) {
+      state.theme = theme;
+      triggerHaptic(15);
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast(`THEME // ${theme.toUpperCase()}`);
+    }
+
+    function toggleLanguage() {
+      state.lang = state.lang === "en" ? "pt" : "en";
+      triggerHaptic(15);
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast(state.lang === "pt" ? "IDIOMA // PORTUGUÊS ATIVO" : "LANGUAGE // ENGLISH ACTIVE");
+    }
+
+    function toggleUnits() {
+      state.units = state.units === "lbs" ? "kg" : "lbs";
+      triggerHaptic(15);
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast(`UNITS // ${state.units.toUpperCase()}`);
+    }
+
+    function toggleModal(id, open) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (open) {
+        if (id === "brand-modal") {
+          document.getElementById("brand-name-input").value = state.brand.name || "APEXCOACH";
+          document.getElementById("brand-mono-input").value = state.brand.mono || "AP";
+          const activeAccent = state.brand.accent || getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#a3e635";
+          document.getElementById("brand-color-input").value = activeAccent.startsWith("#") ? activeAccent : "#a3e635";
+        }
+        if (id === "cloud-modal") {
+          document.getElementById("cloud-url-input").value = state.cloud.url || "";
+          document.getElementById("cloud-key-input").value = state.cloud.anonKey || "";
+        }
+        el.classList.remove("hidden");
+        el.classList.add("flex");
+      } else {
+        el.classList.add("hidden");
+        el.classList.remove("flex");
+      }
+    }
+
+    function saveBrandSettings(e) {
+      e.preventDefault();
+      state.brand.name = (document.getElementById("brand-name-input").value.trim() || "APEXCOACH").toUpperCase();
+      state.brand.mono = (document.getElementById("brand-mono-input").value.trim() || "AP").toUpperCase().slice(0, 2);
+      state.brand.accent = document.getElementById("brand-color-input").value;
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      toggleModal("brand-modal", false);
+      showToast(`STUDIO BRAND UPDATED: ${state.brand.name}`);
+    }
+
+    function resetBrandAccent() {
+      state.brand.accent = "";
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      toggleModal("brand-modal", false);
+      showToast("THEME DEFAULT ACCENT RESTORED");
+    }
+
+    function addWater(ml) {
+      state.biometrics.waterMl += ml;
+      triggerHaptic(15);
+      playTone(540, 0.08);
+      saveState();
+      updateHeroHUD();
+      showToast(`+${ml}ml HYDRATION LOGGED`);
+    }
+
+    function addProtein(g) {
+      state.biometrics.proteinG += g;
+      triggerHaptic(15);
+      playTone(620, 0.08);
+      saveState();
+      updateHeroHUD();
+      showToast(`+${g}g PROTEIN LOGGED`);
+    }
+
+    function addQuickBurn(kcal) {
+      state.biometrics.caloriesBurnt += kcal;
+      state.biometrics.weeklyBurn[6] += kcal;
+      triggerHaptic(18);
+      playTone(720, 0.1);
+      saveState();
+      updateHeroHUD();
+      if (state.activeTab === "overview") renderWorkspace();
+      showToast(`+${kcal} KCAL ACTIVE BURN ADDED`);
+    }
+
+    function syncWearable(source) {
+      state.biometrics.steps += 1420;
+      state.biometrics.caloriesBurnt += 185;
+      state.biometrics.weeklyBurn[6] += 185;
+      state.biometrics.restingHR = Math.max(46, state.biometrics.restingHR - 1);
+      state.biometrics.liveHR = 64 + Math.floor(Math.random() * 14);
+      triggerHaptic([20, 25, 20]);
+      playTone(780, 0.15);
+      saveState();
+      updateHeroHUD();
+      toggleModal("wearable-modal", false);
+      if (state.activeTab === "overview") renderWorkspace();
+      showToast(`SYNCED ${source.toUpperCase()} // +1,420 STEPS`);
+    }
+
+    // Web Bluetooth Heart-Rate Monitor (with live simulation fallback)
+    let bleSimTimer = null;
+    async function connectBLEHeartRate() {
+      try {
+        if (navigator.bluetooth) {
+          const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ["heart_rate"] }] });
+          const server = await device.gatt.connect();
+          const service = await server.getPrimaryService("heart_rate");
+          const char = await service.getCharacteristic("heart_rate_measurement");
+          await char.startNotifications();
+          char.addEventListener("characteristicvaluechanged", (ev) => {
+            const val = ev.target.value;
+            const flags = val.getUint8(0);
+            const bpm = (flags & 0x01) ? val.getUint16(1, true) : val.getUint8(1);
+            state.biometrics.liveHR = bpm;
+            updateHeroHUD();
+          });
+          showToast(`BLE STRAP PAIRED: ${device.name || "HRM"}`);
+          return;
+        }
+      } catch (err) {}
+      if (bleSimTimer) {
+        clearInterval(bleSimTimer);
+        bleSimTimer = null;
+        showToast("LIVE HR SIMULATOR PAUSED");
+        return;
+      }
+      showToast("LIVE HR STREAM ACTIVE (SIMULATED BLE)");
+      bleSimTimer = setInterval(() => {
+        state.biometrics.liveHR = Math.max(58, Math.min(176, state.biometrics.liveHR + Math.floor(Math.random() * 7) - 3));
+        updateHeroHUD();
+      }, 2200);
+    }
+
+    function startVoiceCoach() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        addWater(250);
+        showToast("VOICE FALLBACK // LOGGED +250ml WATER");
+        return;
+      }
+      const rec = new SR();
+      rec.lang = state.lang === "pt" ? "pt-BR" : "en-US";
+      showToast("🎙️ LISTENING... SAY 'WATER', 'PROTEIN', OR 'REST'");
+      rec.onresult = (ev) => {
+        const text = ev.results[0][0].transcript.toLowerCase();
+        if (text.includes("water") || text.includes("água")) addWater(250);
+        else if (text.includes("protein") || text.includes("proteína")) addProtein(25);
+        else if (text.includes("rest") || text.includes("descanso")) startRestTimer(90);
+        else if (text.includes("gps") || text.includes("run") || text.includes("corrida")) switchTab("endurance");
+        else showToast(`VOICE HEARD: "${text}"`);
+      };
+      rec.onerror = () => showToast("MICROPHONE PERMISSION REQUIRED FOR VOICE");
+      rec.start();
+    }
+
+    function handleAppInstall() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
+      } else {
+        switchTab("vault");
+        showToast("OPENED iOS / ANDROID INSTALL GUIDE");
+      }
+    }
+
+    // Floating Rest Timer Engine
+    let restSecLeft = 0;
+    let restInterval = null;
+    function startRestTimer(seconds = 90) {
+      restSecLeft = seconds;
+      const pill = document.getElementById("rest-timer-pill");
+      pill.classList.remove("hidden");
+      pill.classList.add("flex");
+      document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
+      clearInterval(restInterval);
+      restInterval = setInterval(() => {
+        restSecLeft--;
+        if (restSecLeft <= 3 && restSecLeft > 0) playTone(520, 0.08);
+        if (restSecLeft <= 0) {
+          stopRestTimer();
+          playTone(880, 0.25);
+          triggerHaptic([60, 40, 60]);
+          showToast("⏱️ REST COMPLETE — NEXT WORKING SET!");
+        } else {
+          document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
+        }
+      }, 1000);
+    }
+    function adjustRest(delta) {
+      restSecLeft = Math.max(5, restSecLeft + delta);
+      document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
+    }
+    function stopRestTimer() {
+      clearInterval(restInterval);
+      const pill = document.getElementById("rest-timer-pill");
+      pill.classList.add("hidden");
+      pill.classList.remove("flex");
+    }
+
+    // PR Celebration & Branded PNG Generator
+    function triggerPRModal(exName, metricText, deltaText) {
+      document.getElementById("pr-modal-exercise").textContent = exName.toUpperCase();
+      document.getElementById("pr-modal-metric").textContent = metricText;
+      document.getElementById("pr-modal-delta").textContent = deltaText;
+      toggleModal("pr-modal", true);
+      launchConfetti();
+      playTone(880, 0.25);
+      triggerHaptic([60, 30, 90]);
+
+      const accentColor = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#a3e635";
+      const cardAccent = accentColor === "#0f172a" ? "#38bdf8" : accentColor;
+      const c = document.getElementById("pr-share-canvas");
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#06080c";
+      ctx.fillRect(0, 0, 600, 340);
+      ctx.strokeStyle = cardAccent;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(16, 16, 568, 308);
+      ctx.fillStyle = cardAccent;
+      ctx.font = "bold 16px monospace";
+      ctx.fillText(`${state.brand.name} // ALL-TIME PERSONAL RECORD`, 40, 60);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 32px sans-serif";
+      ctx.fillText(exName.toUpperCase().slice(0, 24), 40, 125);
+      ctx.fillStyle = cardAccent;
+      ctx.font = "bold 52px monospace";
+      ctx.fillText(metricText, 40, 200);
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "18px monospace";
+      ctx.fillText(deltaText.slice(0, 44), 40, 248);
+      ctx.fillText(`ATHLETE: ${document.getElementById("hero-athlete-name").textContent}`, 40, 290);
+    }
+
+    function downloadPRCard() {
+      const c = document.getElementById("pr-share-canvas");
+      const a = document.createElement("a");
+      a.download = `apexcoach-pr-${Date.now()}.png`;
+      a.href = c.toDataURL("image/png");
+      a.click();
+      showToast("PR ACHIEVEMENT CARD DOWNLOADED");
+    }
+
+    // =========================================================================
+    // 5. TAB ROUTER
+    // =========================================================================
+    function switchTab(tab) {
+      state.activeTab = tab;
+      confirmResetArmed = false;
+      saveState();
+      document.querySelectorAll(".dock-tab").forEach(btn => {
+        btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+      });
+      renderWorkspace();
+    }
+
+    function renderWorkspace() {
+      const container = document.getElementById("workspace-container");
+      if (!container) return;
+      container.classList.remove("view-enter");
+      void container.offsetWidth;
+      container.classList.add("view-enter");
+
+      switch (state.activeTab) {
+        case "overview": container.innerHTML = renderOverviewView(); break;
+        case "strength": container.innerHTML = renderStrengthView(); break;
+        case "endurance": container.innerHTML = renderEnduranceView(); break;
+        case "body": container.innerHTML = renderBodyView(); break;
+        case "roster":
+          container.innerHTML = renderRosterView();
+          const feed = document.getElementById("chat-feed");
+          if (feed) feed.scrollTop = feed.scrollHeight;
+          break;
+        case "vault": container.innerHTML = renderVaultView(); break;
+        default: container.innerHTML = renderOverviewView();
+      }
+    }
+
+    // =========================================================================
+    // VIEW 01: OVERVIEW & AI SMART COACH
+    // =========================================================================
+    function getCoachPrescription(readiness, weeklyLoad) {
+      const isPt = state.lang === "pt";
+      if (readiness < 60) {
+        return {
+          title: isPt ? "RECUPERAÇÃO ATIVA ZONA 2 & MOBILIDADE" : "ZONE 2 ACTIVE RECOVERY & MOBILITY",
+          reason: isPt
+            ? `Prontidão reduzida (${readiness}/100). Reduzindo intensidade hoje para acelerar a supercompensação.`
+            : `Readiness dipped to ${readiness}/100. Deloading CNS intensity today to accelerate recovery.`
+        };
+      }
+      return {
+        title: isPt ? "POTÊNCIA HÍBRIDA & RITMO TEMPO" : "HYBRID POWER & TEMPO CONDITIONING",
+        reason: isPt
+          ? `Prontidão em ${readiness}/100 e carga semanal de ${weeklyLoad} kcal. Janela ideal para sobrecarga progressiva.`
+          : `Readiness is ${readiness}/100 with ${weeklyLoad} kcal 7-day load. Optimal neuromuscular window for progressive overload.`
+      };
+    }
+
+    function renderOverviewView() {
+      const isPt = state.lang === "pt";
+      const b = state.biometrics;
+      const readiness = computeReadiness();
+      const weeklyLoad = b.weeklyBurn.reduce((a, c) => a + c, 0);
+      const coach = getCoachPrescription(readiness, weeklyLoad);
+
+      // Build smooth SVG Bezier points for 7-day calorie trend
+      const maxVal = Math.max(...b.weeklyBurn, 2400);
+      const pts = b.weeklyBurn.map((v, i) => ({
+        x: 20 + i * 56,
+        y: 120 - (v / maxVal) * 95,
+        v
+      }));
+      let lineD = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 1; i < pts.length; i++) {
+        const cx = (pts[i - 1].x + pts[i].x) / 2;
+        lineD += ` C ${cx} ${pts[i - 1].y}, ${cx} ${pts[i].y}, ${pts[i].x} ${pts[i].y}`;
+      }
+      const areaD = `${lineD} L ${pts[pts.length - 1].x} 130 L ${pts[0].x} 130 Z`;
+      const days = isPt ? ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "HOJE"] : ["MON", "TUE", "WED", "THU", "FRI", "SAT", "TODAY"];
+
+      // 84-day consistency heatmap (deterministic rich visual pattern)
+      const heatmapCells = Array.from({ length: 84 }, (_, idx) => {
+        const lvl = idx >= 66 ? ((idx * 7) % 4) + 1 : ((idx * 13 + 3) % 5);
+        const opac = [0.1, 0.28, 0.5, 0.75, 1][lvl];
+        return `<div title="Day -${84 - idx}" class="w-full aspect-square rounded-[4px]" style="background: var(--accent); opacity: ${opac};"></div>`;
+      }).join("");
+
+      const badges = [
+        { icon: "🔥", label: isPt ? "14 Dias Seguidos" : "14-Day Streak", unlocked: b.streakDays >= 14 },
+        { icon: "🏋️", label: isPt ? "Clube 300 lbs" : "300 lb Club", unlocked: state.exercises.some(e => e.bestLbs >= 300) },
+        { icon: "💧", label: isPt ? "Meta Hidratação" : "Hydration Pro", unlocked: b.waterMl >= 2500 },
+        { icon: "🏃", label: isPt ? "Pace Sub-7:30" : "Sub-7:30 Pace", unlocked: state.runs.some(r => r.paceSecPerMile <= 450) }
+      ];
+
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left 7 cols: Smart Coach + 7-Day Bezier Curve + 84-Day Matrix -->
+          <div class="lg:col-span-7 space-y-5">
+            <div class="hud-panel chamfer-card p-5 space-y-3 border-l-4" style="border-left-color: var(--accent);">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-[10px] font-mono-num font-extrabold uppercase tracking-widest" style="color: var(--accent);">
+                  🧠 SMART COACH AI // 7-DAY LOAD SYNTHESIS
+                </span>
+                <button onclick="switchTab('strength')" class="px-3.5 py-1.5 rounded-xl btn-accent text-[10px] font-mono-num cursor-pointer">
+                  ${isPt ? "INICIAR SESSÃO →" : "LAUNCH SESSION →"}
+                </button>
+              </div>
+              <h2 id="coach-title" class="font-display text-lg sm:text-2xl font-extrabold uppercase">${coach.title}</h2>
+              <p id="coach-reason" class="text-xs leading-relaxed" style="color: var(--text-secondary);">${coach.reason}</p>
+            </div>
+
+            <!-- 7-Day Calorie Burn Bezier Area Chart -->
+            <div class="hud-panel rounded-2xl p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "CURVA DE QUEIMA CALÓRICA (7 DIAS)" : "7-DAY CALORIE BURN CURVE"}</h3>
+                <span class="text-xs font-mono-num font-extrabold" style="color: var(--accent);">${weeklyLoad.toLocaleString()} kcal</span>
+              </div>
+              <svg viewBox="0 0 380 148" class="w-full h-40 overflow-visible">
+                <defs>
+                  <linearGradient id="burnAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.38" />
+                    <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02" />
+                  </linearGradient>
+                </defs>
+                <path d="${areaD}" fill="url(#burnAreaGrad)" />
+                <path d="${lineD}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" />
+                ${pts.map((p, idx) => `
+                  <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="var(--surface-solid)" stroke="var(--accent)" stroke-width="2.5">
+                    <title>${days[idx]}: ${p.v} kcal</title>
+                  </circle>
+                  <text x="${p.x}" y="144" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="JetBrains Mono">${days[idx]}</text>
+                `).join("")}
+              </svg>
+            </div>
+
+            <!-- 84-Day Consistency Heatmap -->
+            <div class="hud-panel rounded-2xl p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "MATRIZ DE CONSISTÊNCIA (12 SEMANAS)" : "12-WEEK CONSISTENCY MATRIX"}</h3>
+                <span class="text-[10px] font-mono-num" style="color: var(--accent);">92% ADHERENCE</span>
+              </div>
+              <div class="grid grid-cols-12 sm:grid-cols-14 gap-1.5" style="grid-template-columns: repeat(14, minmax(0, 1fr));">
+                ${heatmapCells}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 5 cols: Biometric Calibrator + Streak Badges + Club Challenge -->
+          <div class="lg:col-span-5 space-y-5">
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "CALIBRAÇÃO DE RECUPERAÇÃO IA" : "BIOMETRIC RECOVERY CALIBRATOR"}</h3>
+                <span id="bio-readiness-val" class="font-mono-num text-sm font-extrabold" style="color: var(--accent);">${readiness}/100</span>
+              </div>
+              <div class="space-y-3 text-xs font-mono-num">
+                <div>
+                  <div class="flex justify-between mb-1"><span>${isPt ? "Sono Noturno" : "Sleep Duration"}</span><strong id="bio-sleep-val">${b.sleepHours} hrs</strong></div>
+                  <input type="range" min="4" max="10" step="0.2" value="${b.sleepHours}" oninput="updateBiometric('sleepHours', this.value)" style="accent-color: var(--accent);" class="w-full cursor-pointer" />
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1"><span>${isPt ? "FC de Repouso" : "Resting Heart Rate"}</span><strong id="bio-hr-val">${b.restingHR} bpm</strong></div>
+                  <input type="range" min="42" max="85" step="1" value="${b.restingHR}" oninput="updateBiometric('restingHR', this.value)" style="accent-color: var(--accent-2);" class="w-full cursor-pointer" />
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1"><span>${isPt ? "Dor Muscular (1-10)" : "Muscle Soreness (1-10)"}</span><strong id="bio-sore-val">${b.soreness}/10</strong></div>
+                  <input type="range" min="1" max="10" step="1" value="${b.soreness}" oninput="updateBiometric('soreness', this.value)" style="accent-color: var(--accent-3);" class="w-full cursor-pointer" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Streak Badges & Weekly Club Challenge -->
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "CONQUISTAS & DESAFIOS DO CLUBE" : "STREAK BADGES & CLUB CHALLENGES"}</h3>
+              <div class="grid grid-cols-2 gap-2.5 text-xs font-mono-num">
+                ${badges.map(bg => `
+                  <div class="p-3 rounded-xl border flex items-center gap-2 ${bg.unlocked ? '' : 'opacity-45'}" style="border-color: ${bg.unlocked ? 'var(--accent)' : 'var(--border-hairline)'}; background: var(--surface-solid);">
+                    <span class="text-lg">${bg.icon}</span>
+                    <div class="min-w-0">
+                      <div class="font-bold truncate">${bg.label}</div>
+                      <div class="text-[9px]" style="color: ${bg.unlocked ? 'var(--accent)' : 'var(--text-muted)'};">${bg.unlocked ? (isPt ? "DESBLOQUEADO" : "UNLOCKED") : (isPt ? "EM PROGRESSO" : "LOCKED")}</div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+
+              <div class="p-3.5 rounded-xl border space-y-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="flex justify-between">
+                  <span class="font-bold">🏆 ${isPt ? "DESAFIO 50 MILHAS DO MÊS" : "NOVEMBER 50-MILE CLUB"}</span>
+                  <span style="color: var(--accent);">38.4 / 50 mi</span>
+                </div>
+                <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--border-hairline);">
+                  <div class="h-full rounded-full" style="width: 77%; background: var(--accent);"></div>
+                </div>
+                <div class="flex justify-between text-[10px] opacity-70">
+                  <span>#1 Marcus V. (38.4 mi)</span>
+                  <span>#2 Sofia A. (34.1 mi)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateBiometric(key, val) {
+      state.biometrics[key] = parseFloat(val);
+      saveState();
+      updateHeroHUD();
+      const readiness = computeReadiness();
+      const weeklyLoad = state.biometrics.weeklyBurn.reduce((a, c) => a + c, 0);
+      const coach = getCoachPrescription(readiness, weeklyLoad);
+      const rEl = document.getElementById("bio-readiness-val");
+      const sEl = document.getElementById("bio-sleep-val");
+      const hEl = document.getElementById("bio-hr-val");
+      const dEl = document.getElementById("bio-sore-val");
+      const ctEl = document.getElementById("coach-title");
+      const crEl = document.getElementById("coach-reason");
+      if (rEl) rEl.textContent = `${readiness}/100`;
+      if (sEl) sEl.textContent = `${state.biometrics.sleepHours} hrs`;
+      if (hEl) hEl.textContent = `${state.biometrics.restingHR} bpm`;
+      if (dEl) dEl.textContent = `${state.biometrics.soreness}/10`;
+      if (ctEl) ctEl.textContent = coach.title;
+      if (crEl) crEl.textContent = coach.reason;
+    }
+
+    // =========================================================================
+    // VIEW 02: STRENGTH, DUAL-VIEW ANATOMICAL MUSCLE HEAT MAP & AUTO-PR ENGINE
+    // =========================================================================
+    let activeSessionBanner = "";
+
+    function selectMuscleGroup(mKey) {
+      state.selectedMuscle = mKey;
+      triggerHaptic(15);
+      saveState();
+      renderWorkspace();
+    }
+
+    function addMuscleExerciseToLog(name, muscleKey) {
+      const existing = state.exercises.find(e => e.name.toLowerCase() === name.toLowerCase());
+      if (!existing) {
+        state.exercises.unshift({
+          id: "ex_" + Date.now() + "_" + Math.random().toString(36).slice(2, 5),
+          name, muscle: muscleKey, bestLbs: 95, reps: 10, rpe: 8.0, historyLbs: [95]
+        });
+      }
+      state.workedMuscles[muscleKey] = Math.min(100, (state.workedMuscles[muscleKey] || 50) + 8);
+      triggerHaptic(20);
+      saveState();
+      renderWorkspace();
+      showToast(`ADDED TO LOGGER: ${name.toUpperCase()}`);
+    }
+
+    function launchMuscleWorkout(muscleKey) {
+      const data = MUSCLE_WORKOUT_DB[muscleKey];
+      if (!data) return;
+      data.workouts.forEach(w => {
+        if (!state.exercises.some(e => e.name.toLowerCase() === w.name.toLowerCase())) {
+          state.exercises.unshift({
+            id: "ex_" + Date.now() + "_" + Math.random().toString(36).slice(2, 5),
+            name: w.name, muscle: muscleKey, bestLbs: 95, reps: 10, rpe: 8.0, historyLbs: [95]
+          });
+        }
+      });
+      activeSessionBanner = `${muscleKey.toUpperCase()} TARGETED PROTOCOL`;
+      state.workedMuscles[muscleKey] = Math.min(100, (state.workedMuscles[muscleKey] || 50) + 15);
+      state.biometrics.caloriesBurnt += 190;
+      state.biometrics.weeklyBurn[6] += 190;
+      triggerHaptic(35);
+      saveState();
+      updateHeroHUD();
+      startRestTimer(90);
+      renderWorkspace();
+      showToast(`TARGETED ${muscleKey.toUpperCase()} SESSION LOADED`);
+    }
+
+    function getMuscleHeatFill(mKey) {
+      const load = state.workedMuscles[mKey] || 30;
+      if (load >= 85) return `fill="url(#heatPeak)"`;
+      if (load >= 65) return `fill="url(#heatHigh)"`;
+      if (load >= 45) return `fill="url(#heatMid)"`;
+      return `fill="var(--muscle-base)"`;
+    }
+
+    function renderStrengthView() {
+      const isPt = state.lang === "pt";
+      const unitLabel = state.units === "kg" ? "kg" : "lbs";
+      const selKey = state.selectedMuscle && MUSCLE_WORKOUT_DB[state.selectedMuscle] ? state.selectedMuscle : "Chest";
+      const selInfo = MUSCLE_WORKOUT_DB[selKey];
+      const selLoad = state.workedMuscles[selKey] || 50;
+
+      const mClass = (k) => `muscle-zone ${selKey === k ? "selected" : ""}`;
+      const mFill = (k) => getMuscleHeatFill(k);
+
+      return `
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+          <!-- ZONE 1 (8 Cols): Dual-View Anterior/Posterior Anatomical Muscle Heat Map + Targeted Prescription -->
+          <div class="xl:col-span-8 space-y-4">
+            <div class="hud-panel chamfer-card p-4 sm:p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">🧬 ANATOMICAL MUSCLE HEAT MAP TELEMETRY</span>
+                  <h3 class="font-display text-lg font-extrabold uppercase">${isPt ? "CLIQUE EM QUALQUER MÚSCULO PARA TREINAR" : "CLICK ANY MUSCLE FOR TARGETED WORKOUTS"}</h3>
+                </div>
+                <div class="flex items-center gap-2 text-[9px] font-mono-num">
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full" style="background: var(--muscle-base); border: 1px solid var(--muscle-stroke);"></span>LOW</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>MID</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-lime-400"></span>HIGH</span>
+                  <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>PEAK</span>
+                </div>
+              </div>
+
+              <!-- Quick Muscle Selector Pills -->
+              <div class="flex flex-wrap gap-1.5">
+                ${Object.keys(MUSCLE_WORKOUT_DB).map(k => `
+                  <button onclick="selectMuscleGroup('${k}')" class="px-2.5 py-1 rounded-lg text-[10px] font-mono-num font-bold border cursor-pointer transition ${selKey === k ? 'btn-accent border-transparent' : ''}" style="${selKey !== k ? 'border-color: var(--border-hairline); background: var(--surface-solid);' : ''}">
+                    ${isPt ? (MUSCLE_PT[k] || k) : k} ${state.workedMuscles[k] || 40}%
+                  </button>
+                `).join("")}
+              </div>
+
+              <!-- Dual-View Vector Body Map (Anterior + Posterior matching uploaded anatomical reference) -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                <div class="md:col-span-7 rounded-2xl border p-3" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <svg viewBox="0 0 540 395" class="w-full h-auto max-h-[400px] mx-auto select-none">
+                    <defs>
+                      <linearGradient id="heatMid" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.72" />
+                        <stop offset="100%" stop-color="#0284c7" stop-opacity="0.88" />
+                      </linearGradient>
+                      <linearGradient id="heatHigh" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#a3e635" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="#65a30d" stop-opacity="0.92" />
+                      </linearGradient>
+                      <linearGradient id="heatPeak" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#fb7185" stop-opacity="0.85" />
+                        <stop offset="100%" stop-color="#e11d48" stop-opacity="0.95" />
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Labels -->
+                    <text x="135" y="18" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="JetBrains Mono" font-weight="700">${isPt ? "ANTERIOR (FRENTE)" : "ANTERIOR (FRONT)"}</text>
+                    <text x="405" y="18" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="JetBrains Mono" font-weight="700">${isPt ? "POSTERIOR (COSTAS)" : "POSTERIOR (BACK)"}</text>
+
+                    <!-- ===== ANTERIOR FIGURE (Center X = 135) ===== -->
+                    <!-- Head & Neck -->
+                    <path d="M121 34 C121 23, 149 23, 149 34 C150 48, 144 61, 135 63 C126 61, 120 48, 121 34 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.4" />
+                    <path d="M127 61 L143 61 L145 78 L125 78 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+
+                    <!-- Traps (Front) -->
+                    <path onclick="selectMuscleGroup('Traps')" class="${mClass('Traps')}" ${mFill('Traps')} d="M127 63 L123 76 L102 84 L118 88 L135 86 L152 88 L168 84 L147 76 L143 63 Z"><title>Trapezius</title></path>
+
+                    <!-- Chest (Pectoralis L/R) -->
+                    <path onclick="selectMuscleGroup('Chest')" class="${mClass('Chest')}" ${mFill('Chest')} d="M135 88 L115 86 L99 95 L102 114 C112 121, 127 121, 134 114 Z"><title>Pectoralis (Chest)</title></path>
+                    <path onclick="selectMuscleGroup('Chest')" class="${mClass('Chest')}" ${mFill('Chest')} d="M135 88 L155 86 L171 95 L168 114 C158 121, 143 121, 136 114 Z"><title>Pectoralis (Chest)</title></path>
+
+                    <!-- Deltoids (Shoulders L/R) -->
+                    <path onclick="selectMuscleGroup('Shoulders')" class="${mClass('Shoulders')}" ${mFill('Shoulders')} d="M102 84 C88 86, 81 97, 83 111 L99 107 L102 95 Z"><title>Deltoids (Shoulders)</title></path>
+                    <path onclick="selectMuscleGroup('Shoulders')" class="${mClass('Shoulders')}" ${mFill('Shoulders')} d="M168 84 C182 86, 189 97, 187 111 L171 107 L168 95 Z"><title>Deltoids (Shoulders)</title></path>
+
+                    <!-- Biceps (L/R) -->
+                    <path onclick="selectMuscleGroup('Biceps')" class="${mClass('Biceps')}" ${mFill('Biceps')} d="M83 111 C77 124, 77 141, 83 151 L95 147 C99 135, 99 119, 98 108 Z"><title>Biceps Brachii</title></path>
+                    <path onclick="selectMuscleGroup('Biceps')" class="${mClass('Biceps')}" ${mFill('Biceps')} d="M187 111 C193 124, 193 141, 187 151 L175 147 C171 135, 171 119, 172 108 Z"><title>Biceps Brachii</title></path>
+
+                    <!-- Forearms (Front L/R) + Hands -->
+                    <path onclick="selectMuscleGroup('Forearms')" class="${mClass('Forearms')}" ${mFill('Forearms')} d="M83 151 C73 166, 68 186, 67 202 L74 203 C82 187, 90 168, 95 147 Z"><title>Forearms</title></path>
+                    <path onclick="selectMuscleGroup('Forearms')" class="${mClass('Forearms')}" ${mFill('Forearms')} d="M187 151 C197 166, 202 186, 203 202 L196 203 C188 187, 180 168, 175 147 Z"><title>Forearms</title></path>
+                    <path d="M67 202 C63 210, 65 224, 70 227 C73 224, 74 214, 74 203 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+                    <path d="M203 202 C207 210, 205 224, 200 227 C197 224, 196 214, 196 203 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+
+                    <!-- Core (Rectus Abdominis 4-segment grid) -->
+                    <path onclick="selectMuscleGroup('Core')" class="${mClass('Core')}" ${mFill('Core')} d="M122 121 L135 118 L148 121 L146 135 L135 136 L124 135 Z"><title>Rectus Abdominis (Core)</title></path>
+                    <path onclick="selectMuscleGroup('Core')" class="${mClass('Core')}" ${mFill('Core')} d="M124 136 L135 137 L146 136 L145 151 L135 152 L125 151 Z"><title>Rectus Abdominis (Core)</title></path>
+                    <path onclick="selectMuscleGroup('Core')" class="${mClass('Core')}" ${mFill('Core')} d="M125 152 L135 153 L145 152 L144 167 L135 168 L126 167 Z"><title>Rectus Abdominis (Core)</title></path>
+                    <path onclick="selectMuscleGroup('Core')" class="${mClass('Core')}" ${mFill('Core')} d="M126 168 L135 169 L144 168 L141 193 L135 198 L129 193 Z"><title>Rectus Abdominis (Core)</title></path>
+
+                    <!-- Obliques (L/R) -->
+                    <path onclick="selectMuscleGroup('Obliques')" class="${mClass('Obliques')}" ${mFill('Obliques')} d="M103 115 L121 122 L125 184 L106 177 C104 156, 105 134, 103 115 Z"><title>Obliques</title></path>
+                    <path onclick="selectMuscleGroup('Obliques')" class="${mClass('Obliques')}" ${mFill('Obliques')} d="M167 115 L149 122 L145 184 L164 177 C166 156, 165 134, 167 115 Z"><title>Obliques</title></path>
+
+                    <!-- Pelvis Bridge -->
+                    <path d="M111 180 L129 198 L141 198 L159 180 L156 196 L135 206 L114 196 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.1" />
+
+                    <!-- Quadriceps (Sweeps + Inner Teardrop L/R) -->
+                    <path onclick="selectMuscleGroup('Quads')" class="${mClass('Quads')}" ${mFill('Quads')} d="M106 181 C97 206, 97 238, 105 264 L114 266 L122 204 L114 196 Z"><title>Quadriceps</title></path>
+                    <path onclick="selectMuscleGroup('Quads')" class="${mClass('Quads')}" ${mFill('Quads')} d="M122 204 L115 265 L125 266 L132 212 Z"><title>Quadriceps</title></path>
+                    <path onclick="selectMuscleGroup('Quads')" class="${mClass('Quads')}" ${mFill('Quads')} d="M164 181 C173 206, 173 238, 165 264 L156 266 L148 204 L156 196 Z"><title>Quadriceps</title></path>
+                    <path onclick="selectMuscleGroup('Quads')" class="${mClass('Quads')}" ${mFill('Quads')} d="M148 204 L155 265 L145 266 L138 212 Z"><title>Quadriceps</title></path>
+
+                    <!-- Lower Legs (Calves / Tibialis Front) + Feet -->
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M107 278 C102 296, 103 318, 108 342 L118 342 C123 318, 123 296, 120 278 Z"><title>Calves & Tibialis</title></path>
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M163 278 C168 296, 167 318, 162 342 L152 342 C147 318, 147 296, 150 278 Z"><title>Calves & Tibialis</title></path>
+                    <path d="M108 344 L119 344 L118 364 L98 370 L97 363 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+                    <path d="M162 344 L151 344 L152 364 L172 370 L173 363 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+
+                    <!-- ===== POSTERIOR FIGURE (Center X = 405) ===== -->
+                    <!-- Head & Neck Back -->
+                    <path d="M391 34 C391 23, 419 23, 419 34 C420 48, 414 60, 405 62 C396 60, 390 48, 391 34 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.4" />
+
+                    <!-- Trapezius (Diamond) -->
+                    <path onclick="selectMuscleGroup('Traps')" class="${mClass('Traps')}" ${mFill('Traps')} d="M397 62 L413 62 L421 76 L440 84 L417 104 L405 144 L393 104 L370 84 L389 76 Z"><title>Trapezius</title></path>
+
+                    <!-- Rear Deltoids (L/R) -->
+                    <path onclick="selectMuscleGroup('Shoulders')" class="${mClass('Shoulders')}" ${mFill('Shoulders')} d="M370 84 C356 87, 350 98, 353 111 L371 106 L375 91 Z"><title>Rear Deltoids</title></path>
+                    <path onclick="selectMuscleGroup('Shoulders')" class="${mClass('Shoulders')}" ${mFill('Shoulders')} d="M440 84 C454 87, 460 98, 457 111 L439 106 L435 91 Z"><title>Rear Deltoids</title></path>
+
+                    <!-- Latissimus Dorsi / Back (L/R) -->
+                    <path onclick="selectMuscleGroup('Back')" class="${mClass('Back')}" ${mFill('Back')} d="M372 106 L393 105 L403 146 L398 175 L378 172 C374 148, 371 126, 372 106 Z"><title>Latissimus Dorsi (Back)</title></path>
+                    <path onclick="selectMuscleGroup('Back')" class="${mClass('Back')}" ${mFill('Back')} d="M438 106 L417 105 L407 146 L412 175 L432 172 C436 148, 439 126, 438 106 Z"><title>Latissimus Dorsi (Back)</title></path>
+
+                    <!-- Triceps (L/R) -->
+                    <path onclick="selectMuscleGroup('Triceps')" class="${mClass('Triceps')}" ${mFill('Triceps')} d="M353 111 C346 125, 347 141, 354 152 L367 148 C371 135, 371 120, 370 107 Z"><title>Triceps Brachii</title></path>
+                    <path onclick="selectMuscleGroup('Triceps')" class="${mClass('Triceps')}" ${mFill('Triceps')} d="M457 111 C464 125, 463 141, 456 152 L443 148 C439 135, 439 120, 440 107 Z"><title>Triceps Brachii</title></path>
+
+                    <!-- Forearms (Back L/R) + Hands -->
+                    <path onclick="selectMuscleGroup('Forearms')" class="${mClass('Forearms')}" ${mFill('Forearms')} d="M354 152 C344 167, 339 186, 338 202 L345 203 C353 187, 361 168, 367 148 Z"><title>Forearms</title></path>
+                    <path onclick="selectMuscleGroup('Forearms')" class="${mClass('Forearms')}" ${mFill('Forearms')} d="M456 152 C466 167, 471 186, 472 202 L465 203 C457 187, 449 168, 443 148 Z"><title>Forearms</title></path>
+                    <path d="M338 202 C334 210, 336 224, 341 227 C344 224, 345 214, 345 203 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+                    <path d="M472 202 C476 210, 474 224, 469 227 C466 224, 465 214, 465 203 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+
+                    <!-- Glutes (L/R) -->
+                    <path onclick="selectMuscleGroup('Glutes')" class="${mClass('Glutes')}" ${mFill('Glutes')} d="M378 174 L404 178 L404 212 C391 216, 376 210, 373 196 C372 187, 374 180, 378 174 Z"><title>Glutes</title></path>
+                    <path onclick="selectMuscleGroup('Glutes')" class="${mClass('Glutes')}" ${mFill('Glutes')} d="M432 174 L406 178 L406 212 C419 216, 434 210, 437 196 C438 187, 436 180, 432 174 Z"><title>Glutes</title></path>
+
+                    <!-- Hamstrings (L/R) -->
+                    <path onclick="selectMuscleGroup('Hamstrings')" class="${mClass('Hamstrings')}" ${mFill('Hamstrings')} d="M374 203 C369 224, 371 248, 377 268 L388 268 L391 213 Z"><title>Hamstrings</title></path>
+                    <path onclick="selectMuscleGroup('Hamstrings')" class="${mClass('Hamstrings')}" ${mFill('Hamstrings')} d="M391 213 L388 268 L398 266 C402 246, 403 228, 403 213 Z"><title>Hamstrings</title></path>
+                    <path onclick="selectMuscleGroup('Hamstrings')" class="${mClass('Hamstrings')}" ${mFill('Hamstrings')} d="M436 203 C441 224, 439 248, 433 268 L422 268 L419 213 Z"><title>Hamstrings</title></path>
+                    <path onclick="selectMuscleGroup('Hamstrings')" class="${mClass('Hamstrings')}" ${mFill('Hamstrings')} d="M419 213 L422 268 L412 266 C408 246, 407 228, 407 213 Z"><title>Hamstrings</title></path>
+
+                    <!-- Calves (Gastrocnemius Heads L/R) + Heels -->
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M377 278 C371 296, 372 316, 378 338 L385 338 L387 280 Z"><title>Calves</title></path>
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M388 280 L386 338 L393 338 C398 316, 398 296, 395 278 Z"><title>Calves</title></path>
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M433 278 C439 296, 438 316, 432 338 L425 338 L423 280 Z"><title>Calves</title></path>
+                    <path onclick="selectMuscleGroup('Calves')" class="${mClass('Calves')}" ${mFill('Calves')} d="M422 280 L424 338 L417 338 C412 316, 412 296, 415 278 Z"><title>Calves</title></path>
+                    <path d="M378 342 L391 342 L390 364 L370 369 L369 362 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+                    <path d="M432 342 L419 342 L420 364 L440 369 L441 362 Z" fill="var(--surface-2)" stroke="var(--muscle-stroke)" stroke-width="1.2" />
+                  </svg>
+                </div>
+
+                <!-- Selected Muscle Prescription Drawer -->
+                <div class="md:col-span-5 rounded-2xl border p-4 space-y-3" style="border-color: var(--accent); background: var(--surface-solid);">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <span class="text-[10px] font-mono-num uppercase tracking-wider" style="color: var(--accent);">TARGETED MUSCLE</span>
+                      <h4 class="font-display text-xl font-extrabold uppercase">${isPt ? (MUSCLE_PT[selKey] || selKey) : selKey}</h4>
+                      <div class="text-[10px] font-mono-num italic opacity-75">${selInfo.latin}</div>
+                    </div>
+                    <span class="px-2 py-1 rounded-lg text-[10px] font-mono-num font-extrabold" style="background: var(--surface-2); color: var(--accent);">${selLoad}% LOAD</span>
+                  </div>
+                  <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">${isPt ? selInfo.fnPt : selInfo.fnEn}</p>
+
+                  <div class="space-y-2 pt-1">
+                    ${selInfo.workouts.map(w => `
+                      <div class="p-2.5 rounded-xl border space-y-1" style="border-color: var(--border-hairline); background: var(--surface-2);">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="font-bold text-xs">${escapeHtml(w.name)}</span>
+                          <button onclick="addMuscleExerciseToLog('${w.name.replace(/'/g, "\\'")}', '${selKey}')" class="px-2 py-0.5 rounded-md text-[10px] font-mono-num font-bold btn-accent cursor-pointer">+ LOG</button>
+                        </div>
+                        <div class="text-[10px] font-mono-num" style="color: var(--accent-2);">${w.sets}</div>
+                        <div class="text-[10px] opacity-75">${escapeHtml(w.cue)}</div>
+                      </div>
+                    `).join("")}
+                  </div>
+
+                  <button onclick="launchMuscleWorkout('${selKey}')" class="w-full py-2.5 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
+                    ⚡ ${isPt ? "CARREGAR TREINO COMPLETO" : "LOAD TARGETED WORKOUT"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 1-Tap Weekly Workout Templates -->
+            <div class="hud-panel rounded-2xl p-5 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "PLANOS SEMANAIS (1 TOQUE)" : "ONE-TAP WEEKLY WORKOUT PLANS"}</h3>
+                <span class="text-[10px] font-mono-num opacity-65">AUTO-REST TIMER</span>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                ${state.workoutTemplates.map(tpl => `
+                  <div class="p-3.5 rounded-xl border flex flex-col justify-between gap-2.5" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                    <div>
+                      <div class="font-bold text-xs">${escapeHtml(tpl.title)}</div>
+                      <div class="text-[10px] opacity-70 mt-0.5">${escapeHtml(tpl.focus)}</div>
+                    </div>
+                    <div class="flex items-center justify-between text-[10px] font-mono-num pt-2 border-t" style="border-color: var(--border-hairline);">
+                      <span>⏱ ${tpl.duration} • 🔥 ${tpl.estBurn}</span>
+                      <button onclick="startTemplate('${tpl.id}')" class="px-2.5 py-1 rounded-lg btn-accent cursor-pointer">${isPt ? "INICIAR" : "START"}</button>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+
+          <!-- ZONE 2 (4 Cols): Exercise Logger, Auto-PR & Custom Exercise Creator -->
+          <div class="xl:col-span-4 space-y-4">
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "REGISTRO DE FORÇA & RECORDES" : "STRENGTH LOGGER & AUTO-PR"}</h3>
+                <span class="text-[10px] font-mono-num px-2 py-0.5 rounded" style="background: var(--surface-solid); color: var(--accent);">+2.5% AI</span>
+              </div>
+
+              ${activeSessionBanner ? `
+                <div class="p-2.5 rounded-xl border flex items-center justify-between text-[10px] font-mono-num" style="border-color: var(--accent); background: var(--surface-solid);">
+                  <span>⚡ ACTIVE: <strong>${escapeHtml(activeSessionBanner)}</strong></span>
+                  <button onclick="activeSessionBanner=''; renderWorkspace();" class="opacity-70 hover:opacity-100 cursor-pointer px-1">✕</button>
+                </div>
+              ` : ""}
+
+              <div class="space-y-2.5 max-h-[470px] overflow-y-auto pr-1">
+                ${state.exercises.map(ex => {
+                  const nextTargetLbs = Math.round(ex.bestLbs * 1.025);
+                  return `
+                    <div class="p-3 rounded-xl border space-y-2" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                      <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                          <span class="font-bold text-xs">${escapeHtml(ex.name)}</span>
+                          <span class="ml-1.5 text-[10px] font-mono-num px-1.5 py-0.5 rounded border" style="border-color: var(--border-strong);">${isPt ? (MUSCLE_PT[ex.muscle] || ex.muscle) : ex.muscle}</span>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                          <span class="text-[11px] font-mono-num font-extrabold" style="color: var(--accent);">PR: ${fmtWeight(ex.bestLbs)} × ${ex.reps}</span>
+                          <button onclick="deleteExercise('${ex.id}')" title="Remove exercise" class="text-[10px] opacity-45 hover:opacity-100 cursor-pointer">✕</button>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <input id="w-${ex.id}" type="number" min="1" step="0.5" value="${fmtWeightNum(nextTargetLbs)}" class="hud-input w-24 text-xs font-mono-num" />
+                        <span class="text-[10px] font-mono-num opacity-70">${unitLabel} ×</span>
+                        <input id="r-${ex.id}" type="number" min="1" value="${ex.reps}" class="hud-input w-16 text-xs font-mono-num" />
+                        <button onclick="logSet('${ex.id}')" class="ml-auto px-3 py-2 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
+                          ✓ ${isPt ? "SALVAR" : "LOG SET"}
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+
+              <!-- Add New Exercise Form -->
+              <form onsubmit="addCustomExercise(event)" class="pt-3 border-t space-y-2 text-xs font-mono-num" style="border-color: var(--border-hairline);">
+                <div class="text-[10px] opacity-70 uppercase">${isPt ? "ADICIONAR NOVO EXERCÍCIO" : "ADD NEW EXERCISE"}</div>
+                <input id="new-ex-name" type="text" placeholder="${isPt ? 'Nome do exercício...' : 'Exercise name (e.g. Bulgarian Split Squat)'}" class="hud-input w-full text-xs" required />
+                <div class="flex gap-2">
+                  <select id="new-ex-muscle" class="hud-input flex-1 text-xs">
+                    ${Object.keys(MUSCLE_WORKOUT_DB).map(k => `<option value="${k}">${isPt ? (MUSCLE_PT[k] || k) : k}</option>`).join("")}
+                  </select>
+                  <button type="submit" class="px-4 py-2 rounded-xl btn-accent cursor-pointer">+ ${isPt ? "CRIAR" : "ADD"}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function logSet(exId) {
+      const ex = state.exercises.find(e => e.id === exId);
+      if (!ex) return;
+      const rawWeight = parseFloat(document.getElementById(`w-${exId}`).value);
+      const reps = parseInt(document.getElementById(`r-${exId}`).value, 10);
+      if (!Number.isFinite(rawWeight) || rawWeight <= 0 || !Number.isFinite(reps) || reps <= 0) {
+        showToast("ENTER VALID WEIGHT & REPS (> 0)");
+        return;
+      }
+      const weightLbs = toLbs(rawWeight);
+      const isPR = weightLbs > ex.bestLbs || (Math.abs(weightLbs - ex.bestLbs) < 0.5 && reps > ex.reps);
+      const prevBest = ex.bestLbs;
+
+      if (isPR) { ex.bestLbs = weightLbs; ex.reps = reps; }
+      ex.historyLbs.push(weightLbs);
+      state.workedMuscles[ex.muscle] = Math.min(100, (state.workedMuscles[ex.muscle] || 50) + 12);
+      state.biometrics.caloriesBurnt += 45;
+      state.biometrics.weeklyBurn[6] += 45;
+
+      saveState();
+      updateHeroHUD();
+      startRestTimer(90);
+      renderWorkspace();
+
+      if (isPR) {
+        const delta = Math.max(1, Math.round(weightLbs - prevBest));
+        triggerPRModal(ex.name, `${fmtWeight(weightLbs)} × ${reps}`, `+${fmtWeight(delta)} ABOVE PREVIOUS ALL-TIME BEST`);
+      } else {
+        playTone(660, 0.12);
+        triggerHaptic(25);
+        showToast(`SET LOGGED: ${ex.name} (${fmtWeight(weightLbs)} × ${reps})`);
+      }
+    }
+
+    function deleteExercise(exId) {
+      if (state.exercises.length <= 1) {
+        showToast("KEEP AT LEAST 1 EXERCISE IN LOGGER");
+        return;
+      }
+      state.exercises = state.exercises.filter(e => e.id !== exId);
+      saveState();
+      renderWorkspace();
+      showToast("EXERCISE REMOVED");
+    }
+
+    function addCustomExercise(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById("new-ex-name");
+      const muscle = document.getElementById("new-ex-muscle").value;
+      const name = nameInput.value.trim();
+      if (!name) return;
+      state.exercises.unshift({ id: "ex_" + Date.now(), name, muscle, bestLbs: 95, reps: 10, rpe: 8.0, historyLbs: [95] });
+      nameInput.value = "";
+      saveState();
+      renderWorkspace();
+      showToast(`CUSTOM EXERCISE ADDED: ${name.toUpperCase()}`);
+    }
+
+    function startTemplate(tplId) {
+      const tpl = state.workoutTemplates.find(t => t.id === tplId);
+      if (!tpl) return;
+      activeSessionBanner = tpl.title;
+      state.biometrics.caloriesBurnt += 260;
+      state.biometrics.weeklyBurn[6] += 260;
+      triggerHaptic(30);
+      saveState();
+      updateHeroHUD();
+      startRestTimer(90);
+      renderWorkspace();
+      showToast(`STARTED TEMPLATE: ${tpl.title.toUpperCase()}`);
+    }
+
+    // =========================================================================
+    // VIEW 03: GPS RUN TRACKING, HEART-RATE ZONES & TIMED FITNESS TEST MODE
+    // =========================================================================
+    let gpsRunning = false;
+    let gpsSeconds = 0;
+    let gpsMiles = 0;
+    let gpsTimer = null;
+    let gpsWatchId = null;
+    let gpsWakeLock = null;
+    let gpsAccuracyM = null;
+    let gpsStatus = "STANDBY";
+    let lastCoords = null;
+    let gpsLatLngs = [];
+    let gpsBreadcrumbs = [[20, 100]];
+
+    let testRunning = false;
+    let testSeconds = 0;
+    let testTimer = null;
+    let testCountdownTimer = null;
+    let testSplits = [];
+
+    function haversineMiles(lat1, lon1, lat2, lon2) {
+      const R = 3958.8;
+      const toRad = (d) => (d * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function projectLatLngsToSVG(coords) {
+      if (!coords || coords.length < 2) return [[20, 100], [200, 65]];
+      const lats = coords.map(c => c[0]);
+      const lngs = coords.map(c => c[1]);
+      const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+      const latSpan = Math.max(0.00025, maxLat - minLat);
+      const lngSpan = Math.max(0.00025, maxLng - minLng);
+      return coords.map(([lat, lng]) => [
+        24 + ((lng - minLng) / lngSpan) * 352,
+        112 - ((lat - minLat) / latSpan) * 90
+      ]);
+    }
+
+    async function requestScreenWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          gpsWakeLock = await navigator.wakeLock.request("screen");
+        }
+      } catch (e) {}
+    }
+
+    function releaseScreenWakeLock() {
+      try {
+        if (gpsWakeLock) {
+          gpsWakeLock.release();
+          gpsWakeLock = null;
+        }
+      } catch (e) {}
+    }
+
+    function toggleGPSDemoMode() {
+      if (gpsRunning) { showToast("STOP CURRENT RUN BEFORE SWITCHING GPS MODE"); return; }
+      state.gpsDemoMode = !state.gpsDemoMode;
+      saveState();
+      renderWorkspace();
+      showToast(state.gpsDemoMode ? "GPS MODE // INDOOR SIMULATOR" : "GPS MODE // REAL SATELLITE CHIP");
+    }
+
+    function updateGPSSignalBadge() {
+      const badge = document.getElementById("gps-signal-badge");
+      if (!badge) return;
+      if (!gpsRunning) {
+        badge.textContent = state.gpsDemoMode ? "🧪 SIMULATOR READY" : "🛰️ REAL GPS READY";
+        return;
+      }
+      if (state.gpsDemoMode) {
+        badge.textContent = "🧪 SIMULATOR ACTIVE";
+      } else if (gpsAccuracyM !== null) {
+        badge.textContent = `🟢 GPS LOCKED (±${Math.round(gpsAccuracyM)}m)`;
+      } else {
+        badge.textContent = `🟡 ${gpsStatus}`;
+      }
+    }
+
+    function renderEnduranceView() {
+      const isPt = state.lang === "pt";
+      const totalPastMiles = state.runs.reduce((acc, r) => acc + r.distMiles, 0);
+      const livePointsStr = gpsBreadcrumbs.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+      const headPt = gpsBreadcrumbs[gpsBreadcrumbs.length - 1] || [375, 35];
+
+      const zoneColors = ["#94a3b8", "#38bdf8", "#a3e635", "#fbbf24", "#f43f5e"];
+      const zoneNames = ["Z1 Recovery", "Z2 Aerobic", "Z3 Tempo", "Z4 Threshold", "Z5 VO2 Max"];
+      const totalZoneMin = Math.max(1, state.biometrics.hrZonesMin.reduce((a, b) => a + b, 0));
+
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left 6 cols: Live GPS Tracker + Past Mileage Log -->
+          <div class="lg:col-span-6 space-y-5">
+            <div class="hud-panel chamfer-card p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span id="gps-signal-badge" class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">
+                      ${gpsRunning ? (state.gpsDemoMode ? "🧪 SIMULATOR ACTIVE" : (gpsAccuracyM !== null ? `🟢 GPS LOCKED (±${Math.round(gpsAccuracyM)}m)` : `🟡 ${gpsStatus}`)) : (state.gpsDemoMode ? "🧪 SIMULATOR READY" : "🛰️ REAL GPS READY")}
+                    </span>
+                    <button onclick="toggleGPSDemoMode()" class="px-2 py-0.5 rounded-md border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--border-strong);">
+                      ${state.gpsDemoMode ? "SIM: ON" : "REAL GPS"}
+                    </button>
+                  </div>
+                  <h3 class="font-display text-lg font-extrabold uppercase mt-0.5">${isPt ? "RASTREADOR GPS DE CORRIDA" : "GPS RUN TRACKER & PACE"}</h3>
+                </div>
+                <button onclick="toggleGPSRun()" class="px-4 py-2 rounded-xl font-mono-num text-xs font-extrabold cursor-pointer ${gpsRunning ? 'bg-rose-500 text-white' : 'btn-accent'}">
+                  ${gpsRunning ? (isPt ? "■ PARAR & SALVAR" : "■ STOP & SAVE") : (isPt ? "▶ INICIAR GPS" : "▶ START GPS RUN")}
+                </button>
+              </div>
+
+              <div class="relative rounded-2xl border p-4 overflow-hidden" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <svg viewBox="0 0 400 130" class="w-full h-28">
+                  <path d="M 20 100 Q 95 20, 180 65 T 375 35" fill="none" stroke="var(--text-muted)" stroke-opacity="0.28" stroke-width="2" stroke-dasharray="5 5" />
+                  ${gpsRunning
+                    ? `<polyline id="gps-live-path" points="${livePointsStr}" fill="none" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />`
+                    : `<path d="M 20 100 Q 95 20, 180 65 T 375 35" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="6 4" />`}
+                  <circle cx="20" cy="100" r="5" fill="var(--accent-2)" />
+                  <circle id="gps-head-dot" cx="${gpsRunning ? headPt[0] : 375}" cy="${gpsRunning ? headPt[1] : 35}" r="6" fill="var(--accent)" />
+                  ${gpsRunning ? `<circle id="gps-head-ring" cx="${headPt[0]}" cy="${headPt[1]}" r="14" fill="none" stroke="var(--accent)" stroke-width="2" class="beacon-ring" />` : ""}
+                </svg>
+                <div class="grid grid-cols-3 gap-2 pt-2 border-t text-center font-mono-num" style="border-color: var(--border-hairline);">
+                  <div>
+                    <div class="text-[9px] opacity-65">${isPt ? "DURAÇÃO" : "DURATION"}</div>
+                    <div id="gps-time-readout" class="text-sm font-extrabold">${formatClock(gpsSeconds)}</div>
+                  </div>
+                  <div>
+                    <div class="text-[9px] opacity-65">${isPt ? "DISTÂNCIA" : "DISTANCE"}</div>
+                    <div id="gps-dist-readout" class="text-sm font-extrabold" style="color: var(--accent);">${fmtDist(gpsMiles)}</div>
+                  </div>
+                  <div>
+                    <div class="text-[9px] opacity-65">${isPt ? "RITMO MÉDIO" : "AVG PACE"}</div>
+                    <div id="gps-pace-readout" class="text-sm font-extrabold">${gpsMiles >= 0.005 && gpsSeconds >= 2 ? fmtPace(Math.round(gpsSeconds / gpsMiles)) : "--:--"}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Past Runs & Total Mileage -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-mono-num">
+                  <span class="uppercase opacity-70">${isPt ? "CORRIDAS RECENTES" : "TODAY & PAST RUNS"}</span>
+                  <strong style="color: var(--accent);">${isPt ? "TOTAL:" : "LOGGED:"} ${fmtDist(totalPastMiles)}</strong>
+                </div>
+                ${state.runs.map(r => `
+                  <div class="p-3 rounded-xl border flex items-center justify-between gap-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                    <div class="min-w-0">
+                      <div class="font-bold truncate">${escapeHtml(r.route)} ${r.bestPace ? `<span class="ml-1 px-1.5 py-0.5 rounded text-[9px]" style="background: var(--accent); color: var(--accent-contrast);">PR PACE</span>` : ""}</div>
+                      <div class="text-[10px] opacity-65">${escapeHtml(r.date)} • ❤️ ${r.avgHr} bpm</div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                      <div class="font-extrabold" style="color: var(--accent);">${fmtDist(r.distMiles)}</div>
+                      <div class="text-[10px] opacity-75">${fmtPace(r.paceSecPerMile)}</div>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 6 cols: Heart-Rate Zones + Timed Fitness Test Mode -->
+          <div class="lg:col-span-6 space-y-5">
+            <!-- Heart-Rate Zones -->
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "ZONAS DE FREQUÊNCIA CARDÍACA" : "HEART-RATE ZONES (MINUTES)"}</h3>
+                <button onclick="connectBLEHeartRate()" class="text-[10px] font-mono-num px-2.5 py-1 rounded-lg border cursor-pointer" style="border-color: var(--accent-3); color: var(--accent-3);">📡 BLE HR</button>
+              </div>
+              <div class="space-y-2.5 text-xs font-mono-num">
+                ${state.biometrics.hrZonesMin.map((min, idx) => {
+                  const pct = Math.round((min / totalZoneMin) * 100);
+                  return `
+                    <div class="space-y-1">
+                      <div class="flex justify-between text-[11px]">
+                        <span>${zoneNames[idx]}</span>
+                        <strong>${min} min (${pct}%)</strong>
+                      </div>
+                      <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--border-hairline);">
+                        <div class="h-full rounded-full" style="width: ${pct}%; background: ${zoneColors[idx]};"></div>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+              <form onsubmit="logHeartRateSession(event)" class="grid grid-cols-3 gap-2 pt-2 border-t text-xs font-mono-num" style="border-color: var(--border-hairline);">
+                <input id="hr-avg-input" type="number" min="80" max="210" value="154" placeholder="Avg BPM" class="hud-input text-xs" />
+                <input id="hr-min-input" type="number" min="1" max="240" value="30" placeholder="Minutes" class="hud-input text-xs" />
+                <button type="submit" class="btn-accent rounded-xl font-bold cursor-pointer">+ ${isPt ? "LOG FC" : "LOG HR"}</button>
+              </form>
+            </div>
+
+            <!-- Timed Fitness Test Mode -->
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent-2);">⏱️ BENCHMARK PROTOCOL</span>
+                  <h3 class="font-display text-base font-extrabold uppercase">${isPt ? "TESTE FÍSICO CRONOMETRADO" : "TIMED FITNESS TEST MODE"}</h3>
+                </div>
+                <div class="flex gap-1.5">
+                  <button onclick="startFitnessTestCountdown()" class="px-3 py-1.5 rounded-xl font-mono-num text-xs font-bold cursor-pointer ${testRunning ? 'bg-rose-500 text-white' : 'btn-accent'}">
+                    ${testRunning ? "■ STOP" : "▶ 3-2-1 GO"}
+                  </button>
+                  <button onclick="recordTestSplit()" class="px-3 py-1.5 rounded-xl border text-xs font-mono-num font-bold cursor-pointer" style="border-color: var(--border-strong);">LAP SPLIT</button>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl border flex items-center justify-between font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div>
+                  <div class="text-[10px] opacity-65">${isPt ? "CRONÔMETRO" : "TEST CLOCK"}</div>
+                  <div id="test-clock" class="text-2xl font-extrabold" style="color: var(--accent);">${formatClock(testSeconds)}</div>
+                </div>
+                <div class="text-right text-[11px]">
+                  <div class="opacity-65">${isPt ? "PARCIAIS" : "PACE SPLITS"}</div>
+                  <div>${testSplits.length ? testSplits.join(" • ") : (isPt ? "Sem parciais" : "No splits yet")}</div>
+                </div>
+              </div>
+
+              <form onsubmit="saveFitnessTestResult(event)" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono-num">
+                <input id="ft-run" type="text" value="09:35" placeholder="1.5mi Time" class="hud-input text-xs" />
+                <input id="ft-push" type="number" min="0" value="56" placeholder="Push-ups" class="hud-input text-xs" />
+                <input id="ft-sit" type="number" min="0" value="64" placeholder="Sit-ups" class="hud-input text-xs" />
+                <button type="submit" class="btn-accent rounded-xl py-2 font-bold cursor-pointer">${isPt ? "SALVAR" : "SAVE TEST"}</button>
+              </form>
+
+              <div class="space-y-1.5 pt-2 border-t text-xs font-mono-num" style="border-color: var(--border-hairline);">
+                <div class="text-[10px] opacity-65 uppercase">${isPt ? "HISTÓRICO DE TESTES" : "RECENT FITNESS BENCHMARKS"}</div>
+                ${state.fitnessTests.slice(0, 4).map(ft => `
+                  <div class="p-2.5 rounded-xl border flex items-center justify-between gap-2" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                    <span><strong>${escapeHtml(ft.date)}</strong> • 🏃 ${escapeHtml(ft.run15Mi)} • 💪 ${ft.pushups} • 🧘 ${ft.situps}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold" style="background: var(--accent); color: var(--accent-contrast);">${escapeHtml(ft.grade)}</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleGPSRun() {
+      if (gpsRunning) {
+        clearInterval(gpsTimer);
+        if (gpsWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(gpsWatchId);
+        releaseScreenWakeLock();
+        gpsWatchId = null;
+        lastCoords = null;
+        gpsAccuracyM = null;
+        gpsStatus = "STANDBY";
+        gpsRunning = false;
+        if (gpsMiles >= 0.01 && gpsSeconds >= 3) {
+          const paceSec = Math.round(gpsSeconds / gpsMiles);
+          const bestPrev = Math.min(...state.runs.map(r => r.paceSecPerMile));
+          const isPR = paceSec < bestPrev;
+          state.runs.unshift({
+            id: "r_" + Date.now(), date: "Just now", route: state.gpsDemoMode ? "Simulated GPS Route" : "Android/iOS GPS Route",
+            distMiles: Number(gpsMiles.toFixed(2)), paceSecPerMile: paceSec, avgHr: state.biometrics.liveHR || 158, bestPace: isPR
+          });
+          const burn = Math.max(15, Math.round(gpsMiles * 115));
+          state.biometrics.caloriesBurnt += burn;
+          state.biometrics.weeklyBurn[6] += burn;
+          saveState();
+          updateHeroHUD();
+          if (isPR) triggerPRModal("GPS RUN PACE RECORD", fmtPace(paceSec), `COVERED ${fmtDist(gpsMiles)} AT RECORD SPEED`);
+          else showToast(`GPS RUN SAVED: ${fmtDist(gpsMiles)} (${fmtPace(paceSec)})`);
+        } else {
+          showToast("RUN STOPPED (MOVE AT LEAST 0.01 MI TO SAVE)");
+        }
+        gpsSeconds = 0; gpsMiles = 0; gpsLatLngs = []; gpsBreadcrumbs = [[20, 100]];
+        renderWorkspace();
+      } else {
+        gpsRunning = true;
+        gpsSeconds = 0;
+        gpsMiles = 0;
+        gpsAccuracyM = null;
+        gpsLatLngs = [];
+        gpsBreadcrumbs = [[20, 100]];
+        gpsStatus = state.gpsDemoMode ? "SIMULATOR ACTIVE" : "SEARCHING SATELLITES...";
+        playTone(760, 0.15);
+        triggerHaptic(35);
+        requestScreenWakeLock();
+        showToast(state.gpsDemoMode ? "GPS SIMULATOR STARTED" : "REQUESTING REAL GPS LOCK + WAKE LOCK");
+
+        if (!state.gpsDemoMode && navigator.geolocation) {
+          gpsWatchId = navigator.geolocation.watchPosition(
+            (pos) => {
+              const { latitude, longitude, accuracy } = pos.coords;
+              gpsAccuracyM = accuracy;
+              gpsStatus = "GPS LOCKED";
+              updateGPSSignalBadge();
+              if (accuracy > 65 && lastCoords) return;
+              if (lastCoords) {
+                const delta = haversineMiles(lastCoords.lat, lastCoords.lon, latitude, longitude);
+                if (delta > 0.002 && delta < 0.35) {
+                  gpsMiles += delta;
+                  gpsLatLngs.push([latitude, longitude]);
+                  gpsBreadcrumbs = projectLatLngsToSVG(gpsLatLngs);
+                }
+              } else {
+                gpsLatLngs.push([latitude, longitude]);
+              }
+              lastCoords = { lat: latitude, lon: longitude };
+            },
+            (err) => {
+              gpsStatus = err.code === 1 ? "GPS PERMISSION DENIED" : "GPS SIGNAL WEAK";
+              updateGPSSignalBadge();
+              showToast("ALLOW LOCATION ACCESS OR TOGGLE 'SIM: ON' FOR INDOOR TEST");
+            },
+            { enableHighAccuracy: true, maximumAge: 1500, timeout: 15000 }
+          );
+        }
+
+        gpsTimer = setInterval(() => {
+          gpsSeconds += 1;
+          if (state.gpsDemoMode) {
+            gpsMiles += 0.0024;
+            const progress = Math.min(1, gpsSeconds / 120);
+            const nx = 20 + progress * 355;
+            const ny = 100 - progress * 65 - Math.sin(progress * Math.PI * 2.5) * 26;
+            gpsBreadcrumbs.push([nx, ny]);
+            if (gpsBreadcrumbs.length > 140) gpsBreadcrumbs.shift();
+          }
+
+          const head = gpsBreadcrumbs[gpsBreadcrumbs.length - 1] || [20, 100];
+          const tEl = document.getElementById("gps-time-readout");
+          const dEl = document.getElementById("gps-dist-readout");
+          const pEl = document.getElementById("gps-pace-readout");
+          const pathEl = document.getElementById("gps-live-path");
+          const dotEl = document.getElementById("gps-head-dot");
+          const ringEl = document.getElementById("gps-head-ring");
+          if (tEl) tEl.textContent = formatClock(gpsSeconds);
+          if (dEl) dEl.textContent = fmtDist(gpsMiles);
+          if (pEl && gpsMiles >= 0.005 && gpsSeconds >= 2) pEl.textContent = fmtPace(Math.round(gpsSeconds / gpsMiles));
+          if (pathEl) pathEl.setAttribute("points", gpsBreadcrumbs.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "));
+          if (dotEl) { dotEl.setAttribute("cx", head[0].toFixed(1)); dotEl.setAttribute("cy", head[1].toFixed(1)); }
+          if (ringEl) { ringEl.setAttribute("cx", head[0].toFixed(1)); ringEl.setAttribute("cy", head[1].toFixed(1)); }
+        }, 1000);
+        renderWorkspace();
+      }
+    }
+
+    function logHeartRateSession(e) {
+      e.preventDefault();
+      const bpm = parseInt(document.getElementById("hr-avg-input").value, 10);
+      const mins = parseInt(document.getElementById("hr-min-input").value, 10);
+      if (!Number.isFinite(bpm) || !Number.isFinite(mins) || mins <= 0) return;
+      const zIdx = bpm < 115 ? 0 : bpm < 135 ? 1 : bpm < 155 ? 2 : bpm < 172 ? 3 : 4;
+      state.biometrics.hrZonesMin[zIdx] += mins;
+      state.biometrics.liveHR = bpm;
+      const burn = Math.round(mins * (bpm / 18));
+      state.biometrics.caloriesBurnt += burn;
+      state.biometrics.weeklyBurn[6] += burn;
+      saveState();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast(`LOGGED ${mins}m IN ZONE ${zIdx + 1} (${bpm} BPM)`);
+    }
+
+    function startFitnessTestCountdown() {
+      if (testCountdownTimer) {
+        clearInterval(testCountdownTimer);
+        testCountdownTimer = null;
+        showToast("COUNTDOWN CANCELLED");
+        return;
+      }
+      if (testRunning) { clearInterval(testTimer); testRunning = false; renderWorkspace(); return; }
+      let count = 3;
+      showToast("STARTING IN 3...");
+      playTone(440, 0.12);
+      testCountdownTimer = setInterval(() => {
+        count--;
+        if (count > 0) { showToast(`STARTING IN ${count}...`); playTone(440, 0.12); }
+        else {
+          clearInterval(testCountdownTimer);
+          testCountdownTimer = null;
+          playTone(880, 0.25);
+          triggerHaptic(45);
+          showToast("GO! FITNESS TEST CLOCK ACTIVE");
+          testRunning = true; testSeconds = 0; testSplits = [];
+          testTimer = setInterval(() => {
+            testSeconds++;
+            const el = document.getElementById("test-clock");
+            if (el) el.textContent = formatClock(testSeconds);
+          }, 1000);
+          renderWorkspace();
+        }
+      }, 700);
+    }
+
+    function recordTestSplit() {
+      if (!testRunning) { showToast("START THE TEST CLOCK FIRST"); return; }
+      testSplits.push(`L${testSplits.length + 1} ${formatClock(testSeconds)}`);
+      playTone(700, 0.08);
+      renderWorkspace();
+    }
+
+    function saveFitnessTestResult(e) {
+      e.preventDefault();
+      const run15Mi = document.getElementById("ft-run").value.trim() || formatClock(testSeconds);
+      const pushups = parseInt(document.getElementById("ft-push").value, 10) || 0;
+      const situps = parseInt(document.getElementById("ft-sit").value, 10) || 0;
+      const grade = (pushups >= 50 && situps >= 60) ? "ELITE" : (pushups >= 35 && situps >= 45) ? "EXCELLENT" : "SOLID";
+      state.fitnessTests.unshift({ date: "Today", run15Mi, pushups, situps, grade });
+      saveState();
+      renderWorkspace();
+      showToast(`FITNESS TEST SAVED // GRADE: ${grade}`);
+    }
+
+    // =========================================================================
+    // VIEW 04: BODY MEASUREMENTS, BEFORE/AFTER WIPE SLIDER & ADAPTIVE MACROS
+    // =========================================================================
+    let sliderPct = 50;
+
+    function renderBodyView() {
+      const isPt = state.lang === "pt";
+      const cur = state.measurements[0];
+      const prev = state.measurements[1] || cur;
+      const wDeltaLbs = cur.weightLbs - prev.weightLbs;
+      const waistDeltaIn = cur.waistIn - prev.waistIn;
+      const chestDeltaIn = cur.chestIn - prev.chestIn;
+      const armsDeltaIn = cur.armsIn - prev.armsIn;
+      const lenUnit = state.units === "kg" ? "cm" : "in";
+      const wtUnit = state.units === "kg" ? "kg" : "lbs";
+
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left 6 cols: Interactive Before / After Wipe Slider -->
+          <div class="lg:col-span-6 space-y-4">
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "FOTOS ANTES / DEPOIS" : "BEFORE / AFTER PHYSIQUE SLIDER"}</h3>
+                <span class="text-[10px] font-mono-num" style="color: var(--accent);">DRAG TO COMPARE</span>
+              </div>
+
+              <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border select-none" style="border-color: var(--border-strong);">
+                <img src="${state.photos.after}" onerror="this.src='https://placehold.co/600x800/0f172a/a3e635?text=AFTER'" alt="After Physique" class="absolute inset-0 w-full h-full object-cover" />
+                <img id="wipe-before-img" src="${state.photos.before}" onerror="this.src='https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE'" alt="Before Physique" class="absolute inset-0 w-full h-full object-cover" style="clip-path: inset(0 ${100 - sliderPct}% 0 0);" />
+                <div id="wipe-divider" class="absolute top-0 bottom-0 w-0.5 shadow-lg pointer-events-none" style="left: ${sliderPct}%; background: var(--accent);">
+                  <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center font-mono-num text-xs font-extrabold shadow-xl" style="background: var(--accent); color: var(--accent-contrast);">
+                    ⇄
+                  </div>
+                </div>
+                <input type="range" min="5" max="95" value="${sliderPct}" oninput="updateWipeSlider(this.value)" aria-label="Before and after photo slider" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5 text-xs font-mono-num">
+                <label class="p-2.5 rounded-xl border text-center cursor-pointer hover:opacity-90" style="border-color: var(--border-strong); background: var(--surface-solid);">
+                  📷 ${isPt ? "UPLOAD ANTES" : "UPLOAD BEFORE"}
+                  <input type="file" accept="image/*" onchange="uploadProgressPhoto('before', event)" class="hidden" />
+                </label>
+                <label class="p-2.5 rounded-xl btn-accent text-center cursor-pointer">
+                  📷 ${isPt ? "UPLOAD DEPOIS" : "UPLOAD AFTER"}
+                  <input type="file" accept="image/*" onchange="uploadProgressPhoto('after', event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right 6 cols: Measurements + Adaptive Macro Engine -->
+          <div class="lg:col-span-6 space-y-5">
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "MEDIDAS CORPORAIS" : "BODY MEASUREMENTS & DELTAS"}</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono-num">
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[10px] opacity-65">${isPt ? "PESO" : "WEIGHT"}</div>
+                  <div class="text-sm font-extrabold">${fmtWeight(cur.weightLbs)}</div>
+                  <div class="text-[10px]" style="color: var(--accent);">${fmtWeightDelta(wDeltaLbs)}</div>
+                </div>
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[10px] opacity-65">${isPt ? "CINTURA" : "WAIST"}</div>
+                  <div class="text-sm font-extrabold">${fmtLength(cur.waistIn)}</div>
+                  <div class="text-[10px]" style="color: var(--accent);">${fmtLengthDelta(waistDeltaIn)}</div>
+                </div>
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[10px] opacity-65">${isPt ? "PEITORAL" : "CHEST"}</div>
+                  <div class="text-sm font-extrabold">${fmtLength(cur.chestIn)}</div>
+                  <div class="text-[10px]" style="color: var(--accent-2);">${fmtLengthDelta(chestDeltaIn)}</div>
+                </div>
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[10px] opacity-65">${isPt ? "BRAÇOS" : "ARMS"}</div>
+                  <div class="text-sm font-extrabold">${fmtLength(cur.armsIn)}</div>
+                  <div class="text-[10px]" style="color: var(--accent-2);">${fmtLengthDelta(armsDeltaIn)}</div>
+                </div>
+              </div>
+
+              <form onsubmit="logBodyMeasurement(event)" class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t text-xs font-mono-num" style="border-color: var(--border-hairline);">
+                <input id="bm-weight" type="number" step="0.1" value="${fmtWeightNum(cur.weightLbs)}" placeholder="${isPt ? 'Peso' : 'Weight'} (${wtUnit})" class="hud-input text-xs" />
+                <input id="bm-waist" type="number" step="0.1" value="${fmtLengthNum(cur.waistIn)}" placeholder="${isPt ? 'Cintura' : 'Waist'} (${lenUnit})" class="hud-input text-xs" />
+                <input id="bm-chest" type="number" step="0.1" value="${fmtLengthNum(cur.chestIn)}" placeholder="${isPt ? 'Peito' : 'Chest'} (${lenUnit})" class="hud-input text-xs" />
+                <input id="bm-arms" type="number" step="0.1" value="${fmtLengthNum(cur.armsIn)}" placeholder="${isPt ? 'Braços' : 'Arms'} (${lenUnit})" class="hud-input text-xs" />
+                <button type="submit" class="btn-accent rounded-xl py-2 font-bold cursor-pointer">+ LOG</button>
+              </form>
+            </div>
+
+            <!-- Adaptive Macro & Calorie Phase Calculator -->
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "CALCULADORA ADAPTATIVA DE MACROS" : "ADAPTIVE MACRO PHASE ENGINE"}</h3>
+                <span class="text-[10px] font-mono-num uppercase" style="color: var(--accent);">${state.macroProfile.phase}</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-xs font-mono-num">
+                ${["cut", "recomp", "bulk"].map(ph => `
+                  <button onclick="setMacroPhase('${ph}')" class="py-2.5 rounded-xl border font-bold uppercase cursor-pointer ${state.macroProfile.phase === ph ? 'btn-accent border-transparent' : ''}" style="${state.macroProfile.phase !== ph ? 'border-color: var(--border-strong); background: var(--surface-solid);' : ''}">
+                    ${ph === "cut" ? (isPt ? "SECAR" : "FAT LOSS") : ph === "recomp" ? "RECOMP" : (isPt ? "HIPERTROFIA" : "HYPERTROPHY")}
+                  </button>
+                `).join("")}
+              </div>
+              <div class="grid grid-cols-3 gap-2.5 text-center font-mono-num text-xs">
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[9px] opacity-65">BURN TARGET</div>
+                  <div class="text-sm font-extrabold" style="color: var(--accent);">${state.biometrics.calorieGoal} kcal</div>
+                </div>
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[9px] opacity-65">PROTEIN</div>
+                  <div class="text-sm font-extrabold">${state.biometrics.proteinGoal} g</div>
+                </div>
+                <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[9px] opacity-65">WATER</div>
+                  <div class="text-sm font-extrabold" style="color: var(--accent-2);">${(state.biometrics.waterGoal / 1000).toFixed(1)} L</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateWipeSlider(val) {
+      sliderPct = Number(val);
+      const img = document.getElementById("wipe-before-img");
+      const div = document.getElementById("wipe-divider");
+      if (img) img.style.clipPath = `inset(0 ${100 - sliderPct}% 0 0)`;
+      if (div) div.style.left = `${sliderPct}%`;
+    }
+
+    function uploadProgressPhoto(slot, e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      state.photos[slot] = url;
+      renderWorkspace();
+      showToast(`${slot.toUpperCase()} PHOTO UPDATED`);
+    }
+
+    function recalculateMacrosForWeight(weightLbs) {
+      const ph = state.macroProfile.phase;
+      const mult = ph === "cut" ? 11.5 : ph === "bulk" ? 15.2 : 13.2;
+      state.biometrics.calorieGoal = Math.round(weightLbs * mult);
+      state.biometrics.proteinGoal = Math.round(weightLbs * (ph === "cut" ? 1.1 : 1.0));
+    }
+
+    function setMacroPhase(phase) {
+      state.macroProfile.phase = phase;
+      recalculateMacrosForWeight(state.measurements[0].weightLbs);
+      saveState();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast(`MACRO PHASE SET: ${phase.toUpperCase()}`);
+    }
+
+    function logBodyMeasurement(e) {
+      e.preventDefault();
+      const wLbs = toLbs(document.getElementById("bm-weight").value);
+      const waist = toInches(document.getElementById("bm-waist").value);
+      const chest = toInches(document.getElementById("bm-chest").value);
+      const arms = toInches(document.getElementById("bm-arms").value);
+      if (!Number.isFinite(wLbs) || wLbs <= 0) { showToast("ENTER VALID WEIGHT"); return; }
+
+      state.measurements.unshift({
+        date: "Today",
+        weightLbs: wLbs,
+        waistIn: Number.isFinite(waist) && waist > 0 ? waist : state.measurements[0].waistIn,
+        chestIn: Number.isFinite(chest) && chest > 0 ? chest : state.measurements[0].chestIn,
+        armsIn: Number.isFinite(arms) && arms > 0 ? arms : state.measurements[0].armsIn
+      });
+      recalculateMacrosForWeight(wLbs);
+      saveState();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast("BODY MEASUREMENTS & MACROS UPDATED");
+    }
+
+    // =========================================================================
+    // VIEW 05: CLIENT TRIAGE ROSTER, DIRECT MESSAGING & PRINTABLE REPORT
+    // =========================================================================
+    let supabaseClient = null;
+    let supabaseChannel = null;
+
+    function copySupabaseSQL() {
+      const sql = document.getElementById("supabase-sql-snippet")?.textContent || "";
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(sql).then(() => showToast("SUPABASE SQL COPIED TO CLIPBOARD"));
+      } else {
+        showToast("SELECT AND COPY THE SQL TEXT ABOVE");
+      }
+    }
+
+    async function initSupabaseClient() {
+      try {
+        if (!state.cloud.url || !state.cloud.anonKey || !window.supabase) return;
+        supabaseClient = window.supabase.createClient(state.cloud.url, state.cloud.anonKey);
+        state.cloud.connected = true;
+        await loadCloudMessages(state.selectedClientId);
+        subscribeToCloudChat();
+      } catch (err) {
+        state.cloud.connected = false;
+      }
+    }
+
+    async function loadCloudMessages(clientId) {
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from("messages")
+          .select("*")
+          .eq("client_id", clientId)
+          .order("created_at", { ascending: true })
+          .limit(100);
+        if (!error && Array.isArray(data) && data.length > 0) {
+          state.messages[clientId] = data.map(row => ({
+            id: row.id,
+            sender: row.sender,
+            time: row.time_label || new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            text: row.text,
+            planId: row.plan_id || null
+          }));
+          saveState();
+          if (state.activeTab === "roster") renderWorkspace();
+        }
+      } catch (e) {}
+    }
+
+    function subscribeToCloudChat() {
+      if (!supabaseClient) return;
+      try {
+        if (supabaseChannel) supabaseClient.removeChannel(supabaseChannel);
+        supabaseChannel = supabaseClient
+          .channel("apexcoach-live-chat")
+          .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+            const row = payload.new;
+            if (!row || !row.client_id) return;
+            if (!state.messages[row.client_id]) state.messages[row.client_id] = [];
+            const exists = state.messages[row.client_id].some(m => m.id === row.id);
+            if (!exists) {
+              state.messages[row.client_id].push({
+                id: row.id,
+                sender: row.sender,
+                time: row.time_label || new Date(row.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                text: row.text,
+                planId: row.plan_id || null
+              });
+              saveState();
+              if (row.sender !== state.chatRole) {
+                playTone(760, 0.12);
+                triggerHaptic([20, 20, 20]);
+                const badge = document.getElementById("unread-badge");
+                if (badge && state.activeTab !== "roster") badge.classList.remove("hidden");
+              }
+              if (state.activeTab === "roster" && state.selectedClientId === row.client_id) renderWorkspace();
+            }
+          })
+          .subscribe();
+      } catch (e) {}
+    }
+
+    async function saveCloudSettings(e) {
+      e.preventDefault();
+      state.cloud.url = document.getElementById("cloud-url-input").value.trim().replace(/\/+$/, "");
+      state.cloud.anonKey = document.getElementById("cloud-key-input").value.trim();
+      saveState();
+      await initSupabaseClient();
+      toggleModal("cloud-modal", false);
+      renderWorkspace();
+      showToast(state.cloud.connected ? "🟢 LIVE SUPABASE CHAT CONNECTED" : "CHECK SUPABASE URL & KEY");
+    }
+
+    function disconnectCloud() {
+      if (supabaseClient && supabaseChannel) {
+        try { supabaseClient.removeChannel(supabaseChannel); } catch (e) {}
+      }
+      supabaseClient = null;
+      supabaseChannel = null;
+      state.cloud = { url: "", anonKey: "", connected: false };
+      saveState();
+      toggleModal("cloud-modal", false);
+      renderWorkspace();
+      showToast("CLOUD SYNC DISCONNECTED (LOCAL MODE)");
+    }
+
+    function renderRosterView() {
+      const isPt = state.lang === "pt";
+      const activeClient = state.clients.find(c => c.id === state.selectedClientId) || state.clients[0];
+      const thread = state.messages[activeClient.id] || [];
+
+      const statusBadge = (s) => {
+        if (s === "green") return `<span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/20 text-emerald-400">ON TRACK</span>`;
+        if (s === "amber") return `<span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-500/20 text-amber-400">CHECK-IN DUE</span>`;
+        return `<span class="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500/20 text-rose-400">NEEDS ALERT</span>`;
+      };
+
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <!-- Left 5 cols: Multi-Client Triage Roster -->
+          <div class="lg:col-span-5 space-y-4">
+            <div class="hud-panel rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-sm font-extrabold uppercase">${isPt ? "CENTRAL DE CLIENTES" : "CLIENT TRIAGE ROSTER"}</h3>
+                <button onclick="openClientReport()" class="px-2.5 py-1 rounded-lg border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);">🖨️ PDF REPORT</button>
+              </div>
+
+              <div class="space-y-2.5">
+                ${state.clients.map(c => `
+                  <div onclick="selectClient('${c.id}')" class="p-3.5 rounded-xl border cursor-pointer transition" style="border-color: ${c.id === activeClient.id ? 'var(--accent)' : 'var(--border-hairline)'}; background: var(--surface-solid);">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-bold text-xs">${escapeHtml(c.name)}</span>
+                      ${statusBadge(c.status)}
+                    </div>
+                    <div class="text-[11px] mt-1 opacity-80">${escapeHtml(c.goal)}</div>
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono-num mt-2 pt-2 border-t" style="border-color: var(--border-hairline);">
+                      <div class="flex items-center gap-1.5">
+                        <span>SESSIONS: <strong>${c.sessionsUsed}/${c.sessionsTotal}</strong></span>
+                        <button onclick="event.stopPropagation(); logClientSession('${c.id}')" class="px-1.5 py-0.5 rounded border font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);">+1</button>
+                      </div>
+                      <span style="color: var(--accent);">COMPLIANCE ${c.compliance}%</span>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+
+              ${activeClient.checkin ? `
+                <div class="p-3.5 rounded-xl border space-y-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                  <div class="text-[10px] uppercase opacity-65">${isPt ? "ÚLTIMO CHECK-IN SEMANAL" : "LATEST SUNDAY CHECK-IN"} // ${escapeHtml(activeClient.name)}</div>
+                  <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="p-2 rounded-lg border" style="border-color: var(--border-hairline);"><div class="text-[9px] opacity-65">SLEEP</div><strong>${escapeHtml(activeClient.checkin.sleep)}</strong></div>
+                    <div class="p-2 rounded-lg border" style="border-color: var(--border-hairline);"><div class="text-[9px] opacity-65">STRESS</div><strong>${escapeHtml(activeClient.checkin.stress)}</strong></div>
+                    <div class="p-2 rounded-lg border" style="border-color: var(--border-hairline);"><div class="text-[9px] opacity-65">SORENESS</div><strong class="truncate block">${escapeHtml(activeClient.checkin.soreness)}</strong></div>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+          </div>
+
+          <!-- Right 7 cols: Direct Client Messenger -->
+          <div class="lg:col-span-7">
+            <div class="hud-panel rounded-2xl p-5 flex flex-col h-[500px]">
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b" style="border-color: var(--border-hairline);">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-mono-num uppercase opacity-65">${isPt ? "MENSAGENS DIRETAS" : "DIRECT CLIENT MESSENGER"}</span>
+                    <button onclick="toggleModal('cloud-modal', true)" class="px-2 py-0.5 rounded-full text-[9px] font-mono-num font-bold border cursor-pointer" style="border-color: ${state.cloud.connected ? 'var(--accent)' : 'var(--accent-2)'}; color: ${state.cloud.connected ? 'var(--accent)' : 'var(--accent-2)'};">
+                      ${state.cloud.connected ? "🟢 LIVE CLOUD" : "☁️ CONNECT LIVE"}
+                    </button>
+                  </div>
+                  <h3 class="font-display text-base font-extrabold uppercase mt-0.5">${escapeHtml(activeClient.name)}</h3>
+                </div>
+                <div class="flex items-center gap-1 p-1 rounded-xl border text-[10px] font-mono-num" style="border-color: var(--border-strong); background: var(--surface-solid);">
+                  <button onclick="setChatRole('trainer')" class="px-2.5 py-1.5 rounded-lg font-bold cursor-pointer ${state.chatRole === 'trainer' ? 'btn-accent' : ''}">COACH</button>
+                  <button onclick="setChatRole('client')" class="px-2.5 py-1.5 rounded-lg font-bold cursor-pointer ${state.chatRole === 'client' ? 'btn-accent' : ''}">CLIENT</button>
+                </div>
+              </div>
+
+              <div id="chat-feed" class="flex-1 overflow-y-auto py-4 space-y-3">
+                ${thread.map(m => {
+                  const isMine = m.sender === state.chatRole;
+                  return `
+                    <div class="flex flex-col ${isMine ? 'items-end' : 'items-start'}">
+                      <div class="text-[9px] font-mono-num uppercase opacity-60 mb-1">${m.sender === 'trainer' ? 'COACH' : escapeHtml(activeClient.name)} • ${escapeHtml(m.time)}</div>
+                      <div class="max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${isMine ? 'btn-accent' : 'border'}" style="${!isMine ? 'border-color: var(--border-strong); background: var(--surface-solid);' : ''}">
+                        <div>${escapeHtml(m.text)}</div>
+                        ${m.planId ? `
+                          <button onclick="startTemplate('${m.planId}'); switchTab('strength')" class="mt-2 px-2.5 py-1 rounded-lg bg-black/20 font-mono-num text-[10px] font-bold underline cursor-pointer">
+                            ⚡ ${isPt ? "ACEITAR & INICIAR PLANO" : "ACCEPT & START PLAN"}
+                          </button>
+                        ` : ""}
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+
+              <form onsubmit="sendChatMessage(event)" class="pt-3 border-t flex flex-wrap sm:flex-nowrap gap-2" style="border-color: var(--border-hairline);">
+                <button type="button" onclick="attachWorkoutToChat()" title="Assign Workout Plan" class="px-3 py-2 rounded-xl border text-xs font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">
+                  📋 +PLAN
+                </button>
+                <input id="chat-input" type="text" placeholder="${isPt ? 'Escreva uma mensagem...' : 'Message client or send coaching cue...'}" class="hud-input flex-1 text-xs" />
+                <button type="submit" class="px-4 py-2 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">${isPt ? "ENVIAR" : "SEND"}</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectClient(id) {
+      state.selectedClientId = id;
+      const badge = document.getElementById("unread-badge");
+      if (badge) badge.classList.add("hidden");
+      saveState();
+      updateHeroHUD();
+      if (supabaseClient) loadCloudMessages(id);
+      renderWorkspace();
+    }
+    async function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+      const cid = state.selectedClientId;
+      if (!state.messages[cid]) state.messages[cid] = [];
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      input.value = "";
+
+      if (supabaseClient && state.cloud.connected) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("messages")
+            .insert([{ client_id: cid, sender: state.chatRole, text, time_label: now }])
+            .select()
+            .single();
+          if (!error && data) {
+            if (!state.messages[cid].some(m => m.id === data.id)) {
+              state.messages[cid].push({ id: data.id, sender: data.sender, time: data.time_label || now, text: data.text });
+            }
+            saveState();
+            renderWorkspace();
+            return;
+          }
+        } catch (err) {}
+      }
+
+      state.messages[cid].push({ sender: state.chatRole, time: now, text });
+      saveState();
+      renderWorkspace();
+    }
+
+    async function attachWorkoutToChat() {
+      const cid = state.selectedClientId;
+      const tpl = state.workoutTemplates[0];
+      if (!state.messages[cid]) state.messages[cid] = [];
+      const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const text = `Assigned Plan: ${tpl.title} (${tpl.focus} • ${tpl.duration})`;
+
+      if (supabaseClient && state.cloud.connected) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("messages")
+            .insert([{ client_id: cid, sender: "trainer", text, plan_id: tpl.id, time_label: now }])
+            .select()
+            .single();
+          if (!error && data) {
+            if (!state.messages[cid].some(m => m.id === data.id)) {
+              state.messages[cid].push({ id: data.id, sender: "trainer", time: now, planId: tpl.id, text });
+            }
+            saveState();
+            renderWorkspace();
+            showToast("LIVE WORKOUT PLAN SENT IN CLOUD CHAT");
+            return;
+          }
+        } catch (err) {}
+      }
+
+      state.messages[cid].push({ sender: "trainer", time: now, planId: tpl.id, text });
+      saveState();
+      renderWorkspace();
+      showToast("WORKOUT PLAN SENT IN CHAT");
+    }
+
+    function openClientReport() {
+      const c = state.clients.find(cl => cl.id === state.selectedClientId) || state.clients[0];
+      const curM = state.measurements[0];
+      document.getElementById("report-studio-name").textContent = `${state.brand.name} // CLIENT PROGRESS REPORT`;
+      document.getElementById("report-client-name").textContent = c.name.toUpperCase();
+      document.getElementById("report-client-goal").textContent = `${c.goal} • Sessions: ${c.sessionsUsed}/${c.sessionsTotal} • Compliance: ${c.compliance}%`;
+      document.getElementById("report-body-content").innerHTML = `
+        <div class="grid grid-cols-3 gap-3 font-mono-num">
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">READINESS</div><div class="text-lg font-extrabold">${computeReadiness()}/100</div></div>
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">WEIGHT / WAIST</div><div class="text-sm font-extrabold">${fmtWeight(curM.weightLbs)} / ${fmtLength(curM.waistIn)}</div></div>
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">STREAK</div><div class="text-lg font-extrabold">${state.biometrics.streakDays} DAYS</div></div>
+        </div>
+        <div>
+          <h4 class="font-bold uppercase text-slate-500 mb-2">All-Time Strength Personal Records</h4>
+          <div class="grid grid-cols-2 gap-2 font-mono-num">
+            ${state.exercises.slice(0, 6).map(ex => `<div class="p-2 rounded-lg border border-slate-200 flex justify-between"><span>${escapeHtml(ex.name)}</span><strong>${fmtWeight(ex.bestLbs)} × ${ex.reps}</strong></div>`).join("")}
+          </div>
+        </div>
+      `;
+      toggleModal("print-report-modal", true);
+    }
+
+    // =========================================================================
+    // VIEW 06: DATA VAULT, CSV/JSON EXPORT & iOS/ANDROID PACKAGING GUIDE
+    // =========================================================================
+    function renderVaultView() {
+      const isPt = state.lang === "pt";
+      return `
+        <div class="space-y-5">
+          <div class="hud-panel chamfer-card p-6 space-y-4">
+            <div>
+              <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">💾 BACKUP & PORTABILITY</span>
+              <h3 class="font-display text-lg font-extrabold uppercase">${isPt ? "EXPORTAR DADOS (CSV / JSON)" : "DATA VAULT — CSV & CROSS-DEVICE SYNC"}</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-mono-num">
+              <button onclick="exportCSV()" class="p-4 rounded-2xl btn-accent text-left space-y-1 cursor-pointer">
+                <div class="text-sm font-extrabold">⬇ EXPORT CSV</div>
+                <div class="opacity-85 text-[11px]">Strength PRs, Runs & Body Logs</div>
+              </button>
+              <button onclick="exportJSON()" class="p-4 rounded-2xl border text-left space-y-1 cursor-pointer" style="border-color: var(--border-strong); background: var(--surface-solid);">
+                <div class="text-sm font-extrabold">📦 BACKUP JSON</div>
+                <div class="opacity-70 text-[11px]">Move full profile to another device</div>
+              </button>
+              <label class="p-4 rounded-2xl border text-left space-y-1 cursor-pointer" style="border-color: var(--border-strong); background: var(--surface-solid);">
+                <div class="text-sm font-extrabold">📥 RESTORE JSON</div>
+                <div class="opacity-70 text-[11px]">Import saved backup file</div>
+                <input type="file" accept=".json" onchange="importJSON(event)" class="hidden" />
+              </label>
+              <button onclick="resetAllData()" class="p-4 rounded-2xl border text-left space-y-1 cursor-pointer" style="border-color: rgba(244,63,94,0.4); color: var(--accent-3); background: var(--surface-solid);">
+                <div class="text-sm font-extrabold">${confirmResetArmed ? "⚠️ TAP AGAIN TO CONFIRM" : "↺ RESET DEMO DATA"}</div>
+                <div class="opacity-75 text-[11px]">Restore factory athlete dataset</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- iOS & Android Installation + Capacitor App Store Packaging -->
+          <div class="hud-panel rounded-2xl p-6 space-y-4 border-l-4" style="border-left-color: var(--accent-2);">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent-2);">📲 GITHUB CLOUD APK &amp; iOS ENGINE</span>
+                <h3 class="font-display text-lg font-extrabold uppercase">${isPt ? "GERAR APK ANDROID NO GITHUB (SEM INSTALAR NADA)" : "BUILD ANDROID APK ON GITHUB (ZERO INSTALLS)"}</h3>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button onclick="downloadGitHubWorkflow()" class="px-3.5 py-2 rounded-xl btn-accent text-[11px] font-mono-num cursor-pointer">
+                  ⬇ build-android.yml
+                </button>
+                <button onclick="downloadStaticManifest()" class="px-3 py-2 rounded-xl border text-[11px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);">
+                  ⬇ manifest.json
+                </button>
+                <button onclick="downloadServiceWorker()" class="px-3 py-2 rounded-xl border text-[11px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">
+                  ⬇ sw.js
+                </button>
+                <button onclick="downloadCapacitorConfig()" class="px-3 py-2 rounded-xl border text-[11px] font-mono-num font-bold cursor-pointer" style="border-color: var(--border-strong);">
+                  ⬇ capacitor.config.json
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs leading-relaxed">
+              <div class="p-4 rounded-xl border space-y-1.5" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="font-mono-num font-extrabold" style="color: var(--accent);">1. UPLOAD TO GITHUB.COM</div>
+                <p style="color: var(--text-secondary);">Create a free repository in your browser, upload <code>index.html</code>, and place the workflow file at <code>.github/workflows/build-android.yml</code>.</p>
+              </div>
+              <div class="p-4 rounded-xl border space-y-1.5" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="font-mono-num font-extrabold" style="color: var(--accent-2);">2. DOWNLOAD YOUR .APK</div>
+                <p style="color: var(--text-secondary);">Open the GitHub <strong>Actions</strong> tab, wait ~3 minutes for the green checkmark, and download <strong>apexcoach-android-apk</strong> directly to your Android phone.</p>
+              </div>
+              <div class="p-4 rounded-xl border space-y-1.5" style="border-color: var(--border-hairline); background: var(--surface-solid);">
+                <div class="font-mono-num font-extrabold">3. ENABLE LIVE CHAT &amp; GPS</div>
+                <p style="color: var(--text-secondary);">Inside the APK, allow Android Location permission for real GPS, and tap <strong>☁️ CONNECT LIVE</strong> in Chat to paste your free Supabase URL &amp; Key.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function downloadBlob(content, filename, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function exportCSV() {
+      const rows = [["Category", "Name/Route", "Metric 1", "Metric 2", "Date/Notes"]];
+      state.exercises.forEach(e => rows.push(["Strength PR", e.name, fmtWeight(e.bestLbs), `${e.reps} reps`, e.muscle]));
+      state.runs.forEach(r => rows.push(["GPS Run", r.route, fmtDist(r.distMiles), fmtPace(r.paceSecPerMile), r.date]));
+      state.measurements.forEach(m => rows.push(["Body", m.date, fmtWeight(m.weightLbs), `Waist ${fmtLength(m.waistIn)}`, `Chest ${fmtLength(m.chestIn)}`]));
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      downloadBlob(csv, "apexcoach-pro-export.csv", "text/csv;charset=utf-8;");
+      showToast("CSV PERFORMANCE REPORT DOWNLOADED");
+    }
+
+    function exportJSON() {
+      downloadBlob(JSON.stringify(state, null, 2), "apexcoach-pro-backup.json", "application/json");
+      showToast("JSON DEVICE BACKUP DOWNLOADED");
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          state = normalizeState(JSON.parse(reader.result));
+          saveState();
+          applyThemeAndBrand();
+          updateHeroHUD();
+          renderWorkspace();
+          showToast("BACKUP RESTORED SUCCESSFULLY");
+        } catch (err) {
+          showToast("INVALID JSON BACKUP FILE");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAllData() {
+      if (!confirmResetArmed) {
+        confirmResetArmed = true;
+        renderWorkspace();
+        showToast("TAP RESET AGAIN TO CONFIRM FACTORY RESTORE");
+        return;
+      }
+      confirmResetArmed = false;
+      state = cloneObj(DEFAULT_STATE);
+      saveState();
+      applyThemeAndBrand();
+      updateHeroHUD();
+      renderWorkspace();
+      showToast("FACTORY DEMO TELEMETRY RESTORED");
+    }
+
+    function downloadCapacitorConfig() {
+      const cfg = {
+        appId: "com.apexcoach.pro",
+        appName: state.brand.name || "APEXCOACH PRO",
+        webDir: "www",
+        bundledWebRuntime: false,
+        plugins: {
+          SplashScreen: { launchShowDuration: 1200, backgroundColor: "#06080c" }
+        }
+      };
+      downloadBlob(JSON.stringify(cfg, null, 2), "capacitor.config.json", "application/json");
+      showToast("CAPACITOR MOBILE CONFIG DOWNLOADED");
+    }
+
+    function downloadServiceWorker() {
+      const swCode = `const CACHE = 'apexcoach-os-v2';
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.open(CACHE).then(cache =>
+      fetch(e.request).then(res => {
+        if (e.request.method === 'GET' && res.status === 200) cache.put(e.request, res.clone());
+        return res;
+      }).catch(() => caches.match(e.request))
+    )
+  );
+});`;
+      downloadBlob(swCode, "sw.js", "application/javascript");
+      showToast("OFFLINE SERVICE WORKER (sw.js) DOWNLOADED");
+    }
+
+    function downloadStaticManifest() {
+      const manifest = {
+        name: `${state.brand.name || "APEXCOACH"} PRO`,
+        short_name: state.brand.name || "APEXCOACH",
+        start_url: "./index.html",
+        display: "standalone",
+        background_color: "#06080c",
+        theme_color: "#06080c",
+        orientation: "portrait"
+      };
+      downloadBlob(JSON.stringify(manifest, null, 2), "manifest.json", "application/manifest+json");
+      showToast("STATIC manifest.json DOWNLOADED");
+    }
+
+    function downloadGitHubWorkflow() {
+      const yml = `name: Build APEXCOACH Android APK
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Prepare web assets and Capacitor Android
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/geolocation@6
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.apexcoach.pro",
+            "appName": "APEXCOACH PRO",
+            "webDir": "www",
+            "server": { "androidScheme": "https" }
+          }
+          EOF
+          npx cap add android
+          node -e "const fs=require('fs');const p='android/app/src/main/AndroidManifest.xml';let x=fs.readFileSync(p,'utf8');const perms='<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />\\n    <uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />\\n    <uses-permission android:name=\"android.permission.WAKE_LOCK\" />';if(!x.includes('ACCESS_FINE_LOCATION'))x=x.replace('<uses-permission android:name=\"android.permission.INTERNET\" />','<uses-permission android:name=\"android.permission.INTERNET\" />\\n    '+perms);fs.writeFileSync(p,x);"
+          npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexcoach-android-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+`;
+      downloadBlob(yml, "build-android.yml", "text/yaml");
+      showToast("GITHUB ACTIONS APK WORKFLOW DOWNLOADED");
+    }
+
+    // =========================================================================
+    // 6. INITIALIZATION & GLOBAL KEYBOARD SHORTCUTS
+    // =========================================================================
+    function updateSpineClock() {
+      const el = document.getElementById("spine-clock");
+      if (el) el.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+    }
+
+    window.onload = function () {
+      applyThemeAndBrand();
+      updateHeroHUD();
+      switchTab(state.activeTab || "overview");
+      updateSpineClock();
+      setInterval(updateSpineClock, 15000);
+      if (state.cloud.url && state.cloud.anonKey) initSupabaseClient();
+    };
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        ["quicklog-modal", "wearable-modal", "brand-modal", "pr-modal", "cloud-modal", "print-report-modal"].forEach(id => toggleModal(id, false));
+        return;
+      }
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const tabMap = { "1": "overview", "2": "strength", "3": "endurance", "4": "body", "5": "roster", "6": "vault" };
+      if (tabMap[e.key]) switchTab(tabMap[e.key]);
+    });
+  </script>
+</body>
+</html>
