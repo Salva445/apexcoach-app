@@ -1,5 +1,45 @@
 # APEXCOACH PRO — Improvements
 
+# Round 2
+
+## New futuristic look
+- Panels have angled, cut corners with glowing diagonal edges, an accent sweep along the top and a corner bracket, instead of plain rounded boxes.
+- Tiles and buttons have notched corners. The main buttons are angled "blades" with a light sweep when you hover over them.
+- The background has a faint tech grid and soft scanlines. Headings use the Chakra Petch font with a glowing accent tick.
+- The bottom dock has a glowing indicator on the active tab and a hexagonal "+" button.
+
+## Readiness rings
+- Fixed the "READINESS" label overlapping the inner red ring: the rings are thinner and spaced further out, so the label and number always fit inside.
+- Added a slowly rotating tick dial around the rings, and a soft glow on each ring.
+
+## Muscle map
+- Redrawn front and back figures with separate muscle heads:
+  - Front: upper, middle and lower abs plus the lower V-line, obliques, chest, front delts, upper traps, biceps, forearms, the 3 quad heads, adductors, tibialis and calves.
+  - Back: the full trapezius diamond, rear delts, infraspinatus, lats, lower back, triceps, gluteus medius and maximus, both hamstrings, both calf heads and the soleus.
+- Each side is drawn once and mirrored, so the figure is perfectly symmetrical. There are subtle muscle-fibre lines, and a labelled load legend (low / medium / high).
+
+## Sound effects
+- A louder sound engine with a compressor and a short echo. The volume levels are now Low / Medium / Loud.
+- **Combo rewards:** each positive action within 6 seconds (a set, water, protein, calories) plays a chime one step higher on a musical scale.
+- **"Level up" sound** when you finish a workout, a run, a fitness test, HIIT or a warm-up: a bass drop, a fast rising arpeggio, a chord and a sparkle tail. PRs get a bigger fanfare.
+- A glowing ring bursts from whatever you tapped. Settings has a button to preview the reward sound.
+
+## Settings
+- The sound, theme, language and unit buttons moved from the top bar into Settings, along with a "Your name" field (shown at the top of the home screen).
+
+## Chat between devices
+- The demo clients (Marcus, Sofia, Daniel) and their fake messages are removed.
+- **Coach:** tap "+ Add client" to get a private invite code, then share it.
+- **Client:** on their own phone, tap "Join a coach" and type the code.
+- Messages go through a Supabase server. History is saved there, messages arrive live, the app checks again every 15 seconds and when you reopen it, and failed messages are resent automatically. Includes unread counts, sending a workout plan, and removing a chat.
+- Security: the public key can only call two database functions (send / read history for one room code). It can't list or read other rooms.
+
+## European Portuguese
+- Everything has a pt-PT version: every screen, popup message, button, setting, date and month, and all 81 exercises (names, tips and step-by-step instructions) plus the 30 warm-up and cool-down drills.
+- Brazilian wording was replaced with European Portuguese (e.g. "registar", "guardar", "ecrã", "gémeos", "isquiotibiais", "a decorrer").
+
+# Round 1
+
 ## Daily tracking & dates
 - **Daily counters now reset at midnight.** Calories, water, protein and steps used to keep piling up forever. The app now notices a new day (on launch, every minute, and when you reopen it) and resets them, and the 7-day burn chart moves forward one day.
 - **The 7-day chart shows real weekdays.** The labels were always MON…SAT, TODAY, whatever day it actually was.
