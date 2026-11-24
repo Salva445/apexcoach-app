@@ -2611,10 +2611,41 @@ alter publication supabase_realtime add table messages;</pre>
       return typeof structuredClone === "function" ? structuredClone(o) : JSON.parse(JSON.stringify(o));
     }
 
+    // Dates are stored as LOCAL calendar days (YYYY-MM-DD). toISOString() is UTC,
+    // which put late-evening / early-morning workouts on the wrong day.
+    const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+    function localIsoDate(d = new Date()) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
     function isoDaysAgo(days) {
       const d = new Date();
       d.setDate(d.getDate() - days);
-      return d.toISOString().slice(0, 10);
+      return localIsoDate(d);
+    }
+
+    // Whole calendar days from isoA to isoB (positive when B is later)
+    function daysBetweenIso(isoA, isoB) {
+      const [y1, m1, d1] = isoA.split("-").map(Number);
+      const [y2, m2, d2] = isoB.split("-").map(Number);
+      return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+    }
+
+    // "Today" / "Yesterday" / "3 days ago" / "Nov 2" — legacy free-text dates pass through untouched
+    function fmtRelDate(value) {
+      const v = String(value ?? "");
+      if (!ISO_DATE_RE.test(v)) return v;
+      const isPt = state.lang === "pt";
+      const diff = daysBetweenIso(v, localIsoDate());
+      if (diff === 0) return isPt ? "Hoje" : "Today";
+      if (diff === 1) return isPt ? "Ontem" : "Yesterday";
+      if (diff > 1 && diff < 7) return isPt ? `${diff} dias atrás` : `${diff} days ago`;
+      const [y, m, d] = v.split("-").map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString(isPt ? "pt-BR" : "en-US", { month: "short", day: "numeric" });
     }
 
     function hoursAgoIso(hours) {
@@ -2690,18 +2721,19 @@ alter publication supabase_realtime add table messages;</pre>
         { id: "tpl3", title: "Fri // Middle Body & Core Conditioning", region: "middle", focus: "Core, Obliques & Stabilizers", duration: "45m", estBurn: 440 }
       ],
       runs: [
-        { id: "r1", date: "Today", route: "Lakeside Tempo Loop", distMiles: 4.20, paceSecPerMile: 448, avgHr: 164, bestPace: true },
-        { id: "r2", date: "2 days ago", route: "Harbor Zone 2 Cruise", distMiles: 6.10, paceSecPerMile: 512, avgHr: 142, bestPace: false },
-        { id: "r3", date: "5 days ago", route: "Track 400m Repeats", distMiles: 3.50, paceSecPerMile: 462, avgHr: 171, bestPace: false }
+        { id: "r1", date: isoDaysAgo(0), route: "Lakeside Tempo Loop", distMiles: 4.20, paceSecPerMile: 448, avgHr: 164, bestPace: true },
+        { id: "r2", date: isoDaysAgo(2), route: "Harbor Zone 2 Cruise", distMiles: 6.10, paceSecPerMile: 512, avgHr: 142, bestPace: false },
+        { id: "r3", date: isoDaysAgo(5), route: "Track 400m Repeats", distMiles: 3.50, paceSecPerMile: 462, avgHr: 171, bestPace: false }
       ],
       fitnessTests: [
-        { date: "Nov 15", run15Mi: "09:42", pushups: 54, situps: 62, grade: "ELITE" },
-        { date: "Oct 28", run15Mi: "10:08", pushups: 48, situps: 55, grade: "EXCELLENT" }
+        { date: isoDaysAgo(9), run15Mi: "09:42", pushups: 54, situps: 62, grade: "ELITE" },
+        { date: isoDaysAgo(27), run15Mi: "10:08", pushups: 48, situps: 55, grade: "EXCELLENT" }
       ],
       measurements: [
-        { date: "Today", weightLbs: 181.5, waistIn: 31.4, chestIn: 42.2, armsIn: 16.1 },
-        { date: "4 wks ago", weightLbs: 185.0, waistIn: 32.8, chestIn: 41.6, armsIn: 15.8 }
+        { date: isoDaysAgo(0), weightLbs: 181.5, waistIn: 31.4, chestIn: 42.2, armsIn: 16.1 },
+        { date: isoDaysAgo(28), weightLbs: 185.0, waistIn: 32.8, chestIn: 41.6, armsIn: 15.8 }
       ],
+      lastActiveDate: isoDaysAgo(0),
       macroProfile: { phase: "recomp" },
       photos: {
         before: "https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE+WEEK+1",
@@ -2764,6 +2796,29 @@ alter publication supabase_realtime add table messages;</pre>
         macroProfile: { ...base.macroProfile, ...(parsed.macroProfile || {}) },
         photos: { ...base.photos, ...(parsed.photos || {}) }
       };
+
+      // Older saves had no day tracking — treat them as "last opened today" so nothing resets unexpectedly
+      if (!ISO_DATE_RE.test(String(merged.lastActiveDate || ""))) merged.lastActiveDate = localIsoDate();
+
+      // Older saves stored "Today" / "Just now" as text, which then stayed "Today" forever.
+      // Pin those to the last day the app was used.
+      const LEGACY_TODAY = new Set(["today", "just now", "hoje", "agora"]);
+      ["runs", "measurements", "fitnessTests"].forEach(key => {
+        if (!Array.isArray(merged[key])) { merged[key] = cloneObj(base[key]); return; }
+        merged[key].forEach(item => {
+          if (item && LEGACY_TODAY.has(String(item.date || "").toLowerCase())) item.date = merged.lastActiveDate;
+        });
+      });
+      if (!merged.measurements.length) merged.measurements = cloneObj(base.measurements);
+
+      // Weekly burn must always be exactly 7 days (oldest → today)
+      const wb = Array.isArray(merged.biometrics.weeklyBurn) ? merged.biometrics.weeklyBurn.map(n => Number(n) || 0) : [];
+      merged.biometrics.weeklyBurn = [...Array(Math.max(0, 7 - wb.length)).fill(0), ...wb].slice(-7);
+
+      // Uploaded photos used to be saved as temporary blob: URLs that die on reload
+      ["before", "after"].forEach(slot => {
+        if (String(merged.photos[slot] || "").startsWith("blob:")) merged.photos[slot] = base.photos[slot];
+      });
       return merged;
     }
 
@@ -2780,8 +2835,57 @@ alter publication supabase_realtime add table messages;</pre>
     let state = loadState();
     let confirmResetArmed = false;
 
+    let storageWarned = false;
     function saveState() {
-      try { localStorage.setItem("apexcoach_mobile_os_v2", JSON.stringify(state)); } catch (e) {}
+      try {
+        localStorage.setItem("apexcoach_mobile_os_v2", JSON.stringify(state));
+        return true;
+      } catch (e) {
+        // Usually the storage quota is full (big photos). Warn once instead of silently losing data.
+        if (!storageWarned) {
+          storageWarned = true;
+          setTimeout(() => showToast("⚠️ STORAGE FULL — EXPORT A BACKUP IN SETTINGS"), 0);
+        }
+        return false;
+      }
+    }
+
+    // Daily counters (calories, water, protein, steps) reset at local midnight,
+    // and the 7-day burn chart slides forward one slot per day that passed.
+    function rollDailyCounters() {
+      const today = localIsoDate();
+      const last = ISO_DATE_RE.test(String(state.lastActiveDate || "")) ? state.lastActiveDate : today;
+      const gap = daysBetweenIso(last, today);
+      if (gap > 0) {
+        const b = state.biometrics;
+        const shift = Math.min(7, gap);
+        b.weeklyBurn = [...b.weeklyBurn.slice(shift), ...Array(shift).fill(0)];
+        b.caloriesBurnt = 0;
+        b.waterMl = 0;
+        b.proteinG = 0;
+        b.steps = 0;
+      }
+      if (state.lastActiveDate !== today) {
+        state.lastActiveDate = today;
+        saveState();
+      }
+      return gap > 0;
+    }
+
+    // Consecutive days (ending today, or yesterday if today isn't done yet) with a logged workout or run
+    function computeStreakDays() {
+      const active = new Set();
+      (state.workoutHistory || []).forEach(h => { if (ISO_DATE_RE.test(String(h.date))) active.add(h.date); });
+      (state.runs || []).forEach(r => { if (ISO_DATE_RE.test(String(r.date))) active.add(r.date); });
+      const start = active.has(isoDaysAgo(0)) ? 0 : 1;
+      let streak = 0;
+      while (active.has(isoDaysAgo(start + streak))) streak++;
+      return streak;
+    }
+
+    // Safely embed any string as a JS argument inside an onclick="..." attribute
+    function jsArg(str) {
+      return escapeHtml(JSON.stringify(String(str ?? "")));
     }
 
     function escapeHtml(str) {
@@ -3250,12 +3354,16 @@ alter publication supabase_realtime add table messages;</pre>
       document.getElementById("hud-protein-val").textContent = `${b.proteinG}g`;
       document.getElementById("hud-protein-goal").textContent = `/ ${b.proteinGoal}g`;
 
-      const todayMiles = state.runs.filter(r => r.date === "Today" || r.date === "Just now").reduce((s, r) => s + r.distMiles, 0);
+      const todayIso = localIsoDate();
+      const todayMiles = state.runs.filter(r => r.date === todayIso).reduce((s, r) => s + r.distMiles, 0);
       document.getElementById("hud-dist-val").textContent = fmtDist(todayMiles);
       document.getElementById("hud-steps-val").textContent = b.steps.toLocaleString();
       document.getElementById("hud-live-hr").textContent = `${b.liveHR} BPM`;
       document.getElementById("spine-bpm").textContent = b.liveHR;
-      document.getElementById("hero-streak-pill").textContent = `🔥 ${b.streakDays}-${isPt ? "DIAS SEGUIDOS" : "DAY STREAK"}`;
+      const streak = computeStreakDays();
+      document.getElementById("hero-streak-pill").textContent = isPt
+        ? `🔥 ${streak} ${streak === 1 ? "DIA SEGUIDO" : "DIAS SEGUIDOS"}`
+        : `🔥 ${streak}-DAY STREAK`;
 
       const activeClient = state.clients.find(c => c.id === state.selectedClientId) || state.clients[0];
       if (activeClient) document.getElementById("hero-athlete-name").textContent = activeClient.name.toUpperCase();
@@ -3436,9 +3544,16 @@ alter publication supabase_realtime add table messages;</pre>
     }
 
     // Floating Rest Timer Engine
+    // Timers track a real end time (Date.now()) instead of counting ticks, because phones
+    // throttle or pause setInterval when the screen locks — the old timers lost time.
     let restSecLeft = 0;
+    let restEndsAt = 0;
     let restInterval = null;
+    function secondsUntil(ts) {
+      return Math.max(0, Math.ceil((ts - Date.now()) / 1000));
+    }
     function startRestTimer(seconds = 90) {
+      restEndsAt = Date.now() + seconds * 1000;
       restSecLeft = seconds;
       const pill = document.getElementById("rest-timer-pill");
       pill.classList.remove("hidden");
@@ -3446,7 +3561,9 @@ alter publication supabase_realtime add table messages;</pre>
       document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
       clearInterval(restInterval);
       restInterval = setInterval(() => {
-        restSecLeft--;
+        const left = secondsUntil(restEndsAt);
+        if (left === restSecLeft) return;
+        restSecLeft = left;
         if (restSecLeft <= 3 && restSecLeft > 0) SFX.tick();
         if (restSecLeft <= 0) {
           stopRestTimer();
@@ -3456,11 +3573,12 @@ alter publication supabase_realtime add table messages;</pre>
         } else {
           document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
         }
-      }, 1000);
+      }, 250);
     }
     function adjustRest(delta) {
       SFX.click();
-      restSecLeft = Math.max(5, restSecLeft + delta);
+      restSecLeft = Math.max(5, secondsUntil(restEndsAt) + delta);
+      restEndsAt = Date.now() + restSecLeft * 1000;
       document.getElementById("rest-timer-display").textContent = formatClock(restSecLeft);
     }
     function stopRestTimer() {
@@ -3740,7 +3858,7 @@ alter publication supabase_realtime add table messages;</pre>
     // 4D. HIIT / TABATA / EMOM INTERVAL TIMER ENGINE
     // =========================================================================
     let hiitWorkSec = 20, hiitRestSec = 10, hiitTotalRounds = 8;
-    let hiitPhase = "ready", hiitSecLeft = 20, hiitRound = 1, hiitTimer = null, hiitRunning = false;
+    let hiitPhase = "ready", hiitSecLeft = 20, hiitRound = 1, hiitTimer = null, hiitRunning = false, hiitPhaseEndsAt = 0;
 
     function openHIITModal() {
       updateHIITUI();
@@ -3809,14 +3927,16 @@ alter publication supabase_realtime add table messages;</pre>
         hiitSecLeft = hiitWorkSec;
       }
       hiitRunning = true;
+      hiitPhaseEndsAt = Date.now() + hiitSecLeft * 1000;
       SFX.hiitWork();
       triggerHaptic(30);
       updateHIITUI();
 
       hiitTimer = setInterval(() => {
-        hiitSecLeft--;
-        if (hiitSecLeft <= 3 && hiitSecLeft > 0) SFX.tick();
-        if (hiitSecLeft <= 0) {
+        // Advance through as many phases as really elapsed (catches up after a screen lock)
+        let left = Math.ceil((hiitPhaseEndsAt - Date.now()) / 1000);
+        let phaseChanged = false;
+        while (left <= 0) {
           if (hiitPhase === "work") {
             if (hiitRound >= hiitTotalRounds) {
               stopHIITTimer();
@@ -3836,22 +3956,33 @@ alter publication supabase_realtime add table messages;</pre>
               return;
             }
             hiitPhase = "rest";
-            hiitSecLeft = hiitRestSec;
-            SFX.hiitRest();
-            triggerHaptic(20);
+            hiitPhaseEndsAt += hiitRestSec * 1000;
           } else {
             hiitRound++;
             hiitPhase = "work";
-            hiitSecLeft = hiitWorkSec;
-            SFX.hiitWork();
-            triggerHaptic([25, 20, 25]);
+            hiitPhaseEndsAt += hiitWorkSec * 1000;
           }
+          phaseChanged = true;
+          left = Math.ceil((hiitPhaseEndsAt - Date.now()) / 1000);
         }
+        if (phaseChanged) {
+          if (hiitPhase === "rest") { SFX.hiitRest(); triggerHaptic(20); }
+          else { SFX.hiitWork(); triggerHaptic([25, 20, 25]); }
+        } else if (left === hiitSecLeft) {
+          return; // same second, nothing to redraw
+        } else if (left <= 3) {
+          SFX.tick();
+        }
+        hiitSecLeft = left;
         updateHIITUI();
-      }, 1000);
+      }, 250);
     }
 
     function stopHIITTimer() {
+      // Freeze the remaining time so RESUME continues from the right second
+      if (hiitRunning && (hiitPhase === "work" || hiitPhase === "rest")) {
+        hiitSecLeft = Math.max(1, Math.ceil((hiitPhaseEndsAt - Date.now()) / 1000));
+      }
       clearInterval(hiitTimer);
       hiitTimer = null;
       hiitRunning = false;
@@ -4013,6 +4144,10 @@ alter publication supabase_realtime add table messages;</pre>
       if (!silent && state.activeTab !== targetTab) SFX.tab();
       state.activeTab = targetTab;
       confirmResetArmed = false;
+      if (targetTab === "roster") {
+        const badge = document.getElementById("unread-badge");
+        if (badge) badge.classList.add("hidden");
+      }
       saveState();
       document.querySelectorAll(".dock-tab").forEach(btn => {
         btn.classList.toggle("active", btn.getAttribute("data-tab") === targetTab);
@@ -4099,7 +4234,21 @@ alter publication supabase_realtime add table messages;</pre>
         lineD += ` C ${cx} ${pts[i - 1].y}, ${cx} ${pts[i].y}, ${pts[i].x} ${pts[i].y}`;
       }
       const areaD = `${lineD} L ${pts[pts.length - 1].x} 130 L ${pts[0].x} 130 Z`;
-      const days = isPt ? ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "HOJE"] : ["MON", "TUE", "WED", "THU", "FRI", "SAT", "TODAY"];
+      // Real weekday labels for the last 7 days (was hard-coded MON…SAT regardless of today)
+      const days = Array.from({ length: 7 }, (_, i) => {
+        if (i === 6) return isPt ? "HOJE" : "TODAY";
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toLocaleDateString(isPt ? "pt-BR" : "en-US", { weekday: "short" }).replace(".", "").toUpperCase().slice(0, 3);
+      });
+      const streakDays = computeStreakDays();
+      // Monthly distance challenge from the runs actually logged this month
+      const monthPrefix = localIsoDate().slice(0, 7);
+      const monthMiles = state.runs.filter(r => String(r.date).startsWith(monthPrefix)).reduce((s, r) => s + (r.distMiles || 0), 0);
+      const monthGoalMiles = 50;
+      const monthPct = Math.min(100, Math.round((monthMiles / monthGoalMiles) * 100));
+      const monthName = new Date().toLocaleDateString(isPt ? "pt-BR" : "en-US", { month: "long" }).toUpperCase();
+      const goalLabel = state.units === "kg" ? `${Math.round(monthGoalMiles * 1.60934)} km` : `${monthGoalMiles} mi`;
 
       // 30-Day Interactive Workout Calendar & Volume History
       const historyByDate = new Map();
@@ -4122,7 +4271,7 @@ alter publication supabase_realtime add table messages;</pre>
         : (state.workoutHistory || []).slice(0, 4);
 
       const badges = [
-        { icon: "🔥", label: isPt ? "14 Dias Seguidos" : "14-Day Streak", unlocked: b.streakDays >= 14 },
+        { icon: "🔥", label: isPt ? "14 Dias Seguidos" : "14-Day Streak", unlocked: streakDays >= 14 },
         { icon: "🏋️", label: isPt ? "Clube 300 lbs" : "300 lb Club", unlocked: state.exercises.some(e => e.bestLbs >= 300) },
         { icon: "💧", label: isPt ? "Meta Hidratação" : "Hydration Pro", unlocked: b.waterMl >= 2500 },
         { icon: "🏃", label: isPt ? "Pace Sub-7:30" : "Sub-7:30 Pace", unlocked: state.runs.some(r => r.paceSecPerMile <= 450) }
@@ -4204,7 +4353,7 @@ alter publication supabase_realtime add table messages;</pre>
                   <div class="p-3 rounded-xl border flex items-center justify-between gap-2" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                     <div class="min-w-0">
                       <div class="font-bold truncate">${escapeHtml(h.title)}</div>
-                      <div class="text-[10px] opacity-65">${escapeHtml(h.date)} • ${Math.max(1, Math.round((h.durationSec || 1800) / 60))}m • ${h.sets} sets</div>
+                      <div class="text-[10px] opacity-65">${escapeHtml(fmtRelDate(h.date))} • ${Math.max(1, Math.round((h.durationSec || 1800) / 60))}m • ${h.sets} sets</div>
                     </div>
                     <div class="text-right flex-shrink-0">
                       <div class="font-extrabold" style="color: var(--accent);">${fmtWeight(h.volumeLbs || 0)}</div>
@@ -4299,15 +4448,15 @@ alter publication supabase_realtime add table messages;</pre>
 
               <div class="p-3.5 rounded-xl border space-y-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                 <div class="flex justify-between">
-                  <span class="font-bold">🏆 ${isPt ? "DESAFIO 50 MILHAS DO MÊS" : "NOVEMBER 50-MILE CLUB"}</span>
-                  <span style="color: var(--accent);">38.4 / 50 mi</span>
+                  <span class="font-bold">🏆 ${isPt ? `DESAFIO ${goalLabel.toUpperCase()} • ${monthName}` : `${monthName} ${goalLabel.toUpperCase()} CLUB`}</span>
+                  <span style="color: var(--accent);">${fmtDist(monthMiles)} / ${goalLabel}</span>
                 </div>
                 <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--border-hairline);">
-                  <div class="h-full rounded-full" style="width: 77%; background: var(--accent);"></div>
+                  <div class="h-full rounded-full transition-all duration-500" style="width: ${monthPct}%; background: var(--accent);"></div>
                 </div>
                 <div class="flex justify-between text-[10px] opacity-70">
-                  <span>#1 Marcus V. (38.4 mi)</span>
-                  <span>#2 Sofia A. (34.1 mi)</span>
+                  <span>${monthPct}% ${isPt ? "concluído" : "complete"}</span>
+                  <span>${monthPct >= 100 ? (isPt ? "🏅 META BATIDA!" : "🏅 GOAL SMASHED!") : `${fmtDist(Math.max(0, monthGoalMiles - monthMiles))} ${isPt ? "restantes" : "to go"}`}</span>
                 </div>
               </div>
             </div>
@@ -4360,11 +4509,18 @@ alter publication supabase_realtime add table messages;</pre>
         showToast("NO MATCHING EXERCISES — TRY 'ALL' EQUIPMENT");
         return;
       }
+      if (liveWorkout && liveWorkoutDoneSets() > 0) {
+        const msg = state.lang === "pt"
+          ? "Você já tem uma sessão ao vivo em andamento. Descartá-la e iniciar uma nova?"
+          : "You already have a live session in progress. Discard it and start a new one?";
+        if (!window.confirm(msg)) return;
+      }
       clearInterval(liveWorkoutTimer);
       const musclesSet = new Set();
       const exercises = items.map((item, idx) => {
         musclesSet.add(item.muscle);
         const existing = state.exercises.find(e => e.name.toLowerCase() === item.workout.name.toLowerCase());
+        const isBodyweight = item.workout.eq === "Bodyweight";
         if (!existing) {
           state.exercises.unshift({
             id: "ex_" + Date.now() + "_" + idx,
@@ -4383,9 +4539,13 @@ alter publication supabase_realtime add table messages;</pre>
           setsText: item.workout.sets,
           restSec: item.workout.rest || 75,
           eq: item.workout.eq || "Gym",
-          weightLbs: existing ? existing.bestLbs : (item.workout.eq === "Bodyweight" ? 135 : 95),
-          reps: parseTargetReps(item.workout.sets),
-          doneSets: Array(totalSets).fill(false)
+          // Start from the logged best; bodyweight moves start at 0 (= just bodyweight)
+          weightLbs: existing ? existing.bestLbs : (isBodyweight ? 0 : 95),
+          reps: existing ? existing.reps : parseTargetReps(item.workout.sets),
+          // true when this session created the logger entry, so its placeholder PR gets replaced by real numbers
+          autoCreated: !existing,
+          doneSets: Array(totalSets).fill(false),
+          setLoads: Array(totalSets).fill(null)
         };
       });
 
@@ -4395,16 +4555,13 @@ alter publication supabase_realtime add table messages;</pre>
         muscles: [...musclesSet],
         exercises,
         activeExIdx: 0,
+        startedAt: Date.now(),
         elapsedSec: 0,
         totalVolumeLbs: 0
       };
       activeSessionBanner = title;
-      liveWorkoutTimer = setInterval(() => {
-        if (!liveWorkout) { clearInterval(liveWorkoutTimer); return; }
-        liveWorkout.elapsedSec++;
-        const clk = document.getElementById("live-workout-clock");
-        if (clk) clk.textContent = formatClock(liveWorkout.elapsedSec);
-      }, 1000);
+      startLiveClock();
+      saveLiveWorkout();
 
       SFX.sessionStart();
       triggerHaptic([25, 20, 35]);
@@ -4414,21 +4571,93 @@ alter publication supabase_realtime add table messages;</pre>
       showToast(`⚡ LIVE SESSION STARTED: ${title.toUpperCase()}`);
     }
 
+    // ---- Live session persistence: survives reloads, app switches and Android killing the WebView ----
+    const LIVE_WORKOUT_KEY = "apexcoach_live_session_v1";
+
+    function saveLiveWorkout() {
+      try {
+        if (liveWorkout) localStorage.setItem(LIVE_WORKOUT_KEY, JSON.stringify(liveWorkout));
+        else localStorage.removeItem(LIVE_WORKOUT_KEY);
+      } catch (e) {}
+    }
+
+    function liveElapsedSec() {
+      return liveWorkout ? Math.max(0, Math.floor((Date.now() - liveWorkout.startedAt) / 1000)) : 0;
+    }
+
+    function liveWorkoutDoneSets() {
+      return liveWorkout ? liveWorkout.exercises.reduce((s, e) => s + e.doneSets.filter(Boolean).length, 0) : 0;
+    }
+
+    function startLiveClock() {
+      clearInterval(liveWorkoutTimer);
+      liveWorkoutTimer = setInterval(() => {
+        if (!liveWorkout) { clearInterval(liveWorkoutTimer); return; }
+        liveWorkout.elapsedSec = liveElapsedSec();
+        const clk = document.getElementById("live-workout-clock");
+        if (clk) clk.textContent = formatClock(liveWorkout.elapsedSec);
+      }, 1000);
+    }
+
+    function restoreLiveWorkout() {
+      try {
+        const raw = localStorage.getItem(LIVE_WORKOUT_KEY);
+        if (!raw) return;
+        const lw = JSON.parse(raw);
+        const valid = lw && Array.isArray(lw.exercises) && lw.exercises.length && Number.isFinite(lw.startedAt);
+        // Sessions left open for over 12 hours were abandoned — don't resurrect them
+        if (!valid || Date.now() - lw.startedAt > 12 * 3600 * 1000) {
+          localStorage.removeItem(LIVE_WORKOUT_KEY);
+          return;
+        }
+        lw.exercises.forEach(e => {
+          if (!Array.isArray(e.setLoads)) e.setLoads = e.doneSets.map(() => null);
+        });
+        liveWorkout = lw;
+        liveWorkout.elapsedSec = liveElapsedSec();
+        activeSessionBanner = lw.title;
+        startLiveClock();
+        setTimeout(() => showToast(state.lang === "pt" ? "⚡ SESSÃO AO VIVO RESTAURADA" : "⚡ LIVE SESSION RESTORED"), 400);
+      } catch (e) {}
+    }
+
+    function recomputeLiveVolume() {
+      if (!liveWorkout) return;
+      liveWorkout.totalVolumeLbs = liveWorkout.exercises.reduce((sum, ex) =>
+        sum + (ex.setLoads || []).reduce((s, l) => s + (l ? Math.round(l.weightLbs * l.reps) : 0), 0), 0);
+    }
+
+    // Weight / reps typed into the live session for the current exercise
+    function updateLiveLoad(exIdx, field, rawVal) {
+      if (!liveWorkout || !liveWorkout.exercises[exIdx]) return;
+      const ex = liveWorkout.exercises[exIdx];
+      if (field === "weight") {
+        const lbs = toLbs(rawVal);
+        ex.weightLbs = Number.isFinite(lbs) && lbs >= 0 ? lbs : 0;
+      } else {
+        const reps = parseInt(rawVal, 10);
+        ex.reps = Number.isFinite(reps) && reps > 0 ? reps : 1;
+      }
+      saveLiveWorkout();
+    }
+
     function selectLiveExercise(idx) {
       if (!liveWorkout) return;
       SFX.click();
       liveWorkout.activeExIdx = Math.max(0, Math.min(liveWorkout.exercises.length - 1, idx));
+      saveLiveWorkout();
       renderWorkspace();
     }
 
     function toggleLiveSet(exIdx, setIdx, anchorEl = null) {
       if (!liveWorkout || !liveWorkout.exercises[exIdx]) return;
       const ex = liveWorkout.exercises[exIdx];
+      if (!Array.isArray(ex.setLoads)) ex.setLoads = ex.doneSets.map(() => null);
       const nextVal = !ex.doneSets[setIdx];
       ex.doneSets[setIdx] = nextVal;
-      const setVol = Math.round((ex.weightLbs || 100) * (ex.reps || 10));
       if (nextVal) {
-        liveWorkout.totalVolumeLbs += setVol;
+        // Record exactly what was lifted on this set
+        ex.setLoads[setIdx] = { weightLbs: ex.weightLbs || 0, reps: ex.reps || 1 };
         state.biometrics.caloriesBurnt += 28;
         state.biometrics.weeklyBurn[6] += 28;
         SFX.setLogged();
@@ -4439,60 +4668,111 @@ alter publication supabase_realtime add table messages;</pre>
           liveWorkout.activeExIdx = exIdx + 1;
         }
       } else {
-        liveWorkout.totalVolumeLbs = Math.max(0, liveWorkout.totalVolumeLbs - setVol);
+        ex.setLoads[setIdx] = null;
+        state.biometrics.caloriesBurnt = Math.max(0, state.biometrics.caloriesBurnt - 28);
+        state.biometrics.weeklyBurn[6] = Math.max(0, state.biometrics.weeklyBurn[6] - 28);
         SFX.click();
       }
+      recomputeLiveVolume();
       saveState();
+      saveLiveWorkout();
       updateHeroHUD();
       renderWorkspace();
     }
 
+    // Push the heaviest set of each exercise into the Strength Logger and detect new PRs
+    function applyLiveWorkoutToLogger() {
+      const newPRs = [];
+      liveWorkout.exercises.forEach(ex => {
+        const loads = (ex.setLoads || []).filter(l => l && l.weightLbs > 0);
+        if (!loads.length) return;
+        const top = loads.reduce((best, l) =>
+          (l.weightLbs > best.weightLbs || (l.weightLbs === best.weightLbs && l.reps > best.reps)) ? l : best);
+        const entry = state.exercises.find(e => e.name.toLowerCase() === ex.name.toLowerCase());
+        if (!entry) return;
+        if (ex.autoCreated) {
+          // First real data for this exercise replaces the placeholder numbers
+          entry.bestLbs = top.weightLbs;
+          entry.reps = top.reps;
+          entry.historyLbs = [top.weightLbs];
+          return;
+        }
+        entry.historyLbs.push(top.weightLbs);
+        const isPR = top.weightLbs > entry.bestLbs + 0.01 || (Math.abs(top.weightLbs - entry.bestLbs) < 0.5 && top.reps > entry.reps);
+        if (isPR) {
+          entry.bestLbs = top.weightLbs;
+          entry.reps = top.reps;
+          newPRs.push(`${entry.name} ${fmtWeight(top.weightLbs)} × ${top.reps}`);
+        }
+      });
+      return newPRs;
+    }
+
     function finishLiveWorkout() {
       if (!liveWorkout) return;
+      const completedSets = liveWorkoutDoneSets();
+      if (completedSets === 0) {
+        SFX.warn();
+        showToast(state.lang === "pt" ? "CONCLUA PELO MENOS 1 SÉRIE (OU ✕ PARA DESCARTAR)" : "COMPLETE AT LEAST 1 SET (OR ✕ TO DISCARD)");
+        return;
+      }
       clearInterval(liveWorkoutTimer);
       stopRestTimer();
-      const completedSets = liveWorkout.exercises.reduce((s, e) => s + e.doneSets.filter(Boolean).length, 0);
-      const effectiveSets = Math.max(1, completedSets);
-      const effectiveVol = liveWorkout.totalVolumeLbs > 0 ? liveWorkout.totalVolumeLbs : effectiveSets * 1250;
-      const estBurn = Math.max(120, Math.round(effectiveSets * 24 + (liveWorkout.elapsedSec / 60) * 6));
-      const todayIso = new Date().toISOString().slice(0, 10);
+      const durationSec = Math.max(60, liveElapsedSec());
+      recomputeLiveVolume();
+      const volumeLbs = liveWorkout.totalVolumeLbs;
+      const estBurn = Math.max(60, Math.round(completedSets * 24 + (durationSec / 60) * 6));
 
       state.workoutHistory.unshift({
         id: "wh_" + Date.now(),
-        date: todayIso,
+        date: localIsoDate(),
         title: liveWorkout.title,
         region: liveWorkout.region,
-        durationSec: Math.max(60, liveWorkout.elapsedSec),
-        sets: effectiveSets,
-        volumeLbs: effectiveVol,
+        durationSec,
+        sets: completedSets,
+        volumeLbs,
         burn: estBurn
       });
       markMusclesTrained(liveWorkout.muscles);
+      const newPRs = applyLiveWorkoutToLogger();
       state.biometrics.caloriesBurnt += Math.round(estBurn * 0.4);
       state.biometrics.weeklyBurn[6] += Math.round(estBurn * 0.4);
-      state.biometrics.streakDays += 1;
 
       document.getElementById("summary-session-title").textContent = liveWorkout.title.toUpperCase();
-      document.getElementById("summary-duration").textContent = formatClock(Math.max(60, liveWorkout.elapsedSec));
-      document.getElementById("summary-sets").textContent = String(effectiveSets);
-      document.getElementById("summary-volume").textContent = fmtWeight(effectiveVol);
+      document.getElementById("summary-duration").textContent = formatClock(durationSec);
+      document.getElementById("summary-sets").textContent = String(completedSets);
+      document.getElementById("summary-volume").textContent = fmtWeight(volumeLbs);
       document.getElementById("summary-burn").textContent = `+${estBurn} kcal`;
 
       liveWorkout = null;
       activeSessionBanner = "";
       saveState();
+      saveLiveWorkout();
       updateHeroHUD();
       renderWorkspace();
       SFX.sessionComplete();
       launchConfetti(110);
       triggerHaptic([60, 35, 90]);
       toggleModal("workout-summary-modal", true);
+      if (newPRs.length) {
+        setTimeout(() => {
+          SFX.pr();
+          showToast(`🏆 ${newPRs.length} NEW PR${newPRs.length > 1 ? "S" : ""}: ${newPRs.join(" • ")}`);
+        }, 700);
+      }
     }
 
     function cancelLiveWorkout() {
+      if (liveWorkoutDoneSets() > 0) {
+        const msg = state.lang === "pt"
+          ? "Descartar esta sessão? As séries concluídas não serão salvas."
+          : "Discard this session? Completed sets will not be saved.";
+        if (!window.confirm(msg)) return;
+      }
       clearInterval(liveWorkoutTimer);
       liveWorkout = null;
       activeSessionBanner = "";
+      saveLiveWorkout();
       SFX.click();
       renderWorkspace();
       showToast("LIVE SESSION ENDED");
@@ -4703,16 +4983,31 @@ alter publication supabase_realtime add table messages;</pre>
                 <div class="font-display text-base font-extrabold uppercase mt-0.5">${escapeHtml(activeEx.name)}</div>
               </div>
               <div class="flex items-center gap-1.5">
-                <button onclick="openExerciseDemo('${activeEx.name.replace(/'/g, "\\'")}', '${activeEx.muscle}')" class="btn-ghost px-2.5 py-1.5 rounded-lg border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
-                <button onclick="openPlateCalculator(${fmtWeightNum(activeEx.weightLbs)})" class="btn-ghost px-2.5 py-1.5 rounded-lg border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--border-strong);">🏋️ PLATES</button>
+                <button onclick="openExerciseDemo(${jsArg(activeEx.name)}, ${jsArg(activeEx.muscle)})" class="btn-ghost px-2.5 py-1.5 rounded-lg border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
+                <button onclick="openPlateCalculator(${fmtWeightNum(activeEx.weightLbs) || "null"})" class="btn-ghost px-2.5 py-1.5 rounded-lg border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--border-strong);">🏋️ PLATES</button>
               </div>
             </div>
+            <div class="flex flex-wrap items-end gap-3 text-[10px] font-mono-num">
+              <label class="flex flex-col gap-1">
+                <span class="opacity-65 uppercase">${isPt ? "Carga" : "Weight"} (${state.units === "kg" ? "kg" : "lbs"})${activeEx.eq === "Bodyweight" ? (isPt ? " • 0 = peso corporal" : " • 0 = bodyweight") : ""}</span>
+                <input type="number" inputmode="decimal" min="0" step="0.5" value="${fmtWeightNum(activeEx.weightLbs)}" onchange="updateLiveLoad(${liveWorkout.activeExIdx}, 'weight', this.value)" aria-label="Weight for next set" class="hud-input w-24 text-xs font-mono-num" />
+              </label>
+              <label class="flex flex-col gap-1">
+                <span class="opacity-65 uppercase">${isPt ? "Repetições" : "Reps"}</span>
+                <input type="number" inputmode="numeric" min="1" step="1" value="${activeEx.reps}" onchange="updateLiveLoad(${liveWorkout.activeExIdx}, 'reps', this.value)" aria-label="Reps for next set" class="hud-input w-16 text-xs font-mono-num" />
+              </label>
+              <span class="opacity-60 pb-2">${isPt ? "Ajuste antes de marcar cada série" : "Adjust before ticking each set"}</span>
+            </div>
             <div class="flex flex-wrap gap-2">
-              ${activeEx.doneSets.map((done, sIdx) => `
+              ${activeEx.doneSets.map((done, sIdx) => {
+                const load = done && activeEx.setLoads ? activeEx.setLoads[sIdx] : null;
+                const loadTxt = load ? ` · ${load.weightLbs > 0 ? fmtWeightNum(load.weightLbs) : "BW"}×${load.reps}` : "";
+                return `
                 <button onclick="toggleLiveSet(${liveWorkout.activeExIdx}, ${sIdx}, this)" class="px-3.5 py-2 rounded-xl border text-xs font-mono-num font-extrabold cursor-pointer transition ${done ? 'btn-accent border-transparent' : 'btn-ghost'}" style="${!done ? 'border-color: var(--border-strong); background: var(--surface-2);' : ''}">
-                  ${done ? "✓" : "○"} SET ${sIdx + 1}
+                  ${done ? "✓" : "○"} SET ${sIdx + 1}${loadTxt}
                 </button>
-              `).join("")}
+              `;
+              }).join("")}
             </div>
           </div>
         </div>
@@ -4939,7 +5234,7 @@ alter publication supabase_realtime add table messages;</pre>
                                 <span class="font-bold text-xs truncate block">${escapeHtml(item.workout.name)}</span>
                                 <span class="text-[9px] font-mono-num opacity-70">${escapeHtml(item.muscle)} • ${escapeHtml(item.workout.eq)} • ${escapeHtml(item.workout.sets)}</span>
                               </div>
-                              <button onclick="openExerciseDemo('${item.workout.name.replace(/'/g, "\\'")}', '${item.muscle}')" class="btn-ghost px-2 py-1 rounded-md border text-[9px] font-mono-num font-bold cursor-pointer flex-shrink-0" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
+                              <button onclick="openExerciseDemo(${jsArg(item.workout.name)}, ${jsArg(item.muscle)})" class="btn-ghost px-2 py-1 rounded-md border text-[9px] font-mono-num font-bold cursor-pointer flex-shrink-0" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
                             </div>
                           </div>
                         `).join("")}
@@ -4976,8 +5271,8 @@ alter publication supabase_realtime add table messages;</pre>
                             <div class="flex items-center justify-between gap-1.5">
                               <span class="font-bold text-xs truncate">${escapeHtml(w.name)}</span>
                               <div class="flex items-center gap-1 flex-shrink-0">
-                                <button onclick="openExerciseDemo('${w.name.replace(/'/g, "\\'")}', '${muscle}')" class="btn-ghost px-2 py-0.5 rounded-md border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
-                                <button onclick="addMuscleExerciseToLog('${w.name.replace(/'/g, "\\'")}', '${muscle}')" class="px-2 py-0.5 rounded-md text-[9px] font-mono-num font-bold btn-accent cursor-pointer">+ LOG</button>
+                                <button onclick="openExerciseDemo(${jsArg(w.name)}, ${jsArg(muscle)})" class="btn-ghost px-2 py-0.5 rounded-md border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶ DEMO</button>
+                                <button onclick="addMuscleExerciseToLog(${jsArg(w.name)}, ${jsArg(muscle)})" class="px-2 py-0.5 rounded-md text-[9px] font-mono-num font-bold btn-accent cursor-pointer">+ LOG</button>
                               </div>
                             </div>
                             <div class="flex items-center gap-2 text-[9px] font-mono-num">
@@ -5048,7 +5343,7 @@ alter publication supabase_realtime add table messages;</pre>
                             <span class="ml-1.5 text-[9px] font-mono-num px-1.5 py-0.5 rounded border" style="border-color: var(--border-strong);">${isPt ? (MUSCLE_PT[ex.muscle] || ex.muscle) : ex.muscle}</span>
                           </div>
                           <div class="flex items-center gap-1.5 flex-shrink-0">
-                            <button onclick="openExerciseDemo('${ex.name.replace(/'/g, "\\'")}', '${ex.muscle}')" title="Watch Exercise Demo" class="btn-ghost px-1.5 py-0.5 rounded border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶</button>
+                            <button onclick="openExerciseDemo(${jsArg(ex.name)}, ${jsArg(ex.muscle)})" title="Watch Exercise Demo" class="btn-ghost px-1.5 py-0.5 rounded border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶</button>
                             <button onclick="openPlateCalculator(${fmtWeightNum(nextTargetLbs)})" title="Plate Calculator" class="btn-ghost px-1.5 py-0.5 rounded border text-[9px] cursor-pointer" style="border-color: var(--border-strong);">🏋️</button>
                             <button onclick="deleteExercise('${ex.id}')" title="Remove exercise" class="text-[10px] opacity-45 hover:opacity-100 cursor-pointer px-1">✕</button>
                           </div>
@@ -5163,6 +5458,7 @@ alter publication supabase_realtime add table messages;</pre>
     // VIEW 03: GPS RUN TRACKING, HEART-RATE ZONES & TIMED FITNESS TEST MODE
     // =========================================================================
     let gpsRunning = false;
+    let gpsStartedAt = 0;
     let gpsSeconds = 0;
     let gpsMiles = 0;
     let gpsTimer = null;
@@ -5207,6 +5503,8 @@ alter publication supabase_realtime add table messages;</pre>
       try {
         if ("wakeLock" in navigator) {
           gpsWakeLock = await navigator.wakeLock.request("screen");
+          // The OS drops the lock when the app is hidden; forget it so it can be re-acquired
+          gpsWakeLock.addEventListener("release", () => { gpsWakeLock = null; });
         }
       } catch (e) {}
     }
@@ -5312,7 +5610,7 @@ alter publication supabase_realtime add table messages;</pre>
                   <div class="p-3 rounded-xl border flex items-center justify-between gap-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                     <div class="min-w-0">
                       <div class="font-bold truncate">${escapeHtml(r.route)} ${r.bestPace ? `<span class="ml-1 px-1.5 py-0.5 rounded text-[9px]" style="background: var(--accent); color: var(--accent-contrast);">PR PACE</span>` : ""}</div>
-                      <div class="text-[10px] opacity-65">${escapeHtml(r.date)} • ❤️ ${r.avgHr} bpm</div>
+                      <div class="text-[10px] opacity-65">${escapeHtml(fmtRelDate(r.date))} • ❤️ ${r.avgHr} bpm</div>
                     </div>
                     <div class="text-right flex-shrink-0">
                       <div class="font-extrabold" style="color: var(--accent);">${fmtDist(r.distMiles)}</div>
@@ -5404,7 +5702,7 @@ alter publication supabase_realtime add table messages;</pre>
                 <div class="text-[10px] opacity-65 uppercase">${isPt ? "HISTÓRICO DE TESTES" : "RECENT FITNESS BENCHMARKS"}</div>
                 ${state.fitnessTests.slice(0, 4).map(ft => `
                   <div class="p-2.5 rounded-xl border flex items-center justify-between gap-2" style="border-color: var(--border-hairline); background: var(--surface-solid);">
-                    <span><strong>${escapeHtml(ft.date)}</strong> • 🏃 ${escapeHtml(ft.run15Mi)} • 💪 ${ft.pushups} • 🧘 ${ft.situps}</span>
+                    <span><strong>${escapeHtml(fmtRelDate(ft.date))}</strong> • 🏃 ${escapeHtml(ft.run15Mi)} • 💪 ${ft.pushups} • 🧘 ${ft.situps}</span>
                     <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold" style="background: var(--accent); color: var(--accent-contrast);">${escapeHtml(ft.grade)}</span>
                   </div>
                 `).join("")}
@@ -5430,7 +5728,7 @@ alter publication supabase_realtime add table messages;</pre>
           const bestPrev = Math.min(...state.runs.map(r => r.paceSecPerMile));
           const isPR = paceSec < bestPrev;
           state.runs.unshift({
-            id: "r_" + Date.now(), date: "Just now", route: state.gpsDemoMode ? "Simulated GPS Route" : "Android/iOS GPS Route",
+            id: "r_" + Date.now(), date: localIsoDate(), route: state.gpsDemoMode ? "Simulated GPS Route" : "Android/iOS GPS Route",
             distMiles: Number(gpsMiles.toFixed(2)), paceSecPerMile: paceSec, avgHr: state.biometrics.liveHR || 158, bestPace: isPR
           });
           const burn = Math.max(15, Math.round(gpsMiles * 115));
@@ -5447,6 +5745,7 @@ alter publication supabase_realtime add table messages;</pre>
         renderWorkspace();
       } else {
         gpsRunning = true;
+        gpsStartedAt = Date.now();
         gpsSeconds = 0;
         gpsMiles = 0;
         gpsAccuracyM = null;
@@ -5488,9 +5787,11 @@ alter publication supabase_realtime add table messages;</pre>
         }
 
         gpsTimer = setInterval(() => {
-          gpsSeconds += 1;
+          const elapsed = Math.floor((Date.now() - gpsStartedAt) / 1000);
+          if (elapsed === gpsSeconds) return;
+          gpsSeconds = elapsed;
           if (state.gpsDemoMode) {
-            gpsMiles += 0.0024;
+            gpsMiles = gpsSeconds * 0.0024;
             const progress = Math.min(1, gpsSeconds / 120);
             const nx = 20 + progress * 355;
             const ny = 100 - progress * 65 - Math.sin(progress * Math.PI * 2.5) * 26;
@@ -5511,7 +5812,7 @@ alter publication supabase_realtime add table messages;</pre>
           if (pathEl) pathEl.setAttribute("points", gpsBreadcrumbs.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "));
           if (dotEl) { dotEl.setAttribute("cx", head[0].toFixed(1)); dotEl.setAttribute("cy", head[1].toFixed(1)); }
           if (ringEl) { ringEl.setAttribute("cx", head[0].toFixed(1)); ringEl.setAttribute("cy", head[1].toFixed(1)); }
-        }, 1000);
+        }, 500);
         renderWorkspace();
       }
     }
@@ -5554,11 +5855,14 @@ alter publication supabase_realtime add table messages;</pre>
           triggerHaptic(45);
           showToast("GO! FITNESS TEST CLOCK ACTIVE");
           testRunning = true; testSeconds = 0; testSplits = [];
+          const testStartedAt = Date.now();
           testTimer = setInterval(() => {
-            testSeconds++;
+            const elapsed = Math.floor((Date.now() - testStartedAt) / 1000);
+            if (elapsed === testSeconds) return;
+            testSeconds = elapsed;
             const el = document.getElementById("test-clock");
             if (el) el.textContent = formatClock(testSeconds);
-          }, 1000);
+          }, 250);
           renderWorkspace();
         }
       }, 700);
@@ -5577,7 +5881,7 @@ alter publication supabase_realtime add table messages;</pre>
       const pushups = parseInt(document.getElementById("ft-push").value, 10) || 0;
       const situps = parseInt(document.getElementById("ft-sit").value, 10) || 0;
       const grade = (pushups >= 50 && situps >= 60) ? "ELITE" : (pushups >= 35 && situps >= 45) ? "EXCELLENT" : "SOLID";
-      state.fitnessTests.unshift({ date: "Today", run15Mi, pushups, situps, grade });
+      state.fitnessTests.unshift({ date: localIsoDate(), run15Mi, pushups, situps, grade });
       saveState();
       renderWorkspace();
       showToast(`FITNESS TEST SAVED // GRADE: ${grade}`);
@@ -5610,8 +5914,8 @@ alter publication supabase_realtime add table messages;</pre>
               </div>
 
               <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border select-none" style="border-color: var(--border-strong);">
-                <img src="${state.photos.after}" onerror="this.src='https://placehold.co/600x800/0f172a/a3e635?text=AFTER'" alt="After Physique" class="absolute inset-0 w-full h-full object-cover" />
-                <img id="wipe-before-img" src="${state.photos.before}" onerror="this.src='https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE'" alt="Before Physique" class="absolute inset-0 w-full h-full object-cover" style="clip-path: inset(0 ${100 - sliderPct}% 0 0);" />
+                <img src="${escapeHtml(state.photos.after)}" onerror="this.src='https://placehold.co/600x800/0f172a/a3e635?text=AFTER'" alt="After Physique" class="absolute inset-0 w-full h-full object-cover" />
+                <img id="wipe-before-img" src="${escapeHtml(state.photos.before)}" onerror="this.src='https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE'" alt="Before Physique" class="absolute inset-0 w-full h-full object-cover" style="clip-path: inset(0 ${100 - sliderPct}% 0 0);" />
                 <div id="wipe-divider" class="absolute top-0 bottom-0 w-0.5 shadow-lg pointer-events-none" style="left: ${sliderPct}%; background: var(--accent);">
                   <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center font-mono-num text-xs font-extrabold shadow-xl" style="background: var(--accent); color: var(--accent-contrast);">
                     ⇄
@@ -5710,13 +6014,37 @@ alter publication supabase_realtime add table messages;</pre>
       if (div) div.style.left = `${sliderPct}%`;
     }
 
+    // Photos are shrunk to ≤900px JPEG and stored inline so they survive app restarts.
+    // (The old blob: URL only lived until the page reloaded.)
     function uploadProgressPhoto(slot, e) {
-      const file = e.target.files[0];
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
-      const url = URL.createObjectURL(file);
-      state.photos[slot] = url;
-      renderWorkspace();
-      showToast(`${slot.toUpperCase()} PHOTO UPDATED`);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const maxSide = 900;
+          const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+          const previous = state.photos[slot];
+          state.photos[slot] = canvas.toDataURL("image/jpeg", 0.82);
+          if (!saveState()) {
+            state.photos[slot] = previous;
+            SFX.warn();
+            showToast("⚠️ NOT ENOUGH STORAGE TO SAVE THIS PHOTO");
+            return;
+          }
+          renderWorkspace();
+          showToast(`${slot.toUpperCase()} PHOTO SAVED`);
+        };
+        img.onerror = () => showToast("COULD NOT READ THAT IMAGE");
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
     }
 
     function recalculateMacrosForWeight(weightLbs) {
@@ -5744,7 +6072,7 @@ alter publication supabase_realtime add table messages;</pre>
       if (!Number.isFinite(wLbs) || wLbs <= 0) { showToast("ENTER VALID WEIGHT"); return; }
 
       state.measurements.unshift({
-        date: "Today",
+        date: localIsoDate(),
         weightLbs: wLbs,
         waistIn: Number.isFinite(waist) && waist > 0 ? waist : state.measurements[0].waistIn,
         chestIn: Number.isFinite(chest) && chest > 0 ? chest : state.measurements[0].chestIn,
@@ -5945,7 +6273,7 @@ alter publication supabase_realtime add table messages;</pre>
                       <div class="max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${isMine ? 'btn-accent' : 'border'}" style="${!isMine ? 'border-color: var(--border-strong); background: var(--surface-solid);' : ''}">
                         <div>${escapeHtml(m.text)}</div>
                         ${m.planId ? `
-                          <button onclick="startTemplate('${m.planId}'); switchTab('strength')" class="mt-2 px-2.5 py-1 rounded-lg bg-black/20 font-mono-num text-[10px] font-bold underline cursor-pointer">
+                          <button onclick="startTemplate(${jsArg(m.planId)}); switchTab('strength')" class="mt-2 px-2.5 py-1 rounded-lg bg-black/20 font-mono-num text-[10px] font-bold underline cursor-pointer">
                             ⚡ ${isPt ? "ACEITAR & INICIAR PLANO" : "ACCEPT & START PLAN"}
                           </button>
                         ` : ""}
@@ -6100,7 +6428,7 @@ alter publication supabase_realtime add table messages;</pre>
         <div class="grid grid-cols-3 gap-3 font-mono-num">
           <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">READINESS</div><div class="text-lg font-extrabold">${computeReadiness()}/100</div></div>
           <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">WEIGHT / WAIST</div><div class="text-sm font-extrabold">${fmtWeight(curM.weightLbs)} / ${fmtLength(curM.waistIn)}</div></div>
-          <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">STREAK</div><div class="text-lg font-extrabold">${state.biometrics.streakDays} DAYS</div></div>
+          <div class="p-3 rounded-xl bg-slate-100"><div class="text-[10px] text-slate-500">STREAK</div><div class="text-lg font-extrabold">${computeStreakDays()} DAYS</div></div>
         </div>
         <div>
           <h4 class="font-bold uppercase text-slate-500 mb-2">All-Time Strength Personal Records</h4>
@@ -6174,6 +6502,11 @@ alter publication supabase_realtime add table messages;</pre>
       }
       confirmResetArmed = false;
       state = cloneObj(DEFAULT_STATE);
+      state.lastActiveDate = localIsoDate();
+      clearInterval(liveWorkoutTimer);
+      liveWorkout = null;
+      activeSessionBanner = "";
+      saveLiveWorkout();
       saveState();
       applyThemeAndBrand();
       updateHeroHUD();
@@ -6191,12 +6524,31 @@ alter publication supabase_realtime add table messages;</pre>
       if (el) el.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
     }
 
+    // Called on launch, every minute, and whenever the app comes back to the foreground
+    function checkForNewDay() {
+      if (rollDailyCounters()) {
+        updateHeroHUD();
+        renderWorkspace();
+        showToast(state.lang === "pt" ? "☀️ NOVO DIA — CONTADORES DIÁRIOS ZERADOS" : "☀️ NEW DAY — DAILY COUNTERS RESET");
+      }
+    }
+
     window.onload = function () {
+      rollDailyCounters();
+      restoreLiveWorkout();
       applyThemeAndBrand();
       updateHeroHUD();
       switchTab(state.activeTab || "overview", true);
       updateSpineClock();
       setInterval(updateSpineClock, 15000);
+      setInterval(checkForNewDay, 60000);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState !== "visible") return;
+        checkForNewDay();
+        updateSpineClock();
+        // Re-acquire the screen wake lock (browsers drop it when the app is hidden)
+        if (gpsRunning && !gpsWakeLock) requestScreenWakeLock();
+      });
       if (state.cloud.url && state.cloud.anonKey) initSupabaseClient();
     };
 
