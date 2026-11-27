@@ -558,6 +558,19 @@
               <button id="hero-focus-btn" class="flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold cursor-pointer active:scale-95 transition" style="background: #ffffff; color: #0d1a06;" data-pt="Começar">Start</button>
             </div>
 
+            <!-- Rank progress: tap to open the leaderboard -->
+            <button onclick="state.socialView = 'ranks'; switchTab('roster')" class="w-full hud-panel !rounded-[22px] px-4 py-3 flex items-center gap-3 text-left cursor-pointer interactive-card">
+              <span id="hero-rank-icon" class="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0" style="background: color-mix(in srgb, var(--accent) 16%, transparent);">🌱</span>
+              <span class="min-w-0 flex-1">
+                <span class="flex items-baseline justify-between gap-2">
+                  <span id="hero-rank-name" class="font-semibold truncate">Rookie</span>
+                  <span id="hero-rank-points" class="text-xs font-mono-num flex-shrink-0" style="color: var(--text-secondary);">0 pts</span>
+                </span>
+                <span class="block w-full h-1.5 rounded-full overflow-hidden mt-1.5" style="background: var(--border-hairline);"><span id="hero-rank-bar" class="block h-full rounded-full transition-all duration-700" style="width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-deep));"></span></span>
+                <span id="hero-rank-next" class="block text-xs mt-1" style="color: var(--text-secondary);"></span>
+              </span>
+            </button>
+
             <!-- This week: days you trained get a ring -->
             <div id="hero-week-strip" class="grid grid-cols-7 gap-1 text-center"></div>
 
@@ -657,8 +670,8 @@
         <span class="truncate" data-pt="CORPO">BODY</span>
       </button>
       <button onclick="switchTab('roster')" data-tab="roster" class="dock-tab relative flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.4A8 8 0 1 1 20.5 11.5z"/></svg>
-        <span class="truncate" data-pt="CHAT">CHAT</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.8 14.6c2.3.1 4 1.6 4.7 4.4"/></svg>
+        <span class="truncate" data-pt="Social">Social</span>
         <span id="unread-badge" class="hidden absolute top-0.5 right-1 lg:static px-1 rounded-full text-[8px] font-extrabold bg-rose-500 text-white">•</span>
       </button>
     </div>
@@ -797,6 +810,16 @@
         <button type="button" onclick="toggleModal('settings-modal', false)" class="btn-ghost px-2 py-1 rounded-lg border text-xs cursor-pointer" style="border-color: var(--border-strong);">✕</button>
       </div>
 
+      <!-- Account -->
+      <button type="button" onclick="toggleModal('settings-modal', false); openAccount()" class="w-full flex items-center gap-3 p-3 rounded-2xl text-left cursor-pointer interactive-card" style="background: var(--surface-solid);">
+        <span class="w-10 h-10 rounded-full flex items-center justify-center text-lg" style="background: color-mix(in srgb, var(--accent) 16%, transparent);">👤</span>
+        <span class="min-w-0 flex-1">
+          <span id="settings-account-title" class="block font-semibold" data-pt="Conta">Account</span>
+          <span id="settings-account-sub" class="block text-xs truncate" style="color: var(--text-secondary);"></span>
+        </span>
+        <span style="color: var(--text-secondary);">›</span>
+      </button>
+
       <!-- Profile -->
       <div class="space-y-2 text-xs font-mono-num">
         <label for="settings-name-input" class="block text-[10px] uppercase tracking-wider opacity-65" data-pt="O SEU NOME">YOUR NAME</label>
@@ -895,6 +918,17 @@
         </div>
         <button type="button" onclick="toggleModal('settings-modal', false); toggleModal('cloud-modal', true)" class="w-full text-[10px] underline opacity-70 hover:opacity-100 cursor-pointer" data-pt="Servidor de chat (avançado)">Chat server (advanced)</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ACCOUNT (sign up with email confirmation, sign in, profile, rank) -->
+  <div id="account-modal" onclick="if(event.target===this) toggleModal('account-modal', false)" class="modal-backdrop no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="modal-card hud-panel chamfer-card max-w-md w-full min-w-0 p-5 sm:p-6 space-y-5 my-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-lg font-semibold" data-pt="A sua conta">Your account</h3>
+        <button type="button" onclick="toggleModal('account-modal', false)" class="btn-ghost w-9 h-9 rounded-full border text-sm cursor-pointer" style="border-color: var(--border-hairline);">✕</button>
+      </div>
+      <div id="account-body"></div>
     </div>
   </div>
 
@@ -1171,9 +1205,14 @@
           <span style="color: var(--accent);" data-pt="1: EXECUTE NO EDITOR SQL DO SUPABASE">1: RUN IN THE SUPABASE SQL EDITOR</span>
           <button type="button" onclick="copySupabaseSQL()" class="px-2 py-1 rounded-lg border font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);" data-pt="COPIAR SQL">COPY SQL</button>
         </div>
-        <pre id="supabase-sql-snippet" class="keep-caps overflow-x-auto opacity-80 whitespace-pre-wrap max-h-40">-- APEXCOACH chat v2. Run once in the Supabase SQL editor.
--- The public (anon/publishable) key can ONLY call the four apex_* functions below.
--- It cannot read, list or change the tables directly.
+        <pre id="supabase-sql-snippet" class="keep-caps overflow-x-auto opacity-80 whitespace-pre-wrap max-h-40">-- APEXCOACH server setup: chat v2 + accounts, points &amp; leaderboard.
+-- Run this whole file once in the Supabase SQL editor (safe to run again).
+-- The public (anon/publishable) key can only call the apex_* functions below;
+-- it cannot read, list or change any table directly.
+
+-- =====================================================================
+-- CHAT (rooms bound to device keys, single-use invite codes)
+-- =====================================================================
 create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists public.apex_rooms (
@@ -1276,7 +1315,155 @@ revoke execute on function public.apex_history(text, text) from public;
 grant execute on function public.apex_create_room(text, text) to anon, authenticated;
 grant execute on function public.apex_join_room(text, text) to anon, authenticated;
 grant execute on function public.apex_send(text, text, text, text, text) to anon, authenticated;
-grant execute on function public.apex_history(text, text) to anon, authenticated;</pre>
+grant execute on function public.apex_history(text, text) to anon, authenticated;
+
+-- =====================================================================
+-- ACCOUNTS, POINTS &amp; LEADERBOARD
+-- Uses Supabase Auth (email + password, email confirmation required).
+-- Points are calculated here on the server with limits, so they can't be faked.
+-- Other users only ever see display name, goal, workouts and points — never emails.
+-- =====================================================================
+create table if not exists public.apex_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null check (char_length(display_name) between 2 and 30 and display_name !~ '[&lt;&gt;]'),
+  objective text not null default 'bodybuilding' check (objective in ('bodybuilding', 'athlete')),
+  points integer not null default 0 check (points &gt;= 0),
+  workouts integer not null default 0 check (workouts &gt;= 0),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.apex_activity (
+  id bigint generated by default as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  ref text not null check (ref ~ '^[A-Za-z0-9_-]{1,64}$'),
+  kind text not null check (kind in ('strength', 'run', 'hiit', 'test')),
+  sets integer,
+  duration_sec integer,
+  distance_km numeric(6, 2),
+  points integer not null,
+  created_at timestamptz not null default now(),
+  unique (user_id, ref)
+);
+create index if not exists apex_activity_user_time_idx on public.apex_activity (user_id, created_at);
+create index if not exists apex_activity_time_idx on public.apex_activity (created_at);
+
+alter table public.apex_profiles enable row level security;
+alter table public.apex_activity enable row level security;
+revoke all on public.apex_profiles, public.apex_activity from anon, authenticated;
+
+-- Every new sign-up gets a profile (name and goal come from the sign-up form)
+create or replace function public.apex_handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_name text := trim(left(regexp_replace(coalesce(new.raw_user_meta_data -&gt;&gt; 'display_name', ''), '[&lt;&gt;]', '', 'g'), 30));
+begin
+  if char_length(v_name) &lt; 2 then v_name := 'Athlete ' || left(new.id::text, 4); end if;
+  insert into public.apex_profiles (id, display_name, objective)
+  values (new.id, v_name, case when new.raw_user_meta_data -&gt;&gt; 'objective' = 'athlete' then 'athlete' else 'bodybuilding' end)
+  on conflict (id) do nothing;
+  return new;
+end $$;
+drop trigger if exists apex_on_auth_user_created on auth.users;
+create trigger apex_on_auth_user_created after insert on auth.users
+  for each row execute function public.apex_handle_new_user();
+
+-- Signed in AND email confirmed (otherwise null)
+create or replace function public.apex_confirmed_uid()
+returns uuid language sql stable security definer set search_path = public as $$
+  select u.id from auth.users u where u.id = auth.uid() and u.email_confirmed_at is not null;
+$$;
+
+create or replace function public.apex_my_profile()
+returns setof public.apex_profiles language sql stable security definer set search_path = public as $$
+  select * from public.apex_profiles where id = public.apex_confirmed_uid();
+$$;
+
+create or replace function public.apex_update_profile(p_display_name text, p_objective text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_uid uuid := public.apex_confirmed_uid();
+begin
+  if v_uid is null then raise exception 'not allowed'; end if;
+  if p_objective not in ('bodybuilding', 'athlete') then raise exception 'invalid objective'; end if;
+  update public.apex_profiles set display_name = trim(p_display_name), objective = p_objective where id = v_uid;
+end $$;
+
+-- Record a finished activity. The server decides if it counts and what it is worth.
+-- Limits: max 8 per 24 hours, minimum length per type, realistic running speed, no duplicates.
+create or replace function public.apex_record_workout(p_ref text, p_kind text, p_sets integer, p_duration_sec integer, p_distance_km numeric)
+returns table (points integer, workouts integer) language plpgsql security definer set search_path = public as $$
+declare
+  v_uid uuid := public.apex_confirmed_uid();
+  v_points integer;
+begin
+  if v_uid is null then raise exception 'not allowed'; end if;
+  if exists (select 1 from public.apex_activity a where a.user_id = v_uid and a.ref = p_ref) then raise exception 'duplicate'; end if;
+  if (select count(*) from public.apex_activity a where a.user_id = v_uid and a.created_at &gt; now() - interval '24 hours') &gt;= 8 then
+    raise exception 'daily limit';
+  end if;
+  if p_kind = 'strength' and coalesce(p_sets, 0) &gt;= 3 and coalesce(p_duration_sec, 0) &gt;= 300 then
+    v_points := 100 + least(p_sets, 40) * 5;
+  elsif p_kind = 'run' and coalesce(p_distance_km, 0) &gt;= 0.5 and coalesce(p_duration_sec, 0) &gt;= 180
+        and p_distance_km / (p_duration_sec / 3600.0) &lt;= 25 then
+    v_points := 50 + round(least(p_distance_km, 42) * 10);
+  elsif p_kind = 'hiit' and coalesce(p_duration_sec, 0) &gt;= 120 then
+    v_points := 60;
+  elsif p_kind = 'test' then
+    v_points := 30;
+  else
+    raise exception 'not eligible';
+  end if;
+  insert into public.apex_activity (user_id, ref, kind, sets, duration_sec, distance_km, points)
+  values (v_uid, p_ref, p_kind, p_sets, p_duration_sec, p_distance_km, v_points);
+  update public.apex_profiles pr set points = pr.points + v_points, workouts = pr.workouts + 1 where pr.id = v_uid;
+  return query select pr.points, pr.workouts from public.apex_profiles pr where pr.id = v_uid;
+end $$;
+
+-- Leaderboard: ranked by workouts (then points), this week or all time. Top 100 plus you.
+create or replace function public.apex_leaderboard(p_period text default 'week')
+returns table (rank bigint, display_name text, objective text, workouts bigint, points bigint, is_me boolean)
+language sql stable security definer set search_path = public as $$
+  with me as (select public.apex_confirmed_uid() as uid),
+  week as (
+    select a.user_id, count(*) as cnt, sum(a.points) as pts
+    from public.apex_activity a where a.created_at &gt; now() - interval '7 days' group by a.user_id
+  ),
+  totals as (
+    select p.id, p.display_name, p.objective,
+      case when p_period = 'all' then p.workouts::bigint else coalesce(w.cnt, 0) end as workouts,
+      case when p_period = 'all' then p.points::bigint else coalesce(w.pts, 0)::bigint end as points
+    from public.apex_profiles p left join week w on w.user_id = p.id
+    where (select uid from me) is not null
+  ),
+  ranked as (
+    select dense_rank() over (order by t.workouts desc, t.points desc) as rnk, t.*
+    from totals t where t.workouts &gt; 0 or t.id = (select uid from me)
+  )
+  select r.rnk, r.display_name, r.objective, r.workouts, r.points, r.id = (select uid from me)
+  from ranked r where r.rnk &lt;= 100 or r.id = (select uid from me)
+  order by r.rnk, r.display_name limit 101;
+$$;
+
+-- Delete your own account (profile and activity are removed with it)
+create or replace function public.apex_delete_account()
+returns void language plpgsql security definer set search_path = public as $$
+declare v_uid uuid := auth.uid();
+begin
+  if v_uid is null then raise exception 'not allowed'; end if;
+  delete from auth.users where id = v_uid;
+end $$;
+
+revoke execute on function public.apex_handle_new_user() from public, anon, authenticated;
+revoke execute on function public.apex_confirmed_uid() from public, anon, authenticated;
+revoke execute on function public.apex_my_profile() from public, anon;
+revoke execute on function public.apex_update_profile(text, text) from public, anon;
+revoke execute on function public.apex_record_workout(text, text, integer, integer, numeric) from public, anon;
+revoke execute on function public.apex_leaderboard(text) from public, anon;
+revoke execute on function public.apex_delete_account() from public, anon;
+grant execute on function public.apex_my_profile() to authenticated;
+grant execute on function public.apex_update_profile(text, text) to authenticated;
+grant execute on function public.apex_record_workout(text, text, integer, integer, numeric) to authenticated;
+grant execute on function public.apex_leaderboard(text) to authenticated;
+grant execute on function public.apex_delete_account() to authenticated;</pre>
       </div>
 
       <form onsubmit="saveCloudSettings(event)" class="space-y-3 text-xs font-mono-num">
@@ -3395,68 +3582,50 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       prefs: { sfxEnabled: true, sfxVolume: 1.0, hapticsEnabled: true },
       cloud: { url: "", anonKey: "" },
       brand: { name: LOCKED_STUDIO_NAME, mono: LOCKED_STUDIO_MONO, accent: "" },
+      // Everything starts at zero — your own workouts fill it in
       biometrics: {
-        caloriesBurnt: 1840,
+        caloriesBurnt: 0,
         calorieGoal: 2400,
-        waterMl: 2500,
-        waterGoal: 3500,
-        proteinG: 145,
-        proteinGoal: 180,
-        steps: 9420,
-        liveHR: 68,
-        sleepHours: 7.8,
-        restingHR: 54,
-        soreness: 3,
-        streakDays: 18,
-        weeklyBurn: [1720, 2150, 1490, 2380, 1960, 2240, 1840],
-        hrZonesMin: [28, 44, 31, 18, 7]
+        waterMl: 0,
+        waterGoal: 3000,
+        proteinG: 0,
+        proteinGoal: 150,
+        steps: 0,
+        liveHR: 0,
+        sleepHours: 8,
+        restingHR: 60,
+        soreness: 1,
+        streakDays: 0,
+        weeklyBurn: [0, 0, 0, 0, 0, 0, 0],
+        hrZonesMin: [0, 0, 0, 0, 0]
       },
       workedMuscles: {
-        Chest: 84, Shoulders: 68, Biceps: 52, Forearms: 40, Core: 74, Obliques: 58,
-        Quads: 90, Traps: 62, Back: 78, Triceps: 66, Glutes: 86, Hamstrings: 72, Calves: 48
+        Chest: 0, Shoulders: 0, Biceps: 0, Forearms: 0, Core: 0, Obliques: 0,
+        Quads: 0, Traps: 0, Back: 0, Triceps: 0, Glutes: 0, Hamstrings: 0, Calves: 0
       },
-      muscleLastTrained: {
-        Chest: hoursAgoIso(52), Shoulders: hoursAgoIso(52), Biceps: hoursAgoIso(70), Forearms: hoursAgoIso(84),
-        Core: hoursAgoIso(34), Obliques: hoursAgoIso(40), Quads: hoursAgoIso(18), Traps: hoursAgoIso(62),
-        Back: hoursAgoIso(48), Triceps: hoursAgoIso(52), Glutes: hoursAgoIso(18), Hamstrings: hoursAgoIso(20), Calves: hoursAgoIso(30)
-      },
-      workoutHistory: [
-        { id: "wh1", date: isoDaysAgo(1), title: "Lower Body Power", region: "lower", durationSec: 3120, sets: 16, volumeLbs: 18420, burn: 490 },
-        { id: "wh2", date: isoDaysAgo(2), title: "Upper Body Hypertrophy", region: "upper", durationSec: 2880, sets: 15, volumeLbs: 14650, burn: 430 },
-        { id: "wh3", date: isoDaysAgo(4), title: "Middle Body & Core Blast", region: "middle", durationSec: 2100, sets: 12, volumeLbs: 6240, burn: 310 },
-        { id: "wh4", date: isoDaysAgo(6), title: "Full-Body Hybrid", region: "full", durationSec: 3420, sets: 18, volumeLbs: 19800, burn: 540 },
-        { id: "wh5", date: isoDaysAgo(8), title: "Upper Body Strength", region: "upper", durationSec: 2940, sets: 14, volumeLbs: 15100, burn: 420 },
-        { id: "wh6", date: isoDaysAgo(10), title: "Lower Body Glutes & Quads", region: "lower", durationSec: 3180, sets: 16, volumeLbs: 17950, burn: 510 },
-        { id: "wh7", date: isoDaysAgo(13), title: "Core & Conditioning", region: "middle", durationSec: 1980, sets: 12, volumeLbs: 5800, burn: 340 },
-        { id: "wh8", date: isoDaysAgo(16), title: "Upper Power Protocol", region: "upper", durationSec: 3000, sets: 15, volumeLbs: 14200, burn: 440 },
-        { id: "wh9", date: isoDaysAgo(19), title: "Lower Strength", region: "lower", durationSec: 3060, sets: 16, volumeLbs: 17300, burn: 480 },
-        { id: "wh10", date: isoDaysAgo(22), title: "Full-Body Hybrid", region: "full", durationSec: 3300, sets: 18, volumeLbs: 18900, burn: 520 },
-        { id: "wh11", date: isoDaysAgo(26), title: "Upper Body Pump", region: "upper", durationSec: 2700, sets: 14, volumeLbs: 13800, burn: 410 }
-      ],
+      muscleLastTrained: {},
+      workoutHistory: [],
+      // Starter list for the Strength Logger (no records yet)
       exercises: [
-        { id: "ex1", name: "Barbell Back Squat", muscle: "Quads", bestLbs: 315, reps: 5, rpe: 8.5, historyLbs: [285, 295, 305, 315] },
-        { id: "ex2", name: "Barbell Bench Press", muscle: "Chest", bestLbs: 225, reps: 6, rpe: 8.0, historyLbs: [205, 210, 220, 225] },
-        { id: "ex3", name: "Conventional Deadlift", muscle: "Glutes", bestLbs: 385, reps: 5, rpe: 9.0, historyLbs: [355, 365, 375, 385] },
-        { id: "ex4", name: "Weighted Pull-Up", muscle: "Back", bestLbs: 215, reps: 8, rpe: 8.0, historyLbs: [195, 200, 210, 215] }
+        { id: "ex1", name: "Barbell Back Squat", muscle: "Quads", bestLbs: 0, reps: 0, rpe: 8, historyLbs: [] },
+        { id: "ex2", name: "Barbell Bench Press", muscle: "Chest", bestLbs: 0, reps: 0, rpe: 8, historyLbs: [] },
+        { id: "ex3", name: "Conventional Deadlift", muscle: "Glutes", bestLbs: 0, reps: 0, rpe: 8, historyLbs: [] },
+        { id: "ex4", name: "Weighted Pull-Up", muscle: "Back", bestLbs: 0, reps: 0, rpe: 8, historyLbs: [] }
       ],
       workoutTemplates: [
         { id: "tpl1", title: "Mon // Upper Power Hypertrophy", region: "upper", focus: "Chest, Back & Shoulders", duration: "55m", estBurn: 420 },
         { id: "tpl2", title: "Wed // Lower Strength & Glutes", region: "lower", focus: "Quads, Hamstrings & Glutes", duration: "60m", estBurn: 510 },
         { id: "tpl3", title: "Fri // Middle Body & Core Conditioning", region: "middle", focus: "Core, Obliques & Stabilizers", duration: "45m", estBurn: 440 }
       ],
-      runs: [
-        { id: "r1", date: isoDaysAgo(0), route: "Lakeside Tempo Loop", distMiles: 4.20, paceSecPerMile: 448, avgHr: 164, bestPace: true },
-        { id: "r2", date: isoDaysAgo(2), route: "Harbor Zone 2 Cruise", distMiles: 6.10, paceSecPerMile: 512, avgHr: 142, bestPace: false },
-        { id: "r3", date: isoDaysAgo(5), route: "Track 400m Repeats", distMiles: 3.50, paceSecPerMile: 462, avgHr: 171, bestPace: false }
-      ],
-      fitnessTests: [
-        { date: isoDaysAgo(9), run15Mi: "09:42", pushups: 54, situps: 62, grade: "ELITE" },
-        { date: isoDaysAgo(27), run15Mi: "10:08", pushups: 48, situps: 55, grade: "EXCELLENT" }
-      ],
-      measurements: [
-        { date: isoDaysAgo(0), weightLbs: 181.5, waistIn: 31.4, chestIn: 42.2, armsIn: 16.1 },
-        { date: isoDaysAgo(28), weightLbs: 185.0, waistIn: 32.8, chestIn: 41.6, armsIn: 15.8 }
-      ],
+      runs: [],
+      fitnessTests: [],
+      measurements: [],
+      // Points & rank (also kept on the server when you have an account)
+      stats: { points: 0, workouts: 0, pending: [] },
+      objective: "bodybuilding",
+      socialView: "ranks",
+      leaderboardPeriod: "week",
+      dataVersion: 2,
       lastActiveDate: isoDaysAgo(0),
       macroProfile: { phase: "recomp" },
       photos: {
@@ -3479,6 +3648,15 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     function normalizeState(parsed) {
       const base = cloneObj(DEFAULT_STATE);
       if (!parsed || typeof parsed !== "object") return base;
+      // Version 2 starts everyone from zero: the old demo workouts, records, runs and
+      // measurements are cleared once. Settings, your name, photos and chats are kept.
+      if (parsed.dataVersion !== 2) {
+        const keep = {};
+        ["theme", "lang", "units", "prefs", "brand", "cloud", "profile", "chats", "messages", "selectedChatId", "photos", "activeTab", "gpsDemoMode"]
+          .forEach(k => { if (parsed[k] !== undefined) keep[k] = parsed[k]; });
+        keep.dataVersion = 2;
+        parsed = keep;
+      }
       const merged = {
         ...base,
         ...parsed,
@@ -3598,9 +3776,9 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
       const wm = {}, mlt = {};
       MUSCLES.forEach(m => {
-        wm[m] = sNum(s.workedMuscles[m], base.workedMuscles[m] || 50, 0, 100);
+        wm[m] = sNum(s.workedMuscles[m], 0, 0, 100);
         const ts = sStr(s.muscleLastTrained[m], 40);
-        mlt[m] = Number.isFinite(Date.parse(ts)) ? ts : base.muscleLastTrained[m];
+        mlt[m] = Number.isFinite(Date.parse(ts)) ? ts : "";
       });
       s.workedMuscles = wm;
       s.muscleLastTrained = mlt;
@@ -3631,10 +3809,24 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         situps: Math.round(sNum(f.situps, 0, 0, 1000)), grade: sEnum(f.grade, ["ELITE", "EXCELLENT", "SOLID"], "SOLID")
       }));
       s.measurements = sArr(s.measurements, 1000, m => ({
-        date: sDate(m.date), weightLbs: sNum(m.weightLbs, 150, 20, 1500), waistIn: sNum(m.waistIn, 30, 5, 200),
-        chestIn: sNum(m.chestIn, 40, 5, 200), armsIn: sNum(m.armsIn, 14, 2, 100)
+        date: sDate(m.date), weightLbs: sNum(m.weightLbs, 0, 0, 1500), waistIn: sNum(m.waistIn, 0, 0, 200),
+        chestIn: sNum(m.chestIn, 0, 0, 200), armsIn: sNum(m.armsIn, 0, 0, 100)
       }));
-      if (!s.measurements.length) s.measurements = cloneObj(base.measurements);
+      s.measurements = s.measurements.filter(m => m.weightLbs > 0);
+      s.stats = {
+        points: Math.round(sNum(s.stats && s.stats.points, 0, 0, 1e8)),
+        workouts: Math.round(sNum(s.stats && s.stats.workouts, 0, 0, 1e6)),
+        pending: sArr(s.stats && s.stats.pending, 50, p => ({
+          ref: SAFE_ID_RE.test(String(p.ref || "")) ? p.ref : sId("", "act"),
+          kind: sEnum(p.kind, ["strength", "run", "hiit", "test"], "strength"),
+          sets: Math.round(sNum(p.sets, 0, 0, 200)), durationSec: Math.round(sNum(p.durationSec, 0, 0, 86400)),
+          distanceKm: sNum(p.distanceKm, 0, 0, 500), at: sStr(p.at, 40)
+        }))
+      };
+      s.objective = sEnum(s.objective, ["bodybuilding", "athlete"], "bodybuilding");
+      s.socialView = sEnum(s.socialView, ["ranks", "chat"], "ranks");
+      s.leaderboardPeriod = sEnum(s.leaderboardPeriod, ["week", "all"], "week");
+      s.dataVersion = 2;
       s.macroProfile = { phase: sEnum(s.macroProfile.phase, ["cut", "recomp", "bulk"], "recomp") };
 
       // Photos: only images stored inside the app (data:image/...) or the built-in placeholders
@@ -3733,6 +3925,84 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       let streak = 0;
       while (active.has(isoDaysAgo(start + streak))) streak++;
       return streak;
+    }
+
+    // ---------------------------------------------------------------------
+    // POINTS & RANKS
+    // Every finished workout, run, HIIT session or fitness test earns points.
+    // The same rules run on the server (apex_record_workout) so the leaderboard
+    // can't be faked by editing the app. Two ladders depending on your goal.
+    // ---------------------------------------------------------------------
+    const RANKS = {
+      bodybuilding: [
+        [0, "Rookie", "Novato", "🌱"], [300, "Gym regular", "Frequentador do ginásio", "🏋️"],
+        [1000, "Iron apprentice", "Aprendiz de ferro", "⚙️"], [2500, "Muscle builder", "Construtor muscular", "💪"],
+        [5000, "Physique athlete", "Atleta de físico", "🔥"], [9000, "Bodybuilding pro", "Profissional de culturismo", "🏆"],
+        [15000, "Bodybuilding legend", "Lenda do culturismo", "👑"]
+      ],
+      athlete: [
+        [0, "Rookie", "Novato", "🌱"], [300, "Active", "Ativo", "👟"],
+        [1000, "Amateur athlete", "Atleta amador", "🏃"], [2500, "Competitor", "Competidor", "🎽"],
+        [5000, "Semi-pro", "Semiprofissional", "⚡"], [9000, "Elite athlete", "Atleta de elite", "🏅"],
+        [15000, "Professional athlete", "Atleta profissional", "👑"]
+      ]
+    };
+    const OBJECTIVES = {
+      bodybuilding: { icon: "💪", en: "Build muscle", pt: "Ganhar músculo", endEn: "Bodybuilding legend", endPt: "Lenda do culturismo" },
+      athlete: { icon: "🏃", en: "Athletic performance", pt: "Desempenho atlético", endEn: "Professional athlete", endPt: "Atleta profissional" }
+    };
+
+    function rankFor(points, objective) {
+      const ladder = RANKS[objective] || RANKS.bodybuilding;
+      let idx = 0;
+      ladder.forEach((r, i) => { if (points >= r[0]) idx = i; });
+      const cur = ladder[idx];
+      const next = ladder[idx + 1] || null;
+      const progress = next ? Math.min(1, (points - cur[0]) / (next[0] - cur[0])) : 1;
+      return { idx, total: ladder.length, min: cur[0], name: tr(cur[1], cur[2]), icon: cur[3], next: next ? { at: next[0], name: tr(next[1], next[2]), icon: next[3] } : null, progress };
+    }
+
+    // Same formula and limits as the server
+    function activityPoints(kind, d = {}) {
+      if (kind === "strength") return 100 + Math.min(40, Math.max(0, Math.round(d.sets || 0))) * 5;
+      if (kind === "run") return 50 + Math.round(Math.min(42, Math.max(0, d.distanceKm || 0)) * 10);
+      if (kind === "hiit") return 60;
+      if (kind === "test") return 30;
+      return 0;
+    }
+    function activityEligible(kind, d = {}) {
+      if (kind === "strength") return (d.sets || 0) >= 3 && (d.durationSec || 0) >= 300;
+      if (kind === "run") return (d.distanceKm || 0) >= 0.5 && (d.durationSec || 0) >= 180 && (d.distanceKm / (d.durationSec / 3600)) <= 25;
+      if (kind === "hiit") return (d.durationSec || 0) >= 120;
+      return kind === "test";
+    }
+
+    function awardActivity(kind, detail = {}) {
+      if (!activityEligible(kind, detail)) {
+        showToast(tr("Saved — too short to earn points", "Guardado — curto demais para ganhar pontos"));
+        return 0;
+      }
+      const before = rankFor(state.stats.points, state.objective);
+      const pts = activityPoints(kind, detail);
+      state.stats.points += pts;
+      state.stats.workouts += 1;
+      state.stats.pending.push({
+        ref: "act_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
+        kind, sets: Math.round(detail.sets || 0), durationSec: Math.round(detail.durationSec || 0),
+        distanceKm: Math.round((detail.distanceKm || 0) * 100) / 100, at: new Date().toISOString()
+      });
+      saveState();
+      const after = rankFor(state.stats.points, state.objective);
+      setTimeout(() => {
+        spawnFloatDelta(`+${pts} ${tr("pts", "pts")} ⭐`, null, "var(--accent)");
+        if (after.idx > before.idx) {
+          SFX.pr();
+          celebrate(null, 140);
+          showToast(tr(`${after.icon} New rank: ${after.name}!`, `${after.icon} Nova patente: ${after.name}!`));
+        }
+      }, 900);
+      if (typeof syncPendingActivity === "function") syncPendingActivity();
+      return pts;
     }
 
     // Safely embed any string as a JS argument inside an onclick="..." attribute
@@ -4342,8 +4612,8 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       const todayMiles = state.runs.filter(r => r.date === todayIso).reduce((s, r) => s + r.distMiles, 0);
       document.getElementById("hud-dist-val").textContent = fmtDist(todayMiles);
       document.getElementById("hud-steps-val").textContent = b.steps.toLocaleString();
-      document.getElementById("hud-live-hr").textContent = `${b.liveHR} BPM`;
-      document.getElementById("spine-bpm").textContent = b.liveHR;
+      document.getElementById("hud-live-hr").textContent = b.liveHR ? `${b.liveHR} BPM` : "— BPM";
+      document.getElementById("spine-bpm").textContent = b.liveHR || "—";
       const streak = computeStreakDays();
       const streakPill = document.getElementById("hero-streak-pill");
       streakPill.textContent = `🔥 ${streak}`;
@@ -4395,6 +4665,17 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         subEl.textContent = tr(`${best.recovery}% recovered · ${state.sessionDuration || 45} min`, `${best.recovery}% recuperada · ${state.sessionDuration || 45} min`);
         btn.onclick = () => quickTrainRegion(best.id);
       }
+
+      // Rank progress (server totals when signed in, otherwise this phone's)
+      const pts = myPoints();
+      const rk = rankFor(pts, state.objective);
+      document.getElementById("hero-rank-icon").textContent = rk.icon;
+      document.getElementById("hero-rank-name").textContent = rk.name;
+      document.getElementById("hero-rank-points").textContent = `${pts.toLocaleString(state.lang === "pt" ? "pt-PT" : "en-US")} ${tr("pts", "pts")}`;
+      document.getElementById("hero-rank-bar").style.width = `${Math.round(rk.progress * 100)}%`;
+      document.getElementById("hero-rank-next").textContent = rk.next
+        ? tr(`${(rk.next.at - pts).toLocaleString("en-US")} pts to ${rk.next.name} ${rk.next.icon}`, `Faltam ${(rk.next.at - pts).toLocaleString("pt-PT")} pts para ${rk.next.name} ${rk.next.icon}`)
+        : tr("Top rank reached — legendary!", "Patente máxima — lendário!");
 
       // Week strip (Monday → Sunday); days with a workout or run get a ring
       const active = new Set([...(state.workoutHistory || []).map(w => w.date), ...(state.runs || []).map(r => r.date)]);
@@ -4459,7 +4740,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     const ALL_MODALS = [
       "quicklog-modal", "wearable-modal", "settings-modal", "demo-modal",
       "plate-modal", "hiit-modal", "mobility-modal", "workout-summary-modal",
-      "pr-modal", "cloud-modal", "print-report-modal"
+      "pr-modal", "cloud-modal", "print-report-modal", "account-modal"
     ];
 
     function toggleModal(id, open) {
@@ -5003,6 +5284,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
               hiitPhase = "done";
               hiitSecLeft = 0;
               const estBurn = Math.round(((hiitWorkSec + hiitRestSec) * hiitTotalRounds) / 60 * 14);
+              awardActivity("hiit", { durationSec: (hiitWorkSec + hiitRestSec) * hiitTotalRounds });
               state.biometrics.caloriesBurnt += estBurn;
               state.biometrics.weeklyBurn[6] += estBurn;
               state.biometrics.hrZonesMin[3] += Math.max(2, Math.round((hiitWorkSec * hiitTotalRounds) / 60));
@@ -5231,7 +5513,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         case "endurance": container.innerHTML = title + renderEnduranceView(); break;
         case "body": container.innerHTML = title + renderBodyView(); break;
         case "roster":
-          container.innerHTML = title + renderRosterView();
+          container.innerHTML = title + renderSocialView();
           const feed = document.getElementById("chat-feed");
           if (feed) feed.scrollTop = feed.scrollHeight;
           break;
@@ -5244,7 +5526,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         strength: [tr("Your muscles", "Os seus músculos"), tr("Tap a muscle to see exercises, or start a guided session.", "Toque num músculo para ver exercícios ou comece uma sessão guiada.")],
         endurance: [tr("Cardio & runs", "Cardio e corridas"), tr("Track a run, do intervals or test your fitness.", "Registe uma corrida, faça intervalos ou teste a sua forma.")],
         body: [tr("Your body", "O seu corpo"), tr("Photos, measurements and your nutrition targets.", "Fotos, medidas e as suas metas de nutrição.")],
-        roster: [tr("Chat", "Conversas"), tr("Talk with your coach or your clients.", "Fale com o seu treinador ou com os seus clientes.")]
+        roster: [tr("Community", "Comunidade"), tr("Compete on the leaderboard and chat with your coach or clients.", "Compita na classificação e fale com o seu treinador ou clientes.")]
       }[tab];
       if (!t) return "";
       const initials = ((state.profile && state.profile.name) || "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "🙂";
@@ -5921,6 +6203,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         burn: estBurn
       });
       markMusclesTrained(liveWorkout.muscles);
+      awardActivity("strength", { sets: completedSets, durationSec });
       const newPRs = applyLiveWorkoutToLogger();
       state.biometrics.caloriesBurnt += Math.round(estBurn * 0.4);
       state.biometrics.weeklyBurn[6] += Math.round(estBurn * 0.4);
@@ -6545,7 +6828,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
                 <div class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
                   ${state.exercises.map(ex => {
-                    const nextTargetLbs = Math.round(ex.bestLbs * 1.025);
+                    const nextTargetLbs = ex.bestLbs > 0 ? Math.round(ex.bestLbs * 1.025) : 0;
                     return `
                       <div class="p-3 rounded-xl border space-y-2" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                         <div class="flex items-center justify-between gap-2">
@@ -6559,11 +6842,11 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
                             <button onclick="deleteExercise(${jsArg(ex.id)})" title="${tr("Remove exercise", "Remover exercício")}" class="text-[10px] opacity-45 hover:opacity-100 cursor-pointer px-1">✕</button>
                           </div>
                         </div>
-                        <div class="text-[10px] font-mono-num font-extrabold" style="color: var(--accent);">${tr("PR", "RECORDE")}: ${fmtWeight(ex.bestLbs)} × ${ex.reps}</div>
+                        <div class="text-[10px] font-mono-num font-extrabold" style="color: var(--accent);">${ex.bestLbs > 0 ? `${tr("PR", "RECORDE")}: ${fmtWeight(ex.bestLbs)} × ${ex.reps}` : tr("No record yet", "Ainda sem recorde")}</div>
                         <div class="flex flex-wrap items-center gap-2">
-                          <input id="w-${ex.id}" type="number" min="1" step="0.5" value="${fmtWeightNum(nextTargetLbs)}" class="hud-input w-24 text-xs font-mono-num" />
+                          <input id="w-${ex.id}" type="number" min="1" step="0.5" value="${nextTargetLbs > 0 ? fmtWeightNum(nextTargetLbs) : ""}" placeholder="${tr("Weight", "Peso")}" class="hud-input w-24 text-xs font-mono-num" />
                           <span class="text-[10px] font-mono-num opacity-70">${unitLabel} ×</span>
-                          <input id="r-${ex.id}" type="number" min="1" value="${ex.reps}" class="hud-input w-16 text-xs font-mono-num" />
+                          <input id="r-${ex.id}" type="number" min="1" value="${ex.reps || 8}" class="hud-input w-16 text-xs font-mono-num" />
                           <button onclick="logSet(${jsArg(ex.id)}, this)" class="ml-auto px-3 py-2 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
                             ✓ ${isPt ? "REGISTAR" : "LOG SET"}
                           </button>
@@ -6955,6 +7238,8 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
             id: "r_" + Date.now(), date: localIsoDate(), route: state.gpsDemoMode ? tr("Simulated GPS route", "Percurso GPS simulado") : tr("GPS run", "Corrida GPS"),
             distMiles: Number(gpsMiles.toFixed(2)), paceSecPerMile: paceSec, avgHr: state.biometrics.liveHR || 158, bestPace: isPR
           });
+          // The indoor simulator never earns points
+          if (!state.gpsDemoMode) awardActivity("run", { distanceKm: gpsMiles * 1.60934, durationSec: gpsSeconds });
           const burn = Math.max(15, Math.round(gpsMiles * 115));
           state.biometrics.caloriesBurnt += burn;
           state.biometrics.weeklyBurn[6] += burn;
@@ -7116,6 +7401,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       const situps = parseInt(document.getElementById("ft-sit").value, 10) || 0;
       const grade = (pushups >= 50 && situps >= 60) ? "ELITE" : (pushups >= 35 && situps >= 45) ? "EXCELLENT" : "SOLID";
       state.fitnessTests.unshift({ date: localIsoDate(), run15Mi, pushups, situps, grade });
+      awardActivity("test", {});
       saveState();
       renderWorkspace();
       SFX.sessionComplete(); celebrate(null, 60); showToast(`${tr("TEST SAVED // GRADE", "TESTE GUARDADO // NÍVEL")}: ${gradeName(grade)}`);
@@ -7128,7 +7414,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     function renderBodyView() {
       const isPt = state.lang === "pt";
-      const cur = state.measurements[0];
+      const cur = state.measurements[0] || { weightLbs: 0, waistIn: 0, chestIn: 0, armsIn: 0 };
       const prev = state.measurements[1] || cur;
       const wDeltaLbs = cur.weightLbs - prev.weightLbs;
       const waistDeltaIn = cur.waistIn - prev.waistIn;
@@ -7178,31 +7464,31 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono-num">
                 <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                   <div class="text-[10px] opacity-65">${isPt ? "PESO" : "WEIGHT"}</div>
-                  <div class="text-sm font-extrabold">${fmtWeight(cur.weightLbs)}</div>
-                  <div class="text-[10px]" style="color: var(--accent);">${fmtWeightDelta(wDeltaLbs)}</div>
+                  <div class="text-sm font-extrabold">${cur.weightLbs ? fmtWeight(cur.weightLbs) : "—"}</div>
+                  <div class="text-[10px]" style="color: var(--accent);">${state.measurements.length > 1 ? fmtWeightDelta(wDeltaLbs) : ""}</div>
                 </div>
                 <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                   <div class="text-[10px] opacity-65">${isPt ? "CINTURA" : "WAIST"}</div>
-                  <div class="text-sm font-extrabold">${fmtLength(cur.waistIn)}</div>
-                  <div class="text-[10px]" style="color: var(--accent);">${fmtLengthDelta(waistDeltaIn)}</div>
+                  <div class="text-sm font-extrabold">${cur.waistIn ? fmtLength(cur.waistIn) : "—"}</div>
+                  <div class="text-[10px]" style="color: var(--accent);">${state.measurements.length > 1 ? fmtLengthDelta(waistDeltaIn) : ""}</div>
                 </div>
                 <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                   <div class="text-[10px] opacity-65">${isPt ? "PEITORAL" : "CHEST"}</div>
-                  <div class="text-sm font-extrabold">${fmtLength(cur.chestIn)}</div>
-                  <div class="text-[10px]" style="color: var(--accent-2);">${fmtLengthDelta(chestDeltaIn)}</div>
+                  <div class="text-sm font-extrabold">${cur.chestIn ? fmtLength(cur.chestIn) : "—"}</div>
+                  <div class="text-[10px]" style="color: var(--accent-2);">${state.measurements.length > 1 ? fmtLengthDelta(chestDeltaIn) : ""}</div>
                 </div>
                 <div class="p-3 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                   <div class="text-[10px] opacity-65">${isPt ? "BRAÇOS" : "ARMS"}</div>
-                  <div class="text-sm font-extrabold">${fmtLength(cur.armsIn)}</div>
-                  <div class="text-[10px]" style="color: var(--accent-2);">${fmtLengthDelta(armsDeltaIn)}</div>
+                  <div class="text-sm font-extrabold">${cur.armsIn ? fmtLength(cur.armsIn) : "—"}</div>
+                  <div class="text-[10px]" style="color: var(--accent-2);">${state.measurements.length > 1 ? fmtLengthDelta(armsDeltaIn) : ""}</div>
                 </div>
               </div>
 
               <form onsubmit="logBodyMeasurement(event)" class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t text-xs font-mono-num" style="border-color: var(--border-hairline);">
-                <input id="bm-weight" type="number" step="0.1" value="${fmtWeightNum(cur.weightLbs)}" placeholder="${isPt ? 'Peso' : 'Weight'} (${wtUnit})" class="hud-input text-xs" />
-                <input id="bm-waist" type="number" step="0.1" value="${fmtLengthNum(cur.waistIn)}" placeholder="${isPt ? 'Cintura' : 'Waist'} (${lenUnit})" class="hud-input text-xs" />
-                <input id="bm-chest" type="number" step="0.1" value="${fmtLengthNum(cur.chestIn)}" placeholder="${isPt ? 'Peitoral' : 'Chest'} (${lenUnit})" class="hud-input text-xs" />
-                <input id="bm-arms" type="number" step="0.1" value="${fmtLengthNum(cur.armsIn)}" placeholder="${isPt ? 'Braços' : 'Arms'} (${lenUnit})" class="hud-input text-xs" />
+                <input id="bm-weight" type="number" step="0.1" value="${cur.weightLbs ? fmtWeightNum(cur.weightLbs) : ""}" placeholder="${isPt ? 'Peso' : 'Weight'} (${wtUnit})" class="hud-input text-xs" />
+                <input id="bm-waist" type="number" step="0.1" value="${cur.waistIn ? fmtLengthNum(cur.waistIn) : ""}" placeholder="${isPt ? 'Cintura' : 'Waist'} (${lenUnit})" class="hud-input text-xs" />
+                <input id="bm-chest" type="number" step="0.1" value="${cur.chestIn ? fmtLengthNum(cur.chestIn) : ""}" placeholder="${isPt ? 'Peitoral' : 'Chest'} (${lenUnit})" class="hud-input text-xs" />
+                <input id="bm-arms" type="number" step="0.1" value="${cur.armsIn ? fmtLengthNum(cur.armsIn) : ""}" placeholder="${isPt ? 'Braços' : 'Arms'} (${lenUnit})" class="hud-input text-xs" />
                 <button type="submit" class="btn-accent rounded-xl py-2 font-bold cursor-pointer">+ ${tr("LOG", "REGISTAR")}</button>
               </form>
             </div>
@@ -7290,7 +7576,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     function setMacroPhase(phase) {
       state.macroProfile.phase = phase;
-      recalculateMacrosForWeight(state.measurements[0].weightLbs);
+      recalculateMacrosForWeight((state.measurements[0] && state.measurements[0].weightLbs) || 165);
       saveState();
       updateHeroHUD();
       renderWorkspace();
@@ -7308,9 +7594,9 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       state.measurements.unshift({
         date: localIsoDate(),
         weightLbs: wLbs,
-        waistIn: Number.isFinite(waist) && waist > 0 ? waist : state.measurements[0].waistIn,
-        chestIn: Number.isFinite(chest) && chest > 0 ? chest : state.measurements[0].chestIn,
-        armsIn: Number.isFinite(arms) && arms > 0 ? arms : state.measurements[0].armsIn
+        waistIn: Number.isFinite(waist) && waist > 0 ? waist : ((state.measurements[0] || {}).waistIn || 0),
+        chestIn: Number.isFinite(chest) && chest > 0 ? chest : ((state.measurements[0] || {}).chestIn || 0),
+        armsIn: Number.isFinite(arms) && arms > 0 ? arms : ((state.measurements[0] || {}).armsIn || 0)
       });
       recalculateMacrosForWeight(wLbs);
       saveState();
@@ -7481,13 +7767,17 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       supabaseClient = null;
       if (!cfg.url || !cfg.anonKey || !window.supabase || !SUPABASE_URL_RE.test(cfg.url)) {
         cloudStatus = "off";
+        authUser = null;
+        authProfile = null;
+        refreshAccountUI();
         return;
       }
       try {
         cloudStatus = "connecting";
-        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "apexcoach-auth" } });
         (state.chats || []).forEach(upgradeChat);
         saveState();
+        await initAuth();
         await syncAllChats();
       } catch (err) {
         cloudStatus = "error";
@@ -7654,7 +7944,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       clearInterval(chatPollTimer);
       // Safety net in case a ping is missed (phone asleep, network switch)
       chatPollTimer = setInterval(() => {
-        if (document.visibilityState === "visible" && supabaseClient) syncAllChats();
+        if (document.visibilityState === "visible" && supabaseClient) { syncAllChats(); syncPendingActivity(); }
       }, 15000);
     }
 
@@ -7996,7 +8286,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     // Your own progress report (printable / save as PDF to share with a coach)
     function openClientReport() {
-      const curM = state.measurements[0];
+      const curM = state.measurements[0] || { weightLbs: 0, waistIn: 0 };
       const name = (state.profile && state.profile.name) || tr("Athlete", "Atleta");
       document.getElementById("report-studio-name").textContent = `${state.brand.name} // ${tr("PROGRESS REPORT", "RELATÓRIO DE PROGRESSO")}`;
       document.getElementById("report-client-name").textContent = name;
@@ -8094,6 +8384,536 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       SFX.sessionStart();
       toggleModal("settings-modal", false);
       showToast(tr("DATA RESET TO THE STARTING DEMO", "DADOS REPOSTOS PARA A DEMONSTRAÇÃO INICIAL"));
+    }
+
+    // =========================================================================
+    // 5B-2. ACCOUNTS (Supabase Auth) & LEADERBOARD
+    //   • Sign up with name + email + password + goal. Supabase emails a
+    //     confirmation link; until it is clicked you can't sign in or score.
+    //   • Points are recorded with apex_record_workout, which re-checks the rules
+    //     on the server (limits per day, minimum length, server-side points).
+    //   • The leaderboard shows display names and totals only — never emails.
+    // =========================================================================
+    let authUser = null;          // signed-in Supabase user (email confirmed)
+    let authProfile = null;       // { display_name, objective, points, workouts }
+    let accountView = "signup";   // signup | signin | check-email | reset | profile
+    let accountPendingEmail = "";
+    let accountBusy = false;
+    let accountMsg = "";
+    let leaderboardRows = null;   // last loaded rows
+    let leaderboardError = "";
+    let leaderboardLoading = false;
+    let authListenerReady = false;
+
+    const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,190}\.[^\s@]{2,24}$/;
+
+    function myPoints() {
+      return authProfile ? Math.max(authProfile.points || 0, 0) : state.stats.points;
+    }
+    function myWorkouts() {
+      return authProfile ? authProfile.workouts || 0 : state.stats.workouts;
+    }
+    function initialsOf(name) {
+      return String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "🙂";
+    }
+
+    function authErrorText(error) {
+      const m = String((error && (error.message || error.error_description)) || error || "");
+      if (/not confirmed/i.test(m)) return "unconfirmed";
+      if (/invalid login|invalid credentials/i.test(m)) return tr("Wrong email or password.", "Email ou palavra-passe errados.");
+      if (/rate|too many|security purposes/i.test(m)) return tr("Too many attempts — wait a minute and try again.", "Demasiadas tentativas — aguarde um minuto e tente de novo.");
+      if (/password/i.test(m)) return tr("That password isn't accepted. Use at least 8 characters with letters and numbers.", "Essa palavra-passe não é aceite. Use pelo menos 8 caracteres com letras e números.");
+      if (/limit/i.test(m)) return tr("Daily limit reached — points will be added tomorrow.", "Limite diário atingido — os pontos serão adicionados amanhã.");
+      return m.slice(0, 160) || tr("Something went wrong. Check your connection.", "Algo correu mal. Verifique a ligação.");
+    }
+
+    // Called after the Supabase client is created
+    async function initAuth() {
+      if (!supabaseClient || !supabaseClient.auth) { authUser = null; authProfile = null; return; }
+      if (!authListenerReady) {
+        authListenerReady = true;
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+          const user = session && session.user;
+          setTimeout(() => applyAuthUser(user || null), 0);
+        });
+      }
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        await applyAuthUser(data && data.session ? data.session.user : null);
+      } catch (e) {}
+    }
+
+    async function applyAuthUser(user) {
+      const confirmed = user && (user.email_confirmed_at || user.confirmed_at);
+      authUser = confirmed ? user : null;
+      if (!authUser) { authProfile = null; refreshAccountUI(); return; }
+      await loadMyProfile();
+      await syncPendingActivity();
+      refreshAccountUI();
+    }
+
+    async function loadMyProfile() {
+      if (!supabaseClient || !authUser) return;
+      const { data, error } = await supabaseClient.rpc("apex_my_profile");
+      if (!error && data) {
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) {
+          authProfile = {
+            display_name: sStr(row.display_name, 30), objective: sEnum(row.objective, ["bodybuilding", "athlete"], "bodybuilding"),
+            points: Math.round(sNum(row.points, 0, 0, 1e8)), workouts: Math.round(sNum(row.workouts, 0, 0, 1e6))
+          };
+          state.objective = authProfile.objective;
+          if (!state.profile.name && authProfile.display_name) state.profile.name = authProfile.display_name;
+          saveState();
+        }
+      }
+    }
+
+    // Upload activities earned on this phone (deduplicated on the server by their ref)
+    let syncingActivity = false;
+    async function syncPendingActivity() {
+      if (syncingActivity || !supabaseClient || !authUser || !state.stats.pending.length) return;
+      syncingActivity = true;
+      try {
+        for (const p of [...state.stats.pending]) {
+          const { data, error } = await supabaseClient.rpc("apex_record_workout", {
+            p_ref: p.ref, p_kind: p.kind, p_sets: p.sets, p_duration_sec: p.durationSec, p_distance_km: p.distanceKm
+          });
+          if (error) {
+            const msg = String(error.message || "");
+            // Rejected by the rules (too short, already counted): drop it so it doesn't retry forever.
+            // Daily limit, offline or server problems: keep it and try again later.
+            if (/not eligible|duplicate/i.test(msg)) state.stats.pending = state.stats.pending.filter(x => x.ref !== p.ref);
+            else break;
+          } else {
+            state.stats.pending = state.stats.pending.filter(x => x.ref !== p.ref);
+            const row = Array.isArray(data) ? data[0] : data;
+            if (row && authProfile) { authProfile.points = row.points; authProfile.workouts = row.workouts; }
+          }
+        }
+        saveState();
+      } finally {
+        syncingActivity = false;
+      }
+      leaderboardRows = null;
+      refreshAccountUI();
+    }
+
+    function refreshAccountUI() {
+      const t = document.getElementById("settings-account-sub");
+      if (t) t.textContent = authUser
+        ? `${authProfile ? authProfile.display_name : ""} · ${authUser.email}`
+        : (supabaseClient ? tr("Sign up to join the leaderboard", "Crie conta para entrar na classificação") : tr("Needs the online server", "Precisa do servidor online"));
+      if (!document.getElementById("account-modal").classList.contains("hidden")) renderAccountModal();
+      updateHeroHUD();
+      if (state.activeTab === "roster") renderWorkspace();
+    }
+
+    function openAccount(view) {
+      accountMsg = "";
+      accountView = authUser ? "profile" : (view || (accountPendingEmail ? "check-email" : "signup"));
+      renderAccountModal();
+      toggleModal("account-modal", true);
+    }
+
+    function setAccountView(v) {
+      accountMsg = "";
+      accountView = v;
+      SFX.click();
+      renderAccountModal();
+    }
+
+    function renderAccountModal() {
+      const el = document.getElementById("account-body");
+      if (!el) return;
+      // Keep what the person already typed (name/email) when the form redraws, e.g. to show an error
+      const typed = { name: el.querySelector("#acc-name")?.value, email: el.querySelector("#acc-email")?.value };
+      renderAccountModalInner(el);
+      if (typed.name !== undefined && el.querySelector("#acc-name") && accountView !== "profile") el.querySelector("#acc-name").value = typed.name;
+      if (typed.email && el.querySelector("#acc-email")) el.querySelector("#acc-email").value = typed.email;
+    }
+
+    function renderAccountModalInner(el) {
+      if (!supabaseClient) {
+        el.innerHTML = `
+          <div class="space-y-3 text-sm">
+            <p style="color: var(--text-secondary);">${tr("Accounts, the leaderboard and chat between phones need the online server. It hasn't been set up in this version of the app yet.", "Contas, classificação e chat entre telemóveis precisam do servidor online. Ainda não foi configurado nesta versão da app.")}</p>
+            <button onclick="toggleModal('account-modal', false); toggleModal('cloud-modal', true)" class="w-full py-3 btn-accent cursor-pointer">${tr("Server settings", "Definições do servidor")}</button>
+          </div>`;
+        return;
+      }
+      const msg = accountMsg ? `<div class="text-sm rounded-2xl px-3 py-2" style="background: color-mix(in srgb, var(--accent-3) 14%, transparent); color: var(--text-primary);">${escapeHtml(accountMsg)}</div>` : "";
+      const busy = accountBusy ? "opacity-60 pointer-events-none" : "";
+      const input = (id, type, label, extra = "") => `
+        <label class="block space-y-1">
+          <span class="text-xs" style="color: var(--text-secondary);">${label}</span>
+          <input id="${id}" type="${type}" class="hud-input w-full text-sm" ${extra} />
+        </label>`;
+      const objectivePicker = (selected) => `
+        <div class="space-y-1">
+          <span class="text-xs" style="color: var(--text-secondary);">${tr("Your goal", "O seu objetivo")}</span>
+          <div class="grid grid-cols-2 gap-2">
+            ${Object.entries(OBJECTIVES).map(([k, o]) => `
+              <button type="button" onclick="pickObjective('${k}')" data-objective="${k}" class="seg-btn p-3 text-left cursor-pointer ${selected === k ? "active" : ""}">
+                <span class="block text-lg">${o.icon}</span>
+                <span class="block text-sm font-semibold">${tr(o.en, o.pt)}</span>
+                <span class="block text-[11px] opacity-70">${tr("Rookie → " + o.endEn, "Novato → " + o.endPt)}</span>
+              </button>`).join("")}
+          </div>
+        </div>`;
+
+      if (accountView === "profile" && authUser) {
+        const p = authProfile || { display_name: "", objective: state.objective, points: 0, workouts: 0 };
+        const rk = rankFor(p.points, p.objective);
+        el.innerHTML = `
+          <div class="space-y-4 ${busy}">
+            <div class="flex items-center gap-3">
+              <span class="avatar-ring"><span class="keep-caps w-14 h-14 rounded-full flex items-center justify-center font-display text-lg font-semibold" style="background: var(--surface-solid); color: var(--accent);">${escapeHtml(initialsOf(p.display_name))}</span></span>
+              <div class="min-w-0">
+                <div class="font-display text-lg font-semibold truncate">${escapeHtml(p.display_name)}</div>
+                <div class="text-xs truncate" style="color: var(--text-secondary);">${escapeHtml(authUser.email)} · ✅ ${tr("confirmed", "confirmado")}</div>
+              </div>
+            </div>
+            <div class="rounded-3xl p-4 space-y-2" style="background: var(--surface-solid);">
+              <div class="flex items-center justify-between"><span class="font-semibold">${rk.icon} ${escapeHtml(rk.name)}</span><span class="text-sm font-mono-num">${p.points.toLocaleString()} ${tr("pts", "pts")}</span></div>
+              <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--border-hairline);"><div class="h-full rounded-full" style="width: ${Math.round(rk.progress * 100)}%; background: linear-gradient(90deg, var(--accent), var(--accent-deep));"></div></div>
+              <div class="text-xs" style="color: var(--text-secondary);">${p.workouts} ${tr("workouts", "treinos")} · ${rk.next ? tr(`${rk.next.at - p.points} pts to ${rk.next.name}`, `faltam ${rk.next.at - p.points} pts para ${rk.next.name}`) : tr("Top rank!", "Patente máxima!")}</div>
+            </div>
+            ${input("acc-name", "text", tr("Name on the leaderboard", "Nome na classificação"), `maxlength="30" value="${escapeHtml(p.display_name)}"`)}
+            ${objectivePicker(p.objective)}
+            ${msg}
+            <button onclick="saveAccountProfile()" class="w-full py-3 btn-accent cursor-pointer">${tr("Save", "Guardar")}</button>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <button onclick="signOutAccount()" class="btn-ghost py-2.5 rounded-full border cursor-pointer" style="border-color: var(--border-strong);">${tr("Sign out", "Terminar sessão")}</button>
+              <button onclick="deleteAccount()" class="btn-ghost py-2.5 rounded-full border cursor-pointer" style="border-color: color-mix(in srgb, var(--accent-3) 50%, transparent); color: var(--accent-3);">${tr("Delete account", "Eliminar conta")}</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      if (accountView === "check-email") {
+        el.innerHTML = `
+          <div class="space-y-4 text-center ${busy}">
+            <div class="text-5xl">📬</div>
+            <div class="font-display text-lg font-semibold">${tr("Confirm your email", "Confirme o seu email")}</div>
+            <p class="text-sm" style="color: var(--text-secondary);">${tr(`We sent a link to <strong>${escapeHtml(accountPendingEmail)}</strong>. Open it to confirm your account, then come back and sign in.`, `Enviámos um link para <strong>${escapeHtml(accountPendingEmail)}</strong>. Abra-o para confirmar a conta e depois volte e inicie sessão.`)}</p>
+            ${msg}
+            <button onclick="setAccountView('signin')" class="w-full py-3 btn-accent cursor-pointer">${tr("I've confirmed — sign in", "Já confirmei — iniciar sessão")}</button>
+            <button onclick="resendConfirmation()" class="w-full text-sm underline cursor-pointer" style="color: var(--text-secondary);">${tr("Didn't get it? Send again", "Não recebeu? Enviar de novo")}</button>
+          </div>`;
+        return;
+      }
+
+      if (accountView === "reset") {
+        el.innerHTML = `
+          <form onsubmit="sendPasswordReset(event)" class="space-y-4 ${busy}">
+            <p class="text-sm" style="color: var(--text-secondary);">${tr("Enter your email and we'll send you a link to choose a new password.", "Introduza o seu email e enviamos um link para escolher uma nova palavra-passe.")}</p>
+            ${input("acc-email", "email", "Email", `autocomplete="email" required value="${escapeHtml(accountPendingEmail)}"`)}
+            ${msg}
+            <button type="submit" class="w-full py-3 btn-accent cursor-pointer">${tr("Send reset link", "Enviar link")}</button>
+            <button type="button" onclick="setAccountView('signin')" class="w-full text-sm underline cursor-pointer" style="color: var(--text-secondary);">${tr("Back to sign in", "Voltar a iniciar sessão")}</button>
+          </form>`;
+        return;
+      }
+
+      const isUp = accountView !== "signin";
+      el.innerHTML = `
+        <div class="grid grid-cols-2 gap-1 p-1 rounded-full mb-4" style="background: var(--surface-solid);">
+          <button onclick="setAccountView('signup')" class="py-2 rounded-full text-sm font-semibold cursor-pointer ${isUp ? "btn-accent" : ""}">${tr("Create account", "Criar conta")}</button>
+          <button onclick="setAccountView('signin')" class="py-2 rounded-full text-sm font-semibold cursor-pointer ${!isUp ? "btn-accent" : ""}">${tr("Sign in", "Entrar")}</button>
+        </div>
+        <form onsubmit="${isUp ? "signUpAccount(event)" : "signInAccount(event)"}" class="space-y-3 ${busy}">
+          ${isUp ? input("acc-name", "text", tr("Your name (shown on the leaderboard)", "O seu nome (aparece na classificação)"), `maxlength="30" autocomplete="nickname" required value="${escapeHtml(state.profile.name || "")}"`) : ""}
+          ${input("acc-email", "email", "Email", `autocomplete="email" required value="${escapeHtml(accountPendingEmail)}"`)}
+          ${input("acc-password", "password", tr("Password (8+ characters, letters and numbers)", "Palavra-passe (8+ caracteres, letras e números)"), `minlength="8" autocomplete="${isUp ? "new-password" : "current-password"}" required`)}
+          ${isUp ? objectivePicker(state.objective) : ""}
+          ${msg}
+          <button type="submit" class="w-full py-3 btn-accent cursor-pointer">${isUp ? tr("Create account", "Criar conta") : tr("Sign in", "Entrar")}</button>
+          ${isUp
+            ? `<p class="text-[11px] text-center" style="color: var(--text-muted);">${tr("We only use your email to sign in. Other people only see your name, rank and workouts.", "O email só serve para iniciar sessão. Os outros só veem o seu nome, patente e treinos.")}</p>`
+            : `<button type="button" onclick="setAccountView('reset')" class="w-full text-sm underline cursor-pointer" style="color: var(--text-secondary);">${tr("Forgot your password?", "Esqueceu a palavra-passe?")}</button>`}
+        </form>`;
+    }
+
+    function pickObjective(k) {
+      if (!OBJECTIVES[k]) return;
+      state.objective = k;
+      saveState();
+      SFX.click();
+      document.querySelectorAll("[data-objective]").forEach(b => b.classList.toggle("active", b.dataset.objective === k));
+    }
+
+    async function withAccountBusy(fn) {
+      if (accountBusy) return;
+      accountBusy = true;
+      renderAccountModal();
+      try { await fn(); } finally { accountBusy = false; renderAccountModal(); }
+    }
+
+    function readAccountForm() {
+      return {
+        name: (document.getElementById("acc-name")?.value || "").trim().replace(/\s+/g, " "),
+        email: (document.getElementById("acc-email")?.value || "").trim().toLowerCase(),
+        password: document.getElementById("acc-password")?.value || ""
+      };
+    }
+
+    async function signUpAccount(e) {
+      e.preventDefault();
+      const f = readAccountForm();
+      if (f.name.length < 2 || f.name.length > 30 || /[<>]/.test(f.name)) { accountMsg = tr("Use a name of 2–30 characters.", "Use um nome com 2 a 30 caracteres."); renderAccountModal(); return; }
+      if (!EMAIL_RE.test(f.email)) { accountMsg = tr("That email doesn't look right.", "Esse email não parece correto."); renderAccountModal(); return; }
+      if (f.password.length < 8 || !/[A-Za-z]/.test(f.password) || !/\d/.test(f.password)) { accountMsg = tr("Use at least 8 characters with letters and numbers.", "Use pelo menos 8 caracteres com letras e números."); renderAccountModal(); return; }
+      await withAccountBusy(async () => {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: f.email, password: f.password,
+          options: { data: { display_name: f.name, objective: state.objective } }
+        });
+        if (error) { accountMsg = authErrorText(error); return; }
+        state.profile.name = state.profile.name || f.name;
+        saveState();
+        accountPendingEmail = f.email;
+        accountMsg = "";
+        // With email confirmation on, Supabase returns no session until the link is clicked
+        if (data && data.session && data.user && (data.user.email_confirmed_at || data.user.confirmed_at)) {
+          await applyAuthUser(data.user);
+          accountView = "profile";
+        } else {
+          accountView = "check-email";
+        }
+        SFX.reward();
+      });
+    }
+
+    async function signInAccount(e) {
+      e.preventDefault();
+      const f = readAccountForm();
+      if (!EMAIL_RE.test(f.email) || !f.password) { accountMsg = tr("Enter your email and password.", "Introduza o email e a palavra-passe."); renderAccountModal(); return; }
+      await withAccountBusy(async () => {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email: f.email, password: f.password });
+        if (error) {
+          const t = authErrorText(error);
+          if (t === "unconfirmed") { accountPendingEmail = f.email; accountView = "check-email"; accountMsg = tr("Your email isn't confirmed yet.", "O seu email ainda não está confirmado."); }
+          else accountMsg = t;
+          return;
+        }
+        accountPendingEmail = "";
+        await applyAuthUser(data.user);
+        accountView = "profile";
+        SFX.reward();
+        showToast(tr("👋 Signed in", "👋 Sessão iniciada"));
+      });
+    }
+
+    async function resendConfirmation() {
+      if (!accountPendingEmail) return;
+      await withAccountBusy(async () => {
+        const { error } = await supabaseClient.auth.resend({ type: "signup", email: accountPendingEmail });
+        accountMsg = error ? authErrorText(error) : tr("Sent again — check your inbox and spam folder.", "Enviado de novo — veja a caixa de entrada e o spam.");
+      });
+    }
+
+    async function sendPasswordReset(e) {
+      e.preventDefault();
+      const f = readAccountForm();
+      if (!EMAIL_RE.test(f.email)) { accountMsg = tr("That email doesn't look right.", "Esse email não parece correto."); renderAccountModal(); return; }
+      await withAccountBusy(async () => {
+        await supabaseClient.auth.resetPasswordForEmail(f.email);
+        // Same answer whether or not the email exists (doesn't reveal who has an account)
+        accountMsg = tr("If that email has an account, a reset link is on its way.", "Se esse email tiver conta, o link já vai a caminho.");
+      });
+    }
+
+    async function saveAccountProfile() {
+      const f = readAccountForm();
+      if (f.name.length < 2 || f.name.length > 30 || /[<>]/.test(f.name)) { accountMsg = tr("Use a name of 2–30 characters.", "Use um nome com 2 a 30 caracteres."); renderAccountModal(); return; }
+      await withAccountBusy(async () => {
+        const { error } = await supabaseClient.rpc("apex_update_profile", { p_display_name: f.name, p_objective: state.objective });
+        if (error) { accountMsg = authErrorText(error); return; }
+        await loadMyProfile();
+        accountMsg = "";
+        showToast(tr("Profile saved", "Perfil guardado"));
+        refreshAccountUI();
+      });
+    }
+
+    async function signOutAccount() {
+      await withAccountBusy(async () => {
+        await supabaseClient.auth.signOut();
+        authUser = null;
+        authProfile = null;
+        accountView = "signin";
+        leaderboardRows = null;
+        showToast(tr("Signed out", "Sessão terminada"));
+        refreshAccountUI();
+      });
+    }
+
+    async function deleteAccount() {
+      const ok = window.confirm(tr(
+        "Delete your account? Your name, points and leaderboard history are removed from the server for good. Workouts saved on this phone stay.",
+        "Eliminar a conta? O nome, os pontos e o histórico na classificação são apagados do servidor para sempre. Os treinos guardados neste telemóvel ficam."));
+      if (!ok) return;
+      await withAccountBusy(async () => {
+        const { error } = await supabaseClient.rpc("apex_delete_account");
+        if (error) { accountMsg = authErrorText(error); return; }
+        await supabaseClient.auth.signOut();
+        authUser = null;
+        authProfile = null;
+        accountView = "signup";
+        showToast(tr("Account deleted", "Conta eliminada"));
+        refreshAccountUI();
+      });
+    }
+
+    // ---- Leaderboard ----
+    async function loadLeaderboard(force = false) {
+      if (!supabaseClient || !authUser || leaderboardLoading) return;
+      if (leaderboardRows && !force) return;
+      leaderboardLoading = true;
+      try {
+        const { data, error } = await supabaseClient.rpc("apex_leaderboard", { p_period: state.leaderboardPeriod });
+        if (error) { leaderboardError = authErrorText(error); leaderboardRows = []; }
+        else {
+          leaderboardError = "";
+          leaderboardRows = (Array.isArray(data) ? data : []).slice(0, 101).map(r => ({
+            rank: Math.round(sNum(r.rank, 0, 0, 1e7)), name: sStr(r.display_name, 30, "?"),
+            objective: sEnum(r.objective, ["bodybuilding", "athlete"], "bodybuilding"),
+            workouts: Math.round(sNum(r.workouts, 0, 0, 1e6)), points: Math.round(sNum(r.points, 0, 0, 1e8)), me: r.is_me === true
+          }));
+        }
+      } finally {
+        leaderboardLoading = false;
+      }
+      if (state.activeTab === "roster" && state.socialView === "ranks") renderWorkspace();
+    }
+
+    function setLeaderboardPeriod(p) {
+      state.leaderboardPeriod = p === "all" ? "all" : "week";
+      saveState();
+      SFX.click();
+      leaderboardRows = null;
+      renderWorkspace();
+      loadLeaderboard(true);
+    }
+
+    function setSocialView(v) {
+      state.socialView = v === "chat" ? "chat" : "ranks";
+      saveState();
+      SFX.click();
+      renderWorkspace();
+    }
+
+    function renderRankCard() {
+      const pts = myPoints();
+      const rk = rankFor(pts, state.objective);
+      const ladder = RANKS[state.objective] || RANKS.bodybuilding;
+      return `
+        <div class="hud-panel p-5 space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0" style="background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 30%, transparent), transparent);">${rk.icon}</span>
+            <div class="min-w-0 flex-1">
+              <div class="text-xs" style="color: var(--text-secondary);">${tr("Your rank", "A sua patente")} · ${escapeHtml(tr(OBJECTIVES[state.objective].en, OBJECTIVES[state.objective].pt))}</div>
+              <div class="font-display text-xl font-semibold truncate">${escapeHtml(rk.name)}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-semibold font-mono-num">${pts.toLocaleString()}</div>
+              <div class="text-xs" style="color: var(--text-secondary);">${tr("points", "pontos")}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            ${ladder.map((r, i) => `<span title="${escapeHtml(tr(r[1], r[2]))}" class="flex-1 h-2 rounded-full" style="background: ${i <= rk.idx ? "linear-gradient(90deg, var(--accent), var(--accent-deep))" : "var(--border-hairline)"};"></span>`).join("")}
+          </div>
+          <div class="text-sm" style="color: var(--text-secondary);">${rk.next
+            ? tr(`${(rk.next.at - pts).toLocaleString()} points to ${rk.next.icon} ${rk.next.name}. A full workout is worth 100–300.`, `Faltam ${(rk.next.at - pts).toLocaleString("pt-PT")} pontos para ${rk.next.icon} ${rk.next.name}. Um treino completo vale 100–300.`)
+            : tr("You reached the top of the ladder. Legendary!", "Chegou ao topo. Lendário!")}</div>
+        </div>`;
+    }
+
+    function renderPodiumAvatar(r, size) {
+      return `<span class="avatar-ring inline-block"><span class="keep-caps ${size} rounded-full flex items-center justify-center font-display font-semibold" style="background: var(--surface-solid); color: var(--accent);">${escapeHtml(initialsOf(r.name))}</span></span>`;
+    }
+
+    function renderLeaderboardView() {
+      if (!supabaseClient) {
+        return `${renderRankCard()}
+          <div class="hud-panel p-5 mt-4 text-sm" style="color: var(--text-secondary);">${tr("The leaderboard needs the online server, which isn't set up in this version yet. Your points are still counted on this phone.", "A classificação precisa do servidor online, que ainda não está configurado nesta versão. Os seus pontos continuam a contar neste telemóvel.")}</div>`;
+      }
+      if (!authUser) {
+        return `${renderRankCard()}
+          <div class="hud-panel p-6 mt-4 text-center space-y-3">
+            <div class="text-4xl">🏆</div>
+            <div class="font-display text-lg font-semibold">${tr("Compete with other people", "Compita com outras pessoas")}</div>
+            <p class="text-sm" style="color: var(--text-secondary);">${tr("Create a free account to appear on the leaderboard. Points you've earned on this phone come with you.", "Crie uma conta grátis para aparecer na classificação. Os pontos que já ganhou neste telemóvel vêm consigo.")}</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openAccount('signup')" class="py-3 btn-accent cursor-pointer">${tr("Create account", "Criar conta")}</button>
+              <button onclick="openAccount('signin')" class="py-3 btn-ghost rounded-full border cursor-pointer" style="border-color: var(--border-strong);">${tr("Sign in", "Entrar")}</button>
+            </div>
+          </div>`;
+      }
+      if (!leaderboardRows) setTimeout(() => loadLeaderboard(), 0);
+      const rows = leaderboardRows || [];
+      const top = [rows.find(r => r.rank === 1), rows.find(r => r.rank === 2), rows.find(r => r.rank === 3)];
+      const rest = rows.filter(r => r.rank > 3).slice(0, 50);
+      const me = rows.find(r => r.me);
+      const step = (r, place, h, bg) => r ? `
+        <div class="flex flex-col items-center justify-end gap-2 min-w-0">
+          <div class="relative">
+            ${renderPodiumAvatar(r, place === 1 ? "w-16 h-16 text-lg" : "w-12 h-12")}
+            <span class="absolute -bottom-1 -right-1 text-lg">${["🥇", "🥈", "🥉"][place - 1]}</span>
+          </div>
+          <div class="text-sm font-semibold text-center truncate max-w-full px-1 ${r.me ? "" : ""}" style="${r.me ? "color: var(--accent);" : ""}">${escapeHtml(r.name)}</div>
+          <div class="w-full rounded-t-3xl flex flex-col items-center justify-start pt-2" style="height: ${h}px; background: ${bg};">
+            <span class="font-display text-2xl font-semibold" style="color: rgba(0,0,0,0.75);">${place}</span>
+            <span class="text-[11px] font-medium" style="color: rgba(0,0,0,0.65);">${r.workouts} ${tr("workouts", "treinos")}</span>
+          </div>
+        </div>` : `<div></div>`;
+      const row = r => `
+        <div class="flex items-center gap-3 p-3 rounded-3xl" style="${r.me ? "background: linear-gradient(100deg, var(--accent), var(--accent-deep)); color: var(--accent-contrast);" : "background: var(--surface-solid);"}">
+          <span class="w-8 text-center font-mono-num font-semibold">${r.rank}</span>
+          ${renderPodiumAvatar(r, "w-10 h-10 text-sm")}
+          <div class="min-w-0 flex-1">
+            <div class="font-semibold truncate">${r.me ? tr("You · ", "Você · ") : ""}${escapeHtml(r.name)}</div>
+            <div class="text-xs opacity-75 truncate">${rankFor(r.points, r.objective).icon} ${escapeHtml(rankFor(r.points, r.objective).name)}</div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-lg font-semibold font-mono-num">${r.workouts}</div>
+            <div class="text-xs opacity-75">${tr("workouts", "treinos")}</div>
+          </div>
+        </div>`;
+      return `
+        ${renderRankCard()}
+        <div class="hud-panel p-5 mt-4 space-y-5">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="font-display text-lg font-semibold">${tr("Leaderboard", "Classificação")}</h3>
+            <div class="flex gap-1 p-1 rounded-full" style="background: var(--surface-solid);">
+              <button onclick="setLeaderboardPeriod('week')" class="px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer ${state.leaderboardPeriod === "week" ? "btn-accent" : ""}">${tr("This week", "Esta semana")}</button>
+              <button onclick="setLeaderboardPeriod('all')" class="px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer ${state.leaderboardPeriod === "all" ? "btn-accent" : ""}">${tr("All time", "Sempre")}</button>
+            </div>
+          </div>
+          ${leaderboardError ? `<div class="text-sm" style="color: var(--accent-3);">${escapeHtml(leaderboardError)}</div>` : ""}
+          ${!leaderboardRows ? `<div class="text-sm py-6 text-center" style="color: var(--text-secondary);">${tr("Loading…", "A carregar…")}</div>` : rows.length === 0 ? `
+            <div class="text-sm py-6 text-center" style="color: var(--text-secondary);">${tr("Nobody has trained yet this period — be the first! 💪", "Ainda ninguém treinou neste período — seja o primeiro! 💪")}</div>` : `
+            <div class="grid grid-cols-3 gap-2 items-end">
+              ${step(top[1], 2, 70, "linear-gradient(180deg, #e2e8f0, #94a3b8)")}
+              ${step(top[0], 1, 100, "linear-gradient(180deg, var(--accent), var(--accent-deep))")}
+              ${step(top[2], 3, 54, "linear-gradient(180deg, #fdba74, #c2410c)")}
+            </div>
+            <div class="space-y-2">
+              ${rest.map(row).join("")}
+              ${me && me.rank > 3 && !rest.some(r => r.me) ? `<div class="text-center text-xs opacity-60">• • •</div>${row(me)}` : ""}
+            </div>`}
+          <p class="text-[11px]" style="color: var(--text-muted);">${tr("Ranked by workouts completed. Points: workout 100–300 · run 50 + 10 per km · HIIT 60 · fitness test 30. Max 8 per day.", "Ordenado por treinos concluídos. Pontos: treino 100–300 · corrida 50 + 10 por km · HIIT 60 · teste 30. Máximo 8 por dia.")}</p>
+        </div>`;
+    }
+
+    function renderSocialView() {
+      const seg = `
+        <div class="grid grid-cols-2 gap-1 p-1 rounded-full mb-5 max-w-sm" style="background: var(--surface-2);">
+          <button onclick="setSocialView('ranks')" class="py-2.5 rounded-full text-sm font-semibold cursor-pointer ${state.socialView === "ranks" ? "btn-accent" : ""}">🏆 ${tr("Leaderboard", "Classificação")}</button>
+          <button onclick="setSocialView('chat')" class="py-2.5 rounded-full text-sm font-semibold cursor-pointer ${state.socialView === "chat" ? "btn-accent" : ""}">💬 ${tr("Chat", "Chat")}</button>
+        </div>`;
+      return seg + (state.socialView === "chat" ? renderRosterView() : `<div class="max-w-3xl">${renderLeaderboardView()}</div>`);
     }
 
     // =========================================================================
@@ -8319,7 +9139,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible" && supabaseClient) syncAllChats();
       });
-      window.addEventListener("online", () => { if (supabaseClient) syncAllChats(); else initSupabaseClient(); });
+      window.addEventListener("online", () => { if (supabaseClient) { syncAllChats(); syncPendingActivity(); } else initSupabaseClient(); });
     };
 
     document.addEventListener("keydown", (e) => {

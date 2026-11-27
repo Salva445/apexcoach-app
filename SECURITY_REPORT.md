@@ -199,3 +199,13 @@ All tests ran in a browser against the fixed app.
 | Bundled libraries | Integrity hashes verified locally; the Android build now fails if they don't match |
 
 **Not tested yet:** the real Supabase server (it needs your project) and the APK on a real phone.
+
+---
+
+## Addendum: accounts and leaderboard (round 5)
+
+- **Passwords:** Supabase Auth handles them; the app never stores them. Sign-in sessions use Supabase's standard refresh tokens, protected by the security policy and data cleaning above.
+- **Email confirmation is required.** The server functions only accept users whose email is confirmed (`apex_confirmed_uid`).
+- **Points can't be set by the app.** Tables are closed to the public key, and `apex_record_workout` calculates points itself with limits: minimum length, at most 25 km/h for runs, 8 per 24 hours, and each activity counted once.
+- **Privacy:** the leaderboard returns display name, goal, workouts and points only, never emails. You can delete your account and all its server data from the app.
+- **No hints about who has an account:** "Forgot password" gives the same answer whether or not the email has an account.

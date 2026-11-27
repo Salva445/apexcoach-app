@@ -1,5 +1,27 @@
 # APEXCOACH PRO — Improvements
 
+# Round 5: accounts, points, ranks and leaderboard
+
+- **Fresh start:** all demo numbers (workouts, records, runs, measurements, calories, streak) are cleared once. Theme, language, units, your name, photos and chats are kept.
+- **Accounts:**
+  - Sign up with name, email, password (8+ characters with letters and numbers) and a goal.
+  - Supabase emails a confirmation link; until it's clicked you can't sign in or appear on the leaderboard.
+  - Also: sign in, "resend confirmation", "forgot password", edit your name or goal, sign out, and delete your account.
+- **Points:**
+  - Values: strength workout 100 + 5 per set (up to 300), run 50 + 10 per km, HIIT 60, fitness test 30.
+  - The rules are checked again on the server: minimum length, realistic running speed, max 8 per day, no duplicates. The indoor GPS simulator never scores.
+  - Points earned before you had an account are uploaded when you sign in.
+- **Ranks, depending on your goal:**
+  - Build muscle: Rookie → Gym regular → Iron apprentice → Muscle builder → Physique athlete → Bodybuilding pro → **Bodybuilding legend**.
+  - Athletic performance: Rookie → Active → Amateur athlete → Competitor → Semi-pro → Elite athlete → **Professional athlete**.
+  - New ranks are celebrated, and Home shows a progress bar to the next rank.
+- **Leaderboard** (new **Social** tab, with Chat next to it):
+  - ranked by workouts completed, this week or all time;
+  - podium for 1st, 2nd and 3rd, then everyone else, with your own row highlighted;
+  - shows only names, goals, workouts and points, never emails.
+- **Server:** the chat and accounts setup is now one file, `supabase/schema.sql`.
+
+
 # Round 4: a more human design
 
 The app felt "made by a robot": ALL-CAPS typewriter text, tiny labels, sci-fi words ("Command deck", "Telemetry"), cut-corner panels with scanlines, and emoji as icons. This round keeps the features but changes how the app looks and talks.
