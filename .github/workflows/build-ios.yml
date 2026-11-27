@@ -1,0 +1,103 @@
+name: Build APEXCOACH iOS app
+
+# Builds the same app as Android, packaged for iPhone/iPad with Capacitor on a GitHub Mac.
+# The result is an UNSIGNED .ipa. iPhones only install signed apps, so you either:
+#   • sign it with your own free Apple ID using Sideloadly / AltStore (re-sign every 7 days), or
+#   • join the Apple Developer Program and use TestFlight / the App Store (see IOS.md).
+# Runs when the app itself changes, or by hand from the Actions tab ("Run workflow").
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'index.html'
+      - 'vendor/**'
+      - 'icons/**'
+      - '.github/workflows/build-ios.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify bundled library integrity
+        run: |
+          for f in vendor/*.js; do
+            h="sha384-$(openssl dgst -sha384 -binary "$f" | openssl base64 -A)"
+            grep -q "$h" index.html || { echo "Integrity mismatch for $f ($h)"; exit 1; }
+            echo "OK $f"
+          done
+
+      - name: Prepare web bundle & Capacitor iOS project
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
+          cp -r vendor www/vendor
+          npm init -y
+          # Same Capacitor version as the Android build, plus the native iPhone features the app uses:
+          # Taptic Engine haptics and the share sheet for exports (CSV / backup / PR card)
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/ios@6 @capacitor/haptics@6 @capacitor/share@6 @capacitor/filesystem@6
+          node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({
+            appId: "com.apexcoach.pro",
+            appName: "ApexCoach",
+            webDir: "www",
+            backgroundColor: "#0b100c",
+            ios: { contentInset: "never", backgroundColor: "#0b100c", webContentsDebuggingEnabled: false, limitsNavigationsToAppBoundDomains: false }
+          }, null, 2))'
+          npx cap add ios
+
+      - name: iPhone permissions, name, icon and launch screen
+        run: |
+          PLIST=ios/App/App/Info.plist
+          set_key () { /usr/libexec/PlistBuddy -c "Delete :$1" "$PLIST" 2>/dev/null || true; /usr/libexec/PlistBuddy -c "Add :$1 $2 $3" "$PLIST"; }
+          # Why the app asks for each permission (shown in the iOS permission pop-ups)
+          set_key NSLocationWhenInUseUsageDescription string "ApexCoach uses your location only while you record a run, to measure distance and pace. Your route is never saved or shared."
+          set_key NSMicrophoneUsageDescription string "ApexCoach uses the microphone only when you tap Voice, to hear commands like water, protein or rest."
+          set_key NSSpeechRecognitionUsageDescription string "ApexCoach turns your voice commands into actions. Nothing is recorded or kept."
+          set_key NSCameraUsageDescription string "ApexCoach uses the camera only if you choose to take a progress photo."
+          set_key NSPhotoLibraryUsageDescription string "ApexCoach opens your photos only to pick a progress photo. Photos stay on your phone."
+          set_key NSPhotoLibraryAddUsageDescription string "ApexCoach can save your PR card to your photos when you choose to."
+          # Light status bar text on the dark app, no encryption export paperwork (only HTTPS is used)
+          set_key UIViewControllerBasedStatusBarAppearance bool false
+          set_key UIStatusBarStyle string UIStatusBarStyleLightContent
+          set_key ITSAppUsesNonExemptEncryption bool false
+          set_key CFBundleDisplayName string ApexCoach
+          # App icon (App Store icons must not have transparency, so flatten it)
+          ICONSET=ios/App/App/Assets.xcassets/AppIcon.appiconset
+          sips -s format jpeg icons/icon-1024.png --out /tmp/icon.jpg >/dev/null
+          sips -s format png /tmp/icon.jpg --out "$ICONSET/AppIcon-512@2x.png" >/dev/null
+          # Launch screen in the app's colours instead of the default Capacitor logo
+          for f in ios/App/App/Assets.xcassets/Splash.imageset/*.png; do cp icons/splash-2732.png "$f"; done
+          npx cap sync ios
+
+      - name: Build unsigned IPA
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/ApexCoach.xcarchive" \
+            MARKETING_VERSION=1.0 CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            archive > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || { grep -E "error:|warning: .*fatal" "$RUNNER_TEMP/xcodebuild.log" | head -n 50; tail -n 150 "$RUNNER_TEMP/xcodebuild.log"; exit 1; }
+          tail -n 15 "$RUNNER_TEMP/xcodebuild.log"
+          APP="$RUNNER_TEMP/ApexCoach.xcarchive/Products/Applications/App.app"
+          test -d "$APP" || { echo "Archive did not produce App.app"; exit 1; }
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/ApexCoach-unsigned.ipa" Payload)
+          ls -lh "$GITHUB_WORKSPACE/ApexCoach-unsigned.ipa"
+
+      - name: Upload iOS app (unsigned IPA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: apexcoach-ios-unsigned-ipa
+          path: ApexCoach-unsigned.ipa

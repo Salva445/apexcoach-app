@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ApexCoach" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
   <meta name="theme-color" content="#06080c" />
   <title>APEXCOACH PRO — Personal Trainer & Client Performance OS</title>
 
@@ -154,6 +160,16 @@
 
     /* Headings: calm, sentence case, no glowing ticks */
     .hud-panel h3.font-display { letter-spacing: -0.01em; font-weight: 600; }
+    /* iPhone: Safari zooms into any text field smaller than 16px — keep fields at 16px there */
+    html.is-ios input, html.is-ios select, html.is-ios textarea { font-size: 16px !important; }
+    /* iPhone: no grey flash on tap, no text-selection callout on buttons, smooth momentum scrolling */
+    html.is-ios button, html.is-ios .dock-tab { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+    html.is-ios .chip-scroll, html.is-ios .overflow-y-auto, html.is-ios .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+    /* Installed iPhone app: respect the notch / Dynamic Island and home indicator */
+    html.is-ios .modal-backdrop { padding-top: max(1rem, env(safe-area-inset-top)); padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    html.is-ios #toast-box { top: calc(0.75rem + env(safe-area-inset-top)); }
+    html.is-ios #lock-screen { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
     /* No forced capitals or wide robot letter-spacing anywhere */
     .uppercase { text-transform: none !important; }
     .tracking-widest { letter-spacing: 0.04em !important; }
@@ -1509,26 +1525,14 @@ grant execute on function public.apex_delete_account() to authenticated;</pre>
     const LOCKED_STUDIO_NAME = "APEXCOACH";
     const LOCKED_STUDIO_MONO = "AP";
 
-    (function initAppIcon() {
+    // Home-screen web app ("Add to Home Screen" on iPhone, "Install app" on Android/desktop):
+    // a small service worker keeps the app working offline. Not used inside the native apps.
+    (function registerOfflineSupport() {
       try {
-        const iconCanvas = document.createElement("canvas");
-        iconCanvas.width = 192;
-        iconCanvas.height = 192;
-        const ictx = iconCanvas.getContext("2d");
-        ictx.fillStyle = "#070a10";
-        ictx.fillRect(0, 0, 192, 192);
-        ictx.strokeStyle = "#a3e635";
-        ictx.lineWidth = 10;
-        ictx.strokeRect(14, 14, 164, 164);
-        ictx.fillStyle = "#a3e635";
-        ictx.font = "bold 74px sans-serif";
-        ictx.textAlign = "center";
-        ictx.textBaseline = "middle";
-        ictx.fillText(LOCKED_STUDIO_MONO, 96, 102);
-        const appleIcon = document.createElement("link");
-        appleIcon.rel = "apple-touch-icon";
-        appleIcon.href = iconCanvas.toDataURL("image/png");
-        document.head.appendChild(appleIcon);
+        const native = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+        if (!native && "serviceWorker" in navigator && location.protocol === "https:") {
+          window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+        }
       } catch (err) {}
     })();
 
@@ -4063,8 +4067,26 @@ grant execute on function public.apex_delete_account() to authenticated;</pre>
       return `${m}:${s}`;
     }
 
+    // Platform: iPhone/iPad (Safari or the native app) and "running inside the installed app"
+    const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const IS_NATIVE_APP = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+    function nativePlugin(name) {
+      return IS_NATIVE_APP && window.Capacitor.Plugins ? window.Capacitor.Plugins[name] : null;
+    }
+    document.documentElement.classList.toggle("is-ios", IS_IOS);
+    document.documentElement.classList.toggle("is-native", IS_NATIVE_APP);
+
+    // iPhones have no Vibration API: the app uses the native Taptic Engine instead
     function triggerHaptic(pattern = 20) {
       if (!state.prefs || state.prefs.hapticsEnabled === false) return;
+      const haptics = nativePlugin("Haptics");
+      if (haptics) {
+        try {
+          if (Array.isArray(pattern)) haptics.notification({ type: "SUCCESS" });
+          else haptics.impact({ style: pattern >= 40 ? "HEAVY" : pattern >= 20 ? "MEDIUM" : "LIGHT" });
+        } catch (e) {}
+        return;
+      }
       try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
     }
 
@@ -4825,6 +4847,9 @@ grant execute on function public.apex_delete_account() to authenticated;</pre>
     let bleSimTimer = null;
     async function connectBLEHeartRate() {
       SFX.click();
+      if (!navigator.bluetooth && IS_IOS) {
+        showToast(tr("iPhone does not allow Bluetooth heart-rate straps in this app yet — using the live simulator instead", "O iPhone ainda não permite cintas cardíacas Bluetooth nesta app — a usar o simulador"));
+      }
       try {
         if (navigator.bluetooth) {
           const device = await navigator.bluetooth.requestDevice({ filters: [{ services: ["heart_rate"] }] });
@@ -5471,11 +5496,8 @@ grant execute on function public.apex_delete_account() to authenticated;</pre>
     function downloadPRCard() {
       SFX.click();
       const c = document.getElementById("pr-share-canvas");
-      const a = document.createElement("a");
-      a.download = `apexcoach-pr-${Date.now()}.png`;
-      a.href = c.toDataURL("image/png");
-      a.click();
-      showToast(tr("PR CARD DOWNLOADED", "CARTÃO DE RECORDE DESCARREGADO"));
+      c.toBlob(blob => { if (blob) saveOrShareFile(blob, `apexcoach-pr-${Date.now()}.png`); }, "image/png");
+      if (!IS_IOS && !IS_NATIVE_APP) showToast(tr("PR CARD DOWNLOADED", "CARTÃO DE RECORDE DESCARREGADO"));
     }
 
     // =========================================================================
@@ -8311,7 +8333,33 @@ grant execute on function public.apex_delete_account() to authenticated;</pre>
     // 5B. COMPACT DATA BACKUP & EXPORT (ACCESSIBLE INSIDE SETTINGS MODAL)
     // =========================================================================
     function downloadBlob(content, filename, mime) {
-      const blob = new Blob([content], { type: mime });
+      saveOrShareFile(new Blob([content], { type: mime }), filename);
+    }
+
+    // iPhones (and the installed apps) ignore normal downloads, so files go through
+    // the share sheet there: Save to Files, AirDrop, Messages, WhatsApp…
+    async function saveOrShareFile(blob, filename) {
+      const fs = nativePlugin("Filesystem");
+      const share = nativePlugin("Share");
+      if (fs && share) {
+        try {
+          const base64 = await new Promise((res, rej) => {
+            const rd = new FileReader();
+            rd.onload = () => res(String(rd.result).split(",")[1] || "");
+            rd.onerror = rej;
+            rd.readAsDataURL(blob);
+          });
+          const out = await fs.writeFile({ path: filename, data: base64, directory: "CACHE" });
+          await share.share({ title: filename, url: out.uri });
+          return;
+        } catch (e) { /* closed the share sheet, or not available */ }
+      }
+      if ((IS_IOS || IS_NATIVE_APP) && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: blob.type });
+          if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: filename }); return; }
+        } catch (e) { if (e && e.name === "AbortError") return; }
+      }
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

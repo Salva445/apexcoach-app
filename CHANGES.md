@@ -1,5 +1,21 @@
 # APEXCOACH PRO — Improvements
 
+# Round 6: iPhone
+
+- **New iOS build:** GitHub now builds `ApexCoach-unsigned.ipa` on a Mac each time the app changes. See IOS.md for the three ways to install on iPhone.
+- **iPhone-only changes** (Android is unchanged):
+  - Taptic Engine haptics.
+  - Exports go through the share sheet.
+  - No zoom when tapping text fields.
+  - Safe areas for the notch and home bar.
+  - A clear message about Bluetooth straps.
+  - Permission explanations.
+  - A light status bar.
+- **App icon and launch screen** in the app's own colours.
+- **Home-screen web app:** a manifest, icons and offline support, so the app can be added to any iPhone home screen from Safari once it's hosted.
+- Removed four fonts that were no longer used, so the app is smaller.
+
+
 # Round 5: accounts, points, ranks and leaderboard
 
 - **Fresh start:** all demo numbers (workouts, records, runs, measurements, calories, streak) are cleared once. Theme, language, units, your name, photos and chats are kept.
