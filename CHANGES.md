@@ -1,5 +1,28 @@
 # APEXCOACH PRO — Improvements
 
+# Round 4: a more human design
+
+The app felt "made by a robot": ALL-CAPS typewriter text, tiny labels, sci-fi words ("Command deck", "Telemetry"), cut-corner panels with scanlines, and emoji as icons. This round keeps the features but changes how the app looks and talks.
+
+- **Friendly type:** the rounded *Outfit* font (bundled, works offline), sentence case everywhere instead of capitals, and readable minimum text sizes.
+- **Soft shapes:** big rounded cards, pill-shaped buttons, a warm forest-green background glow, and no more grid, scanlines or corner brackets.
+- **Line icons** in the bottom bar, and a raised round "+" button.
+- **A coach that talks to you:**
+  - Home greets you by name with the time of day ("Good afternoon, Rita 👋") and shows your initials as an avatar.
+  - One plain-words line about today ("Train today to keep your 3-day streak").
+  - The coach card explains why, from your sleep, resting heart rate and soreness, instead of jargon like "neuromuscular window".
+- **Today's focus:** one suggestion with a Start button (for example "Your upper body is ready · 93% recovered · 45 min").
+- **This week:** the days you trained get a ring.
+- **Choose your workout:** Strength / Cardio / Warm-up / Core chips with photo cards from the public-domain exercise library.
+- **Recent activity** with your last workouts and runs.
+- **One clear readiness number** with a word that describes it (Fresh / Steady / Take it easy).
+- Every screen except Home now has a short title and an explanation instead of the big header.
+
+# Round 3: security
+
+See SECURITY_REPORT.md.
+
+
 # Round 2
 
 ## New futuristic look

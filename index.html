@@ -25,23 +25,24 @@
        ===================================================================== */
     :root,
     [data-theme="dark"] {
-      --bg-canvas: #070a10;
-      --bg-glow-1: rgba(163, 230, 53, 0.08);
-      --bg-glow-2: rgba(56, 189, 248, 0.06);
-      --surface-1: rgba(14, 19, 29, 0.84);
-      --surface-2: rgba(22, 30, 44, 0.78);
-      --surface-solid: #0f1522;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-      --border-hairline: rgba(255, 255, 255, 0.075);
-      --border-strong: rgba(255, 255, 255, 0.16);
-      --accent: #a3e635;
-      --accent-contrast: #071005;
-      --accent-2: #38bdf8;
-      --accent-3: #f43f5e;
-      --dock-bg: rgba(10, 14, 22, 0.92);
-      --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 42px -22px rgba(0, 0, 0, 0.65);
+      --bg-canvas: #0b100c;
+      --bg-glow-1: rgba(98, 168, 52, 0.30);
+      --bg-glow-2: rgba(181, 242, 61, 0.06);
+      --surface-1: rgba(20, 26, 22, 0.88);
+      --surface-2: rgba(34, 44, 36, 0.82);
+      --surface-solid: #161d18;
+      --text-primary: #f3f7f2;
+      --text-secondary: #a8b5aa;
+      --text-muted: #748278;
+      --border-hairline: rgba(255, 255, 255, 0.06);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --accent: #b8f03c;
+      --accent-deep: #6fd14f;
+      --accent-contrast: #0d1a06;
+      --accent-2: #5cc8ff;
+      --accent-3: #ff6b57;
+      --dock-bg: rgba(14, 19, 15, 0.94);
+      --panel-shadow: 0 20px 44px -26px rgba(0, 0, 0, 0.7);
       --dock-shadow: 0 -12px 38px rgba(0, 0, 0, 0.52);
       --muscle-base: #1e293b;
       --muscle-stroke: #64748b;
@@ -62,6 +63,7 @@
       --border-hairline: rgba(56, 189, 248, 0.14);
       --border-strong: rgba(56, 189, 248, 0.28);
       --accent: #38bdf8;
+      --accent-deep: #3b82f6;
       --accent-contrast: #031326;
       --accent-2: #fb7185;
       --accent-3: #fbbf24;
@@ -81,10 +83,11 @@
       --surface-solid: #ffffff;
       --text-primary: #0f172a;
       --text-secondary: #475569;
-      --text-muted: #64748b;
+      --text-muted: #748278;
       --border-hairline: rgba(15, 23, 42, 0.08);
       --border-strong: rgba(15, 23, 42, 0.18);
       --accent: #0f172a;
+      --accent-deep: #1e293b;
       --accent-contrast: #ffffff;
       --accent-2: #2563eb;
       --accent-3: #e11d48;
@@ -106,7 +109,7 @@
       overflow-x: hidden;
       background-color: var(--bg-canvas);
       color: var(--text-primary);
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
@@ -114,213 +117,133 @@
       touch-action: manipulation;
     }
 
-    .font-display { font-family: "Chakra Petch", "Space Grotesk", "Inter", sans-serif; letter-spacing: 0.02em; }
+    .font-display { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -0.015em; }
     .font-mono-num {
-      font-family: "JetBrains Mono", monospace;
+      font-family: "Outfit", system-ui, sans-serif;
       font-variant-numeric: tabular-nums;
     }
 
     /* =====================================================================
-       FUTURISTIC HUD LAYER — angled panels, corner brackets, glowing edges,
-       a faint tech grid and scanlines instead of plain rounded squares.
+       HUMAN DESIGN LAYER — soft rounded cards, pill buttons, warm forest
+       background and a friendly rounded font. (Replaces the old sci-fi HUD.)
        ===================================================================== */
-    /* Ambient glows + a faint tech grid that fades out toward the edges, plus soft scanlines
-       (all background layers, so they always stay behind the content) */
     .telemetry-bg {
       background-image:
-        radial-gradient(ellipse 68% 45% at 88% -8%, var(--bg-glow-1), transparent 65%),
-        radial-gradient(ellipse 55% 42% at 10% 108%, var(--bg-glow-2), transparent 65%),
-        radial-gradient(ellipse 85% 65% at 50% 0%, transparent 20%, var(--bg-canvas) 78%),
-        repeating-linear-gradient(0deg, var(--scanline) 0 1px, transparent 1px 3px),
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: auto, auto, auto, auto, 44px 44px, 44px 44px;
+        radial-gradient(ellipse 120% 55% at 50% -12%, var(--bg-glow-1), transparent 70%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, var(--bg-glow-2), transparent 70%);
       background-attachment: fixed;
     }
-    :root { --scanline: rgba(255, 255, 255, 0.016); --grid-line: color-mix(in srgb, var(--accent) 8%, transparent); }
-    [data-theme="white"] { --scanline: transparent; --grid-line: rgba(15, 23, 42, 0.05); }
 
-    /* Angled glass panel: cut top-left & bottom-right corners with glowing diagonals */
+    /* Cards: big soft radius, gentle gradient, almost-invisible edge */
     .hud-panel {
-      --cut: 18px;
       position: relative;
-      border-radius: 4px !important;
-      background:
-        linear-gradient(to bottom right, transparent calc(50% - 0.75px), color-mix(in srgb, var(--accent) 75%, transparent) 50%, transparent calc(50% + 0.75px)) top left / var(--cut) var(--cut) no-repeat,
-        linear-gradient(to bottom right, transparent calc(50% - 0.75px), color-mix(in srgb, var(--accent) 45%, transparent) 50%, transparent calc(50% + 0.75px)) bottom right / var(--cut) var(--cut) no-repeat,
-        linear-gradient(155deg, color-mix(in srgb, var(--accent) 7%, var(--surface-1)) 0%, var(--surface-1) 38%, var(--surface-1) 100%);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px !important;
+      background: linear-gradient(165deg, var(--surface-2), var(--surface-1) 55%);
       border: 1px solid var(--border-hairline);
-      clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
       box-shadow: var(--panel-shadow);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
       transition: border-color 0.24s ease, transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    /* Glowing top edge sweep */
-    .hud-panel::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: var(--cut);
-      width: 42%;
-      height: 1px;
-      background: linear-gradient(90deg, var(--accent), transparent);
-      opacity: 0.85;
-      pointer-events: none;
-    }
-    /* Corner bracket, bottom-left */
-    .hud-panel::after {
-      content: "";
-      position: absolute;
-      left: 7px;
-      bottom: 7px;
-      width: 12px;
-      height: 12px;
-      border-left: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
-      border-bottom: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
-      pointer-events: none;
-    }
-    .hud-panel:hover { border-color: var(--border-strong); }
     .hud-panel > * { position: relative; }
 
     .chamfer-card { position: relative; }
+    .chamfer-card.hud-panel { border-radius: 32px !important; }
     .modal-card { min-width: 0; max-width: min(100%, var(--modal-max, 100%)); }
     .modal-card button, .modal-card .seg-btn { min-width: 0; overflow-wrap: anywhere; }
-    .chamfer-card.hud-panel { --cut: 26px; }
 
-    /* Section headings get a glowing accent tick */
-    .hud-panel h3.font-display {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .hud-panel h3.font-display::before {
-      content: "";
-      flex-shrink: 0;
-      width: 4px;
-      height: 0.95em;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-      clip-path: polygon(0 0, 100% 18%, 100% 100%, 0 82%);
-    }
+    /* Headings: calm, sentence case, no glowing ticks */
+    .hud-panel h3.font-display { letter-spacing: -0.01em; font-weight: 600; }
+    /* No forced capitals or wide robot letter-spacing anywhere */
+    .uppercase { text-transform: none !important; }
+    .tracking-widest { letter-spacing: 0.04em !important; }
+    .tracking-wider { letter-spacing: 0.02em !important; }
+    .font-extrabold { font-weight: 650 !important; }
+    /* Readable minimum text sizes (the old UI used 8â10px labels everywhere) */
+    .text-[8px] { font-size: 10px !important; }
+    .text-[9px] { font-size: 11px !important; }
+    .text-[10px] { font-size: 12px !important; }
+    .text-[11px] { font-size: 12.5px !important; }
 
-    /* Inner tiles & outlined buttons: notched corner instead of a plain rounded square */
+    /* Inner tiles: rounded, filled, no hard outline */
     .hud-panel .rounded-xl.border,
     .hud-panel .rounded-2xl.border,
-    .hud-panel .rounded-lg.border,
     .modal-card .rounded-xl.border,
-    .modal-card .rounded-lg.border {
-      border-radius: 3px !important;
-      clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
-    }
-    .hud-panel .rounded-xl.border:not(.btn-accent),
-    .hud-panel .rounded-2xl.border:not(.btn-accent),
-    .modal-card .rounded-xl.border:not(.btn-accent) {
-      background-image: linear-gradient(135deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 55%);
-    }
+    .modal-card .rounded-2xl.border { border-radius: 20px !important; }
+    .hud-panel .rounded-lg.border,
+    .modal-card .rounded-lg.border { border-radius: 14px !important; }
+    .hud-panel .rounded-md.border { border-radius: 12px !important; }
 
-    /* Tactile Interactive Cards & Buttons */
     .interactive-card {
-      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background-color 0.2s ease;
     }
-    .interactive-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent) !important;
-      box-shadow: inset 0 0 18px -8px var(--accent);
-    }
-    .interactive-card:active {
-      transform: scale(0.985);
-    }
+    .interactive-card:hover { transform: translateY(-2px); border-color: var(--border-strong) !important; }
+    .interactive-card:active { transform: scale(0.98); }
 
-    /* Primary action: angled "blade" button with a light sweep on hover */
+    /* Primary action: soft lime pill */
     .btn-accent {
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 78%, #ffffff));
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
       color: var(--accent-contrast);
-      font-weight: 800;
-      border-radius: 3px !important;
-      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-      transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s ease, filter 0.18s ease;
+      font-weight: 600;
+      border-radius: 999px !important;
+      box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+      transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.18s ease;
     }
-    .btn-accent::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: -60%;
-      width: 40%;
-      background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
-      transform: skewX(-18deg);
-      transition: left 0.5s ease;
-      pointer-events: none;
-    }
-    .btn-accent:hover { filter: brightness(1.08) saturate(1.1); }
-    .btn-accent:hover::after { left: 130%; }
-    .btn-accent:active { transform: scale(0.95); }
+    .btn-accent:hover { filter: brightness(1.06); }
+    .btn-accent:active { transform: scale(0.96); }
 
     .btn-ghost {
-      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.18s ease, background-color 0.18s ease;
     }
-    .btn-ghost:hover { border-color: var(--accent) !important; box-shadow: inset 0 0 14px -8px var(--accent); }
-    .btn-ghost:active { transform: scale(0.95); }
+    .btn-ghost:hover { border-color: var(--border-strong) !important; background-color: color-mix(in srgb, var(--text-primary) 4%, transparent); }
+    .btn-ghost:active { transform: scale(0.96); }
 
-    /* Segmented option buttons used in Settings */
+    /* Option buttons (Settings, keypad) */
     .seg-btn {
-      border: 1px solid var(--border-strong);
+      border: 1px solid var(--border-hairline);
       background: var(--surface-solid);
-      border-radius: 3px;
-      clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+      border-radius: 16px;
+      transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
     }
     .seg-btn.active {
-      border-color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+      background: color-mix(in srgb, var(--accent) 14%, var(--surface-solid));
       color: var(--accent);
-      box-shadow: inset 0 0 16px -6px var(--accent);
     }
 
     .hud-input {
       background: var(--surface-solid);
       color: var(--text-primary);
-      border: 1px solid var(--border-strong);
-      border-radius: 3px;
-      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border-hairline);
+      border-radius: 14px;
+      padding: 0.6rem 0.85rem;
       outline: none;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .hud-input:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
     }
 
-    /* Left Vertical Telemetry Spine (Desktop) / Sticky Top App Bar (Mobile) */
+    /* Top bar (mobile) / side rail (desktop) */
     .telemetry-spine {
-      background: var(--dock-bg);
+      background: color-mix(in srgb, var(--bg-canvas) 82%, transparent);
       backdrop-filter: blur(22px);
       -webkit-backdrop-filter: blur(22px);
-      border-bottom: 1px solid var(--border-hairline);
       padding-top: calc(0.5rem + var(--safe-top));
     }
     @media (min-width: 1024px) {
-      .telemetry-spine {
-        border-bottom: none;
-        border-right: 1px solid var(--border-hairline);
-        padding-top: 1.25rem;
-      }
+      .telemetry-spine { border-right: 1px solid var(--border-hairline); padding-top: 1.25rem; }
     }
+    .vertical-brand { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.18em; }
 
-    .vertical-brand {
-      writing-mode: vertical-rl;
-      transform: rotate(180deg);
-      letter-spacing: 0.24em;
-    }
-
-    /* Floating Bottom Command Dock (Clean 5-Tab Layout) */
+    /* Floating rounded bottom bar with a round centre button */
     .mobile-dock {
       background: var(--dock-bg);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid var(--border-strong);
+      border-top: 1px solid var(--border-hairline);
+      border-radius: 28px 28px 0 0;
       padding-bottom: calc(8px + var(--safe-bottom));
       box-shadow: var(--dock-shadow);
     }
@@ -331,38 +254,43 @@
         width: max-content;
         bottom: 18px !important;
         transform: translateX(calc(-50% + 34px));
-        border: 1px solid var(--border-strong);
-        border-radius: 4px;
-        padding: 6px 10px;
-        clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%, 0 14px);
+        border: 1px solid var(--border-hairline);
+        border-radius: 999px;
+        padding: 6px 14px;
       }
     }
-
     .dock-tab {
-      color: var(--text-secondary);
-      transition: background-color 0.22s ease, color 0.22s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+      position: relative;
+      color: var(--text-muted);
+      border-radius: 18px !important;
+      transition: color 0.22s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .dock-tab svg { width: 22px; height: 22px; }
     .dock-tab:active { transform: scale(0.92); }
-    .dock-tab { position: relative; border-radius: 3px !important; }
-    .dock-tab.active {
-      background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
-      color: var(--accent);
-      text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 70%, transparent);
-    }
+    .dock-tab.active { color: var(--accent); }
     .dock-tab.active::after {
       content: "";
       position: absolute;
-      left: 22%;
-      right: 22%;
-      top: 0;
-      height: 2px;
+      left: 50%;
+      bottom: -1px;
+      width: 5px;
+      height: 5px;
+      margin-left: -2.5px;
+      border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 12px var(--accent);
     }
-    .dock-plus {
-      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-      border-radius: 0 !important;
-    }
+    @media (min-width: 1024px) { .dock-tab.active::after { display: none; } }
+    .dock-plus { border-radius: 999px !important; }
+
+    /* Small helpers for the new Home screen */
+    .icon { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; }
+    .avatar-ring { background: conic-gradient(var(--accent), var(--accent-2), var(--accent)); padding: 2px; border-radius: 999px; }
+    .chip-scroll { scrollbar-width: none; }
+    .chip-scroll::-webkit-scrollbar { display: none; }
+    .photo-card { position: relative; overflow: hidden; border-radius: 22px; background: linear-gradient(160deg, var(--surface-2), var(--surface-solid)); }
+    .photo-card img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.9) contrast(1.05); }
+    .photo-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, 0.78)); pointer-events: none; }
+    [data-theme="white"] .photo-card img { mix-blend-mode: multiply; }
 
     /* Anatomical muscle map */
     .muscle-zone {
@@ -476,7 +404,7 @@
       position: fixed;
       pointer-events: none;
       z-index: 90;
-      font-family: "JetBrains Mono", monospace;
+      font-family: "Outfit", system-ui, sans-serif;
       font-size: 12px;
       font-weight: 800;
       padding: 4px 10px;
@@ -557,7 +485,7 @@
   <canvas id="confetti-canvas" class="no-print fixed inset-0 pointer-events-none z-[80]"></canvas>
 
   <!-- 1. MOBILE TOP APP BAR / DESKTOP LEFT VERTICAL TELEMETRY SPINE -->
-  <aside class="telemetry-spine no-print sticky top-0 lg:fixed lg:left-0 lg:top-0 lg:bottom-0 w-full lg:w-[68px] z-40 flex lg:flex-col items-center justify-between gap-2 px-3 py-2 lg:px-0 lg:py-5">
+  <aside class="telemetry-spine no-print hidden lg:flex lg:fixed lg:left-0 lg:top-0 lg:bottom-0 lg:w-[68px] z-40 lg:flex-col items-center justify-between gap-2 px-3 py-2 lg:px-0 lg:py-5">
     <div class="flex lg:flex-col items-center gap-2.5 min-w-0">
       <div id="brand-monogram" onclick="switchTab('overview')" class="dock-plus w-10 h-10 flex-shrink-0 flex items-center justify-center font-display font-extrabold text-sm shadow-lg cursor-pointer active:scale-95 transition" style="background: var(--accent); color: var(--accent-contrast);">
         AP
@@ -569,7 +497,7 @@
           <span data-pt="SISTEMA ATIVO">SYSTEM ONLINE</span>
         </div>
       </div>
-      <span id="vertical-studio-label" class="hidden lg:block vertical-brand font-mono-num text-[10px] font-extrabold uppercase opacity-70">
+      <span id="vertical-studio-label" class="keep-caps hidden lg:block vertical-brand font-mono-num text-[10px] font-extrabold uppercase opacity-70">
         APEXCOACH // OS
       </span>
     </div>
@@ -586,126 +514,113 @@
 
     <!-- Everything else (sound, theme, language, units) now lives in Settings -->
     <button onclick="toggleModal('settings-modal', true)" aria-label="Settings" data-pt-aria-label="Definições" title="Settings" data-pt-title="Definições" class="btn-ghost w-10 h-10 rounded-lg flex items-center justify-center border cursor-pointer flex-shrink-0 text-base" style="border-color: var(--border-strong); background: var(--surface-solid);">
-      ⚙️
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="width:20px;height:20px"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg>
     </button>
   </aside>
 
   <!-- 2. MAIN APPLICATION CANVAS -->
   <div class="no-print lg:pl-[68px] pb-28 lg:pb-28">
-    <div class="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 pt-4 sm:pt-6 space-y-5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-5 lg:px-8 space-y-5" style="padding-top: calc(1.25rem + var(--safe-top));">
 
       <!-- HERO COMMAND DECK -->
-      <header class="hud-panel chamfer-card p-5 sm:p-6 overflow-hidden relative">
-        <div id="ambient-readiness-glow" class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full blur-3xl opacity-15 transition-colors duration-500" style="background: var(--accent);"></div>
+      <header id="home-hero" class="relative space-y-5">
+        <!-- Energy aura: its colour follows today's readiness (green fresh · amber steady · coral tired) -->
+        <div id="ambient-readiness-glow" class="pointer-events-none absolute -top-28 left-1/2 -translate-x-1/2 w-[34rem] max-w-[140%] h-72 rounded-full blur-3xl opacity-25 transition-colors duration-700" style="background: var(--accent);"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center relative z-10">
+        <!-- Greeting -->
+        <div class="relative flex items-center gap-3">
+          <button onclick="toggleModal('settings-modal', true)" class="avatar-ring flex-shrink-0 cursor-pointer" aria-label="Profile" data-pt-aria-label="Perfil">
+            <span id="hero-avatar" class="keep-caps w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-display text-lg font-semibold" style="background: var(--surface-solid); color: var(--accent);">A</span>
+          </button>
+          <div class="min-w-0 flex-1">
+            <h1 id="hero-studio-heading" class="font-display text-xl sm:text-2xl font-semibold leading-tight">Hello 👋</h1>
+            <p id="hero-coach-line" class="text-sm leading-snug mt-0.5" style="color: var(--text-secondary);"></p>
+            <span id="hero-athlete-name" class="hidden"></span>
+          </div>
+          <span id="hero-streak-pill" class="flex-shrink-0 px-3 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5" style="background: var(--surface-2); color: var(--accent);">🔥 0</span>
+          <button onclick="startVoiceCoach()" aria-label="Voice" data-pt-aria-label="Voz" class="hidden sm:flex flex-shrink-0 w-11 h-11 rounded-full items-center justify-center cursor-pointer btn-ghost" style="background: var(--surface-2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="width:20px;height:20px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>
+          </button>
+          <button onclick="toggleModal('wearable-modal', true)" aria-label="Wearable sync" data-pt-aria-label="Sincronizar relógio" class="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center cursor-pointer btn-ghost" style="background: var(--surface-2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:20px;height:20px"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M10 12h1.5l1-2 1.5 4 1-2"/></svg>
+          </button>
+        </div>
+
+        <div class="relative grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div class="lg:col-span-7 space-y-4">
-            <div class="flex flex-wrap items-center gap-2 text-[10px] font-mono-num">
-              <button onclick="toggleModal('settings-modal', true)" class="btn-ghost px-2.5 py-1 rounded-lg border font-bold flex items-center gap-1.5 cursor-pointer" style="border-color: var(--border-strong); background: var(--surface-solid);">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span id="hero-athlete-name">ATHLETE</span>
-              </button>
-              <span id="hero-streak-pill" class="px-2.5 py-1 rounded-lg border font-extrabold" style="border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: var(--surface-2); color: var(--accent);">🔥 0-DAY STREAK</span>
-              <button onclick="toggleModal('wearable-modal', true)" class="btn-ghost px-2.5 py-1 rounded-lg border cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">
-                ⌚ <span data-pt="SINCRONIZAR RELÓGIO">WEARABLE SYNC</span>
-              </button>
-              <button onclick="startVoiceCoach()" class="btn-ghost px-2.5 py-1 rounded-lg border cursor-pointer" style="border-color: var(--border-strong);">
-                🎙️ <span data-pt="VOZ">VOICE</span>
-              </button>
+            <!-- Today's focus: the coach's suggestion for today -->
+            <div id="hero-focus-card" class="rounded-full p-2 pr-2.5 flex items-center gap-3" style="background: linear-gradient(100deg, var(--accent), var(--accent-deep)); color: var(--accent-contrast);">
+              <span class="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center flex-shrink-0 text-xl" style="background: rgba(0,0,0,0.82); color: var(--accent);">🏆</span>
+              <div class="min-w-0 flex-1">
+                <div id="hero-focus-title" class="font-semibold text-[15px] sm:text-lg leading-tight"></div>
+                <div id="hero-focus-sub" class="text-xs sm:text-sm opacity-80 truncate"></div>
+              </div>
+              <button id="hero-focus-btn" class="flex-shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold cursor-pointer active:scale-95 transition" style="background: #ffffff; color: #0d1a06;" data-pt="Começar">Start</button>
             </div>
 
-            <h1 id="hero-studio-heading" class="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight uppercase">
-              APEXCOACH <span style="color: var(--accent);">COMMAND DECK</span>
-            </h1>
+            <!-- This week: days you trained get a ring -->
+            <div id="hero-week-strip" class="grid grid-cols-7 gap-1 text-center"></div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono-num">
-              <div class="interactive-card p-3.5 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
-                <div class="text-[9px] uppercase opacity-60 tracking-wider" data-pt="CALORIAS GASTAS">CALORIES BURNT</div>
-                <div class="flex items-baseline gap-1 mt-1">
-                  <span id="hud-cal-val" class="text-base sm:text-lg font-extrabold" style="color: var(--accent);">0</span>
-                  <span id="hud-cal-goal" class="text-[10px] opacity-55">/ 2400</span>
+            <!-- Today's numbers -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div class="hud-panel interactive-card p-3.5 !rounded-[22px]">
+                <div class="flex items-center gap-2 text-xs" style="color: var(--text-secondary);"><span class="w-7 h-7 rounded-full flex items-center justify-center" style="background: color-mix(in srgb, var(--accent-3) 18%, transparent);">🔥</span><span data-pt="Calorias">Calories</span></div>
+                <div class="flex items-baseline gap-1 mt-2 font-mono-num">
+                  <span id="hud-cal-val" class="text-2xl font-semibold">0</span>
+                  <span id="hud-cal-goal" class="text-xs opacity-55">/ 2400</span>
                 </div>
-                <button onclick="addQuickBurn(150, this)" class="mt-1.5 text-[10px] font-bold hover:underline cursor-pointer" style="color: var(--accent);">+150 kcal</button>
+                <button onclick="addQuickBurn(150, this)" class="mt-1.5 text-xs font-medium cursor-pointer" style="color: var(--accent);">+150 kcal</button>
               </div>
-
-              <div class="interactive-card p-3.5 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
-                <div class="text-[9px] uppercase opacity-60 tracking-wider" data-pt="HIDRATAÇÃO">HYDRATION</div>
-                <div class="flex items-baseline gap-1 mt-1">
-                  <span id="hud-water-val" class="text-base sm:text-lg font-extrabold" style="color: var(--accent-2);">0.00L</span>
-                  <span id="hud-water-goal" class="text-[10px] opacity-55">/ 3.5L</span>
+              <div class="hud-panel interactive-card p-3.5 !rounded-[22px]">
+                <div class="flex items-center gap-2 text-xs" style="color: var(--text-secondary);"><span class="w-7 h-7 rounded-full flex items-center justify-center" style="background: color-mix(in srgb, var(--accent-2) 18%, transparent);">💧</span><span data-pt="Água">Water</span></div>
+                <div class="flex items-baseline gap-1 mt-2 font-mono-num">
+                  <span id="hud-water-val" class="text-2xl font-semibold">0.00L</span>
+                  <span id="hud-water-goal" class="text-xs opacity-55">/ 3.5L</span>
                 </div>
-                <button onclick="addWater(250, this)" class="mt-1.5 text-[10px] font-bold hover:underline cursor-pointer" style="color: var(--accent-2);">+250 ml</button>
+                <button onclick="addWater(250, this)" class="mt-1.5 text-xs font-medium cursor-pointer" style="color: var(--accent-2);">+250 ml</button>
               </div>
-
-              <div class="interactive-card p-3.5 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
-                <div class="text-[9px] uppercase opacity-60 tracking-wider" data-pt="PROTEÍNA">PROTEIN</div>
-                <div class="flex items-baseline gap-1 mt-1">
-                  <span id="hud-protein-val" class="text-base sm:text-lg font-extrabold">0g</span>
-                  <span id="hud-protein-goal" class="text-[10px] opacity-55">/ 180g</span>
+              <div class="hud-panel interactive-card p-3.5 !rounded-[22px]">
+                <div class="flex items-center gap-2 text-xs" style="color: var(--text-secondary);"><span class="w-7 h-7 rounded-full flex items-center justify-center" style="background: color-mix(in srgb, var(--accent) 18%, transparent);">🥚</span><span data-pt="Proteína">Protein</span></div>
+                <div class="flex items-baseline gap-1 mt-2 font-mono-num">
+                  <span id="hud-protein-val" class="text-2xl font-semibold">0g</span>
+                  <span id="hud-protein-goal" class="text-xs opacity-55">/ 180g</span>
                 </div>
-                <button onclick="addProtein(25, this)" class="mt-1.5 text-[10px] font-bold hover:underline cursor-pointer" style="color: var(--accent);">+25g</button>
+                <button onclick="addProtein(25, this)" class="mt-1.5 text-xs font-medium cursor-pointer" style="color: var(--accent);">+25 g</button>
               </div>
-
-              <div class="interactive-card p-3.5 rounded-xl border" style="border-color: var(--border-hairline); background: var(--surface-solid);">
-                <div class="text-[9px] uppercase opacity-60 tracking-wider" data-pt="DISTÂNCIA HOJE">DIST TODAY</div>
-                <div class="flex items-baseline gap-1 mt-1">
-                  <span id="hud-dist-val" class="text-base sm:text-lg font-extrabold">0.00 mi</span>
+              <div class="hud-panel interactive-card p-3.5 !rounded-[22px]">
+                <div class="flex items-center gap-2 text-xs" style="color: var(--text-secondary);"><span class="w-7 h-7 rounded-full flex items-center justify-center" style="background: color-mix(in srgb, var(--accent-2) 18%, transparent);">👟</span><span data-pt="Distância">Distance</span></div>
+                <div class="flex items-baseline gap-1 mt-2 font-mono-num">
+                  <span id="hud-dist-val" class="text-2xl font-semibold">0.00 mi</span>
                 </div>
-                <button onclick="switchTab('endurance')" class="mt-1.5 text-[10px] font-bold hover:underline cursor-pointer" style="color: var(--accent-2);" data-pt="CORRIDA GPS →">GPS RUN →</button>
+                <button onclick="switchTab('endurance')" class="mt-1.5 text-xs font-medium cursor-pointer" style="color: var(--accent-2);" data-pt="Ir correr →">Go for a run →</button>
               </div>
             </div>
           </div>
 
-          <!-- Readiness core: tick dial + three rings (rings sized so the centre label never touches them) -->
-          <div class="lg:col-span-5 flex items-center justify-center sm:justify-end gap-4 sm:gap-6">
-            <div class="relative w-40 h-40 sm:w-48 sm:h-48 flex-shrink-0">
+          <!-- Readiness: one clear number, explained in words -->
+          <div class="lg:col-span-5 hud-panel p-5 flex items-center gap-5">
+            <div class="relative w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0">
               <svg viewBox="0 0 160 160" class="w-full h-full -rotate-90">
-                <g class="dial-spin">
-                  <circle cx="80" cy="80" r="77" fill="none" stroke="var(--accent)" stroke-opacity="0.35" stroke-width="2.5" stroke-dasharray="1.2 6.86" />
-                  <circle cx="80" cy="80" r="77" fill="none" stroke="var(--accent)" stroke-opacity="0.8" stroke-width="3.5" stroke-dasharray="2 118.95" />
-                </g>
-                <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border-hairline)" stroke-width="6" />
-                <circle id="ring-cal" cx="80" cy="80" r="68" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="427.26" stroke-dashoffset="427" style="transition: stroke-dashoffset 0.65s cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0 0 4px var(--accent));" />
-
-                <circle cx="80" cy="80" r="58" fill="none" stroke="var(--border-hairline)" stroke-width="6" />
-                <circle id="ring-readiness" cx="80" cy="80" r="58" fill="none" stroke="var(--accent-2)" stroke-width="6" stroke-linecap="round" stroke-dasharray="364.42" stroke-dashoffset="364" style="transition: stroke-dashoffset 0.65s cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0 0 4px var(--accent-2));" />
-
-                <circle cx="80" cy="80" r="48" fill="none" stroke="var(--border-hairline)" stroke-width="6" />
-                <circle id="ring-macros" cx="80" cy="80" r="48" fill="none" stroke="var(--accent-3)" stroke-width="6" stroke-linecap="round" stroke-dasharray="301.59" stroke-dashoffset="301" style="transition: stroke-dashoffset 0.65s cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0 0 4px var(--accent-3));" />
-
-                <circle cx="80" cy="80" r="38" fill="none" stroke="var(--border-hairline)" stroke-width="0.8" stroke-dasharray="2 3" />
+                <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border-hairline)" stroke-width="10" />
+                <circle id="ring-cal" cx="80" cy="80" r="68" fill="none" stroke="var(--accent)" stroke-width="10" stroke-linecap="round" stroke-dasharray="427.26" stroke-dashoffset="427" style="transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);" />
+                <circle cx="80" cy="80" r="52" fill="none" stroke="var(--border-hairline)" stroke-width="8" />
+                <circle id="ring-readiness" cx="80" cy="80" r="52" fill="none" stroke="var(--accent-2)" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326" style="transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);" />
+                <circle cx="80" cy="80" r="38" fill="none" stroke="var(--border-hairline)" stroke-width="7" />
+                <circle id="ring-macros" cx="80" cy="80" r="38" fill="none" stroke="var(--accent-3)" stroke-width="7" stroke-linecap="round" stroke-dasharray="238.76" stroke-dashoffset="238" style="transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);" />
               </svg>
-
               <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span class="text-[7px] sm:text-[8px] font-mono-num uppercase tracking-wider opacity-60" data-pt="PRONTIDÃO">READINESS</span>
-                <span id="orbital-readiness-val" class="font-mono-num text-2xl sm:text-3xl font-extrabold leading-none my-0.5">0</span>
-                <span id="orbital-readiness-status" class="text-[8px] sm:text-[9px] font-mono-num font-extrabold" style="color: var(--accent);">OPTIMAL</span>
+                <span id="orbital-readiness-val" class="font-mono-num text-3xl font-semibold leading-none">0</span>
+                <span id="orbital-readiness-status" class="text-[11px] font-medium mt-0.5" style="color: var(--accent);">Optimal</span>
               </div>
             </div>
-
-            <div class="space-y-2 text-[10px] sm:text-xs font-mono-num min-w-[118px]">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5" style="background: var(--accent); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);"></span>
-                <span class="opacity-70" data-pt="QUEIMA">BURN</span>
-                <strong id="ring-cal-pct" class="ml-auto">0%</strong>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5" style="background: var(--accent-2); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);"></span>
-                <span class="opacity-70" data-pt="PRONTO">READY</span>
-                <strong id="ring-ready-pct" class="ml-auto">0%</strong>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5" style="background: var(--accent-3); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);"></span>
-                <span class="opacity-70" data-pt="NUTRIÇÃO">FUEL</span>
-                <strong id="ring-fuel-pct" class="ml-auto">0%</strong>
-              </div>
-              <div class="pt-1.5 border-t flex items-center gap-2" style="border-color: var(--border-hairline);">
-                <span class="opacity-65" data-pt="PASSOS:">STEPS:</span>
-                <strong id="hud-steps-val">0</strong>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="opacity-65" data-pt="FC:">LIVE HR:</span>
-                <strong id="hud-live-hr" style="color: var(--accent-3);">68 BPM</strong>
+            <div class="min-w-0 flex-1 space-y-2 text-sm">
+              <div class="font-display font-semibold" data-pt="Prontidão de hoje">Today's readiness</div>
+              <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent);"></span><span class="opacity-75" data-pt="Calorias">Calories</span><strong id="ring-cal-pct" class="ml-auto font-mono-num font-semibold">0%</strong></div>
+              <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent-2);"></span><span class="opacity-75" data-pt="Recuperação">Recovery</span><strong id="ring-ready-pct" class="ml-auto font-mono-num font-semibold">0%</strong></div>
+              <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full" style="background: var(--accent-3);"></span><span class="opacity-75" data-pt="Nutrição">Nutrition</span><strong id="ring-fuel-pct" class="ml-auto font-mono-num font-semibold">0%</strong></div>
+              <div class="pt-2 border-t flex items-center justify-between gap-2 text-xs" style="border-color: var(--border-hairline); color: var(--text-secondary);">
+                <span>👣 <strong id="hud-steps-val" class="font-mono-num" style="color: var(--text-primary);">0</strong></span>
+                <span>❤️ <strong id="hud-live-hr" class="font-mono-num" style="color: var(--accent-3);">68 BPM</strong></span>
               </div>
             </div>
           </div>
@@ -721,28 +636,28 @@
   <nav aria-label="Bottom Navigation Dock" class="mobile-dock no-print fixed bottom-0 left-0 right-0 z-40">
     <div class="flex items-center justify-around lg:justify-center gap-1 px-2 pt-1.5 lg:pt-0">
       <button onclick="switchTab('overview')" data-tab="overview" class="dock-tab active flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <span>📊</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 3.5l8.5 7V19a1.5 1.5 0 0 1-1.5 1.5h-4v-6h-6v6H5A1.5 1.5 0 0 1 3.5 19z"/></svg>
         <span class="truncate" data-pt="INÍCIO">HOME</span>
       </button>
       <button onclick="switchTab('strength')" data-tab="strength" class="dock-tab flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <span>💪</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>
         <span class="truncate" data-pt="MÚSCULOS">MUSCLE</span>
       </button>
 
-      <button onclick="toggleModal('quicklog-modal', true)" aria-label="Quick log" data-pt-aria-label="Registo rápido" class="dock-plus w-12 h-12 btn-accent flex items-center justify-center text-xl font-extrabold shadow-lg flex-shrink-0 mx-1 cursor-pointer">
-        +
+      <button onclick="toggleModal('quicklog-modal', true)" aria-label="Quick log" data-pt-aria-label="Registo rápido" class="dock-plus w-14 h-14 -mt-7 lg:mt-0 lg:w-12 lg:h-12 btn-accent flex items-center justify-center flex-shrink-0 mx-1 cursor-pointer" style="box-shadow: 0 10px 26px -6px color-mix(in srgb, var(--accent) 65%, transparent), 0 0 0 6px var(--bg-canvas);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:26px;height:26px"><path d="M12 5v14M5 12h14"/></svg>
       </button>
 
       <button onclick="switchTab('endurance')" data-tab="endurance" class="dock-tab flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <span>🛰️</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18.5" r="2"/><circle cx="18" cy="5.5" r="2"/><path d="M8 18.5h7.5a3.25 3.25 0 0 0 0-6.5h-7a3.25 3.25 0 0 1 0-6.5H16"/></svg>
         <span class="truncate">GPS</span>
       </button>
       <button onclick="switchTab('body')" data-tab="body" class="dock-tab flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <span>📐</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M6 9.5h12M12 9.5v5M12 14.5l-3 6M12 14.5l3 6"/></svg>
         <span class="truncate" data-pt="CORPO">BODY</span>
       </button>
       <button onclick="switchTab('roster')" data-tab="roster" class="dock-tab relative flex-1 lg:flex-initial min-w-0 px-2 sm:px-3.5 py-1.5 lg:py-2 flex flex-col lg:flex-row items-center justify-center gap-0.5 sm:gap-1.5 text-[9px] sm:text-[10px] lg:text-xs font-mono-num font-bold cursor-pointer">
-        <span>💬</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.4A8 8 0 1 1 20.5 11.5z"/></svg>
         <span class="truncate" data-pt="CHAT">CHAT</span>
         <span id="unread-badge" class="hidden absolute top-0.5 right-1 lg:static px-1 rounded-full text-[8px] font-extrabold bg-rose-500 text-white">•</span>
       </button>
@@ -1256,7 +1171,7 @@
           <span style="color: var(--accent);" data-pt="1: EXECUTE NO EDITOR SQL DO SUPABASE">1: RUN IN THE SUPABASE SQL EDITOR</span>
           <button type="button" onclick="copySupabaseSQL()" class="px-2 py-1 rounded-lg border font-bold cursor-pointer" style="border-color: var(--accent); color: var(--accent);" data-pt="COPIAR SQL">COPY SQL</button>
         </div>
-        <pre id="supabase-sql-snippet" class="overflow-x-auto opacity-80 whitespace-pre-wrap max-h-40">-- APEXCOACH chat v2. Run once in the Supabase SQL editor.
+        <pre id="supabase-sql-snippet" class="keep-caps overflow-x-auto opacity-80 whitespace-pre-wrap max-h-40">-- APEXCOACH chat v2. Run once in the Supabase SQL editor.
 -- The public (anon/publishable) key can ONLY call the four apex_* functions below.
 -- It cannot read, list or change the tables directly.
 create extension if not exists pgcrypto with schema extensions;
@@ -1438,6 +1353,61 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     // tr("English", "Português") picks the right one; static HTML uses data-pt="…" attributes.
     function tr(en, pt) {
       return state && state.lang === "pt" ? pt : en;
+    }
+
+    // ---------------------------------------------------------------------
+    // Natural sentence case. Lots of the app's text was written in ALL CAPS,
+    // which reads like a machine shouting. Any text that appears on screen is
+    // softened here: shouted words become lower case (real abbreviations such
+    // as HIIT, GPS or PR stay), and the start of each phrase gets a capital.
+    // ---------------------------------------------------------------------
+    const KEEP_CAPS = new Set(["HIIT", "EMOM", "GPS", "PR", "BPM", "CSV", "JSON", "SQL", "BLE", "FC", "PIN", "AI", "OK", "RPE", "BW", "PC",
+      "ID", "AP", "EN", "PT", "EZ", "RDL", "DB", "USB", "HRM", "URL", "VO2", "IA", "UTC", "PDF", "PNG", "SIM", "HR"]);
+    const UNIT_WORDS = { KCAL: "kcal", LBS: "lbs", LB: "lb", KG: "kg", KM: "km", MI: "mi", ML: "ml", MIN: "min", PRS: "PRs",
+      APEXCOACH: "ApexCoach", TABATA: "Tabata", VOL: "vol", EX: "ex", PRO: "Pro", OS: "OS", SHA: "SHA" };
+    const SHOUT_RE = /\p{Lu}{2,}/u;
+    const INVITE_CODE_RE = /([A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4})/;
+    function softenCaps(text) {
+      if (!text || !SHOUT_RE.test(text)) return text;
+      // Invite codes must stay exactly as they are
+      if (INVITE_CODE_RE.test(text)) {
+        return text.split(INVITE_CODE_RE).map((part, i) => i % 2 ? part : softenCaps(part)).join("");
+      }
+      const lower = state && state.lang === "pt" ? "pt-PT" : "en";
+      let changed = false;
+      let out = text.replace(/[\p{L}\p{N}]+/gu, w => {
+        if (w !== w.toUpperCase() || !/\p{Lu}/u.test(w)) return w;      // mixed / lower case: leave alone
+        if (/\d/.test(w)) return UNIT_WORDS[w] || w;                       // Z1, 1RM, 4X…
+        if (KEEP_CAPS.has(w)) return w;
+        if (UNIT_WORDS[w]) { changed = true; return UNIT_WORDS[w]; }
+        changed = true;
+        return w.toLocaleLowerCase(lower);
+      });
+      if (!changed) return text;
+      // Capital letter at the start (after any emoji/symbols) and after separators such as "•" or "//"
+      out = out.replace(/(^[^\p{L}\p{N}]*|[•·|]\s*|\/\/\s*|[.!?]\s+)(\p{Ll})/gu, (m, sep, ch) => sep + ch.toLocaleUpperCase(lower));
+      return out;
+    }
+    function softenTree(root) {
+      if (!root) return;
+      if (root.nodeType === 3) {
+        if (root.parentElement && root.parentElement.closest(".keep-caps, script, style, textarea")) return;
+        const v = softenCaps(root.data);
+        if (v !== root.data) root.data = v;
+        return;
+      }
+      if (root.nodeType !== 1 || root.closest?.(".keep-caps, script, style")) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: n => n.parentElement && n.parentElement.closest(".keep-caps, script, style, textarea") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(n => { const v = softenCaps(n.data); if (v !== n.data) n.data = v; });
+    }
+    function startCapsSoftener() {
+      softenTree(document.body);
+      new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(softenTree)))
+        .observe(document.body, { childList: true, subtree: true });
     }
 
     // Swap every static label marked with data-pt / data-pt-placeholder / data-pt-title / data-pt-aria-label
@@ -3345,7 +3315,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     function tplTitle(tpl) { return state.lang === "pt" && TEMPLATE_PT[tpl.id] ? TEMPLATE_PT[tpl.id][0] : tpl.title; }
     function tplFocus(tpl) { return state.lang === "pt" && TEMPLATE_PT[tpl.id] ? TEMPLATE_PT[tpl.id][1] : tpl.focus; }
     function gradeName(g) { return state.lang === "pt" ? ({ ELITE: "ELITE", EXCELLENT: "EXCELENTE", SOLID: "SÓLIDO" }[g] || g) : g; }
-    function phaseName(p) { return state.lang === "pt" ? ({ cut: "PERDA DE GORDURA", recomp: "RECOMPOSIÇÃO", bulk: "HIPERTROFIA" }[p] || p) : p.toUpperCase(); }
+    function phaseName(p) { return state.lang === "pt" ? ({ cut: "Perda de gordura", recomp: "Recomposição", bulk: "Hipertrofia" }[p] || p) : ({ cut: "Fat loss", recomp: "Recomp", bulk: "Muscle gain" }[p] || p); }
 
     function drillName(d) {
       return state.lang === "pt" && MOBILITY_PT[d.name] ? MOBILITY_PT[d.name][0] : d.name;
@@ -3404,7 +3374,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     // Built-in placeholder photos (drawn in the app, so no request goes to a third-party image service)
     function placeholderPhoto(label, bg, fg) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><rect width="600" height="800" fill="${bg}"/><g fill="none" stroke="${fg}" stroke-opacity="0.35" stroke-width="3"><circle cx="300" cy="230" r="70"/><path d="M170 560c0-90 60-170 130-170s130 80 130 170"/></g><text x="300" y="690" fill="${fg}" font-family="monospace" font-size="38" font-weight="700" text-anchor="middle">${label}</text></svg>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><rect width="600" height="800" fill="${bg}"/><g fill="none" stroke="${fg}" stroke-opacity="0.35" stroke-width="3"><circle cx="300" cy="230" r="70"/><path d="M170 560c0-90 60-170 130-170s130 80 130 170"/></g></svg>`;
       return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     }
 
@@ -3670,7 +3640,8 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       // Photos: only images stored inside the app (data:image/...) or the built-in placeholders
       ["before", "after"].forEach(slot => {
         const p = String(s.photos[slot] || "");
-        s.photos[slot] = /^data:image\/(jpeg|png|webp|svg\+xml);/.test(p) && p.length < 3e6 ? p : base.photos[slot];
+        // Your own uploads are JPEG/PNG/WebP; built-in SVG placeholders are always refreshed to the current design
+        s.photos[slot] = /^data:image\/(jpeg|png|webp);/.test(p) && p.length < 3e6 ? p : base.photos[slot];
       });
 
       s.chats = sArr(s.chats, 100, c => ({
@@ -4228,7 +4199,6 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       document.getElementById("brand-monogram").textContent = LOCKED_STUDIO_MONO;
       document.getElementById("vertical-studio-label").textContent = `${LOCKED_STUDIO_NAME} // OS`;
       document.getElementById("mobile-studio-title").textContent = `${LOCKED_STUDIO_NAME} PRO`;
-      document.getElementById("hero-studio-heading").innerHTML = `${LOCKED_STUDIO_NAME} <span style="color: var(--accent);">${tr("COMMAND DECK", "CENTRO DE COMANDO")}</span>`;
       applyStaticTranslations();
       syncSettingsUI();
     }
@@ -4340,22 +4310,22 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       const glowEl = document.getElementById("ambient-readiness-glow");
       const isPt = state.lang === "pt";
       if (readiness >= 75) {
-        statusEl.textContent = isPt ? "ÓTIMO" : "OPTIMAL";
+        statusEl.textContent = tr("Fresh", "Em forma");
         statusEl.style.color = "var(--accent)";
         if (glowEl) glowEl.style.background = "var(--accent)";
       } else if (readiness >= 60) {
-        statusEl.textContent = isPt ? "MODERADO" : "MODERATE";
+        statusEl.textContent = tr("Steady", "Estável");
         statusEl.style.color = "#fbbf24";
         if (glowEl) glowEl.style.background = "#fbbf24";
       } else {
-        statusEl.textContent = isPt ? "RECUPERAR" : "DELOAD";
+        statusEl.textContent = tr("Take it easy", "Vá com calma");
         statusEl.style.color = "var(--accent-3)";
         if (glowEl) glowEl.style.background = "var(--accent-3)";
       }
 
       document.getElementById("ring-cal").style.strokeDashoffset = (427.26 * (1 - calPct / 100)).toFixed(1);
-      document.getElementById("ring-readiness").style.strokeDashoffset = (364.42 * (1 - readiness / 100)).toFixed(1);
-      document.getElementById("ring-macros").style.strokeDashoffset = (301.59 * (1 - fuelPct / 100)).toFixed(1);
+      document.getElementById("ring-readiness").style.strokeDashoffset = (326.73 * (1 - readiness / 100)).toFixed(1);
+      document.getElementById("ring-macros").style.strokeDashoffset = (238.76 * (1 - fuelPct / 100)).toFixed(1);
 
       document.getElementById("ring-cal-pct").textContent = `${calPct}%`;
       document.getElementById("ring-ready-pct").textContent = `${readiness}%`;
@@ -4375,12 +4345,78 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       document.getElementById("hud-live-hr").textContent = `${b.liveHR} BPM`;
       document.getElementById("spine-bpm").textContent = b.liveHR;
       const streak = computeStreakDays();
-      document.getElementById("hero-streak-pill").textContent = isPt
-        ? `🔥 ${streak} ${streak === 1 ? "DIA SEGUIDO" : "DIAS SEGUIDOS"}`
-        : `🔥 ${streak}-DAY STREAK`;
+      const streakPill = document.getElementById("hero-streak-pill");
+      streakPill.textContent = `🔥 ${streak}`;
+      streakPill.title = tr(`${streak}-day streak`, `${streak} ${streak === 1 ? "dia seguido" : "dias seguidos"}`);
 
-      const myName = (state.profile && state.profile.name) || tr("SET YOUR NAME", "DEFINIR NOME");
-      document.getElementById("hero-athlete-name").textContent = myName.toUpperCase();
+      const myName = (state.profile && state.profile.name) || tr("Athlete", "Atleta");
+      document.getElementById("hero-athlete-name").textContent = myName;
+      renderHomeHero(readiness, streak);
+    }
+
+    // ---------------------------------------------------------------------
+    // HOME HERO — speaks like a coach: greets you by name, tells you how your
+    // body is doing in plain words and suggests one thing to do today.
+    // ---------------------------------------------------------------------
+    function renderHomeHero(readiness, streak) {
+      const name = (state.profile && state.profile.name || "").trim();
+      const first = name.split(/\s+/)[0] || "";
+      const h = new Date().getHours();
+      const hello = h < 12 ? tr("Good morning", "Bom dia") : h < 19 ? tr("Good afternoon", "Boa tarde") : tr("Good evening", "Boa noite");
+      document.getElementById("hero-studio-heading").textContent = first ? `${hello}, ${first} 👋` : `${hello} 👋`;
+      const initials = name ? name.split(/\s+/).slice(0, 2).map(p => p[0]).join("").toUpperCase() : "🙂";
+      const av = document.getElementById("hero-avatar");
+      av.textContent = initials;
+      av.classList.add("keep-caps");
+
+      const today = localIsoDate();
+      const trainedToday = (state.workoutHistory || []).some(w => w.date === today) || (state.runs || []).some(r => r.date === today);
+      let line;
+      if (trainedToday) line = tr("Done for today — great work 💪", "Treino feito hoje — excelente trabalho 💪");
+      else if (readiness < 60) line = tr("Your body needs an easier day", "O seu corpo precisa de um dia mais leve");
+      else if (streak > 0) line = tr(`Train today to keep your ${streak}-day streak`, `Treine hoje para manter os ${streak} dias seguidos`);
+      else if (readiness >= 75) line = tr("You're well recovered — let's go", "Está bem recuperado — vamos a isso");
+      else line = tr("Ready when you are", "Pronto quando quiser");
+      if (!name) line = tr("Tap your avatar to add your name", "Toque no avatar para adicionar o seu nome");
+      document.getElementById("hero-coach-line").textContent = line;
+
+      // Today's focus
+      const rec = getSmartRegionRecommendation();
+      const best = rec.best;
+      const titleEl = document.getElementById("hero-focus-title");
+      const subEl = document.getElementById("hero-focus-sub");
+      const btn = document.getElementById("hero-focus-btn");
+      if (readiness < 60) {
+        titleEl.textContent = tr("Mobility & easy cardio", "Mobilidade e cardio leve");
+        subEl.textContent = tr("5-minute flow to help you recover", "Sequência de 5 minutos para recuperar");
+        btn.onclick = () => openMobilityModal(best.id, "cooldown");
+      } else {
+        titleEl.textContent = tr(`Your ${best.label.toLowerCase()} is ready`, `A ${best.labelPt.toLowerCase()} está pronta`);
+        subEl.textContent = tr(`${best.recovery}% recovered · ${state.sessionDuration || 45} min`, `${best.recovery}% recuperada · ${state.sessionDuration || 45} min`);
+        btn.onclick = () => quickTrainRegion(best.id);
+      }
+
+      // Week strip (Monday → Sunday); days with a workout or run get a ring
+      const active = new Set([...(state.workoutHistory || []).map(w => w.date), ...(state.runs || []).map(r => r.date)]);
+      const now = new Date();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      const locale = state.lang === "pt" ? "pt-PT" : "en-US";
+      document.getElementById("hero-week-strip").innerHTML = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const iso = localIsoDate(d);
+        const isToday = iso === today;
+        const done = active.has(iso);
+        const future = iso > today;
+        const label = d.toLocaleDateString(locale, { weekday: "short" }).replace(".", "").slice(0, 3);
+        return `
+          <div class="flex flex-col items-center gap-1.5 ${future ? "opacity-45" : ""}">
+            <span class="text-xs" style="color: ${isToday ? "var(--accent)" : "var(--text-secondary)"};">${escapeHtml(label.charAt(0).toUpperCase() + label.slice(1))}</span>
+            <span class="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-sm font-mono-num font-semibold"
+              style="${done ? "background: color-mix(in srgb, var(--accent) 22%, transparent); border: 2px solid var(--accent); color: var(--accent);" : isToday ? "border: 2px dashed var(--accent); color: var(--text-primary);" : "border: 1px solid var(--border-hairline);"}">${d.getDate()}</span>
+          </div>`;
+      }).join("");
     }
 
     function setTheme(theme) {
@@ -4392,7 +4428,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       updateHeroHUD();
       renderWorkspace();
       const names = { dark: tr("DARK", "ESCURO"), blue: tr("BLUE", "AZUL"), white: tr("LIGHT", "CLARO") };
-      showToast(`${tr("THEME", "TEMA")} // ${names[theme] || theme.toUpperCase()}`);
+      showToast(`${tr("THEME", "TEMA")} // ${names[theme] || theme}`);
     }
 
     function setLanguage(lang) {
@@ -4501,7 +4537,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       updateHeroHUD();
       toggleModal("wearable-modal", false);
       if (state.activeTab === "overview") renderWorkspace();
-      showToast(tr(`SYNCED ${source.toUpperCase()} // +1,420 STEPS`, `${source.toUpperCase()} SINCRONIZADO // +1420 PASSOS`));
+      showToast(tr(`SYNCED ${source} // +1,420 STEPS`, `${source} SINCRONIZADO // +1420 PASSOS`));
     }
 
     // Web Bluetooth Heart-Rate Monitor (with live simulation fallback)
@@ -4718,10 +4754,10 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     function openExerciseDemo(exerciseName, muscleHint = null) {
       const { muscle, workout } = findExerciseMeta(exerciseName, muscleHint);
-      document.getElementById("demo-muscle-tag").textContent = muscleName(muscle).toUpperCase();
-      document.getElementById("demo-eq-tag").textContent = eqName(workout.eq || "Gym").toUpperCase();
-      document.getElementById("demo-level-tag").textContent = levelName(workout.level || "Intermediate").toUpperCase();
-      document.getElementById("demo-title").textContent = exName(workout.name).toUpperCase();
+      document.getElementById("demo-muscle-tag").textContent = muscleName(muscle);
+      document.getElementById("demo-eq-tag").textContent = eqName(workout.eq || "Gym");
+      document.getElementById("demo-level-tag").textContent = levelName(workout.level || "Intermediate");
+      document.getElementById("demo-title").textContent = exName(workout.name);
       document.getElementById("demo-sets-badge").textContent = workout.sets || "3 × 10-12";
       document.getElementById("demo-rest-badge").textContent = `${tr("REST", "DESCANSO")}: ${workout.rest || 75}s`;
       document.getElementById("demo-cue-text").textContent = exCue(workout);
@@ -4746,8 +4782,8 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       if (playBtn) playBtn.textContent = tr("⏸ PAUSE", "⏸ PAUSA");
       if (offlineEl) { offlineEl.classList.add("hidden"); offlineEl.classList.remove("flex"); }
 
-      const cdnBase = `https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/${workout.demoId}`;
-      const rawBase = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${workout.demoId}`;
+      const cdnBase = `https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5/exercises/${workout.demoId}`;
+      const rawBase = `https://raw.githubusercontent.com/yuhonas/free-exercise-db/f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5/exercises/${workout.demoId}`;
 
       f0.dataset.fallbackTried = "0";
       f1.dataset.fallbackTried = "0";
@@ -5118,7 +5154,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
     // PR Celebration & Branded PNG Generator
     function triggerPRModal(exName, metricText, deltaText) {
-      document.getElementById("pr-modal-exercise").textContent = exName.toUpperCase();
+      document.getElementById("pr-modal-exercise").textContent = exName;
       document.getElementById("pr-modal-metric").textContent = metricText;
       document.getElementById("pr-modal-delta").textContent = deltaText;
       toggleModal("pr-modal", true);
@@ -5184,18 +5220,44 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       void container.offsetWidth;
       container.classList.add("view-enter");
 
+      // The big greeting header belongs to Home only; other screens get a short friendly title
+      const hero = document.getElementById("home-hero");
+      if (hero) hero.classList.toggle("hidden", state.activeTab !== "overview");
+      const title = renderPageTitle(state.activeTab);
+
       switch (state.activeTab) {
         case "overview": container.innerHTML = renderOverviewView(); break;
-        case "strength": container.innerHTML = renderStrengthView(); break;
-        case "endurance": container.innerHTML = renderEnduranceView(); break;
-        case "body": container.innerHTML = renderBodyView(); break;
+        case "strength": container.innerHTML = title + renderStrengthView(); break;
+        case "endurance": container.innerHTML = title + renderEnduranceView(); break;
+        case "body": container.innerHTML = title + renderBodyView(); break;
         case "roster":
-          container.innerHTML = renderRosterView();
+          container.innerHTML = title + renderRosterView();
           const feed = document.getElementById("chat-feed");
           if (feed) feed.scrollTop = feed.scrollHeight;
           break;
         default: container.innerHTML = renderOverviewView();
       }
+    }
+
+    function renderPageTitle(tab) {
+      const t = {
+        strength: [tr("Your muscles", "Os seus músculos"), tr("Tap a muscle to see exercises, or start a guided session.", "Toque num músculo para ver exercícios ou comece uma sessão guiada.")],
+        endurance: [tr("Cardio & runs", "Cardio e corridas"), tr("Track a run, do intervals or test your fitness.", "Registe uma corrida, faça intervalos ou teste a sua forma.")],
+        body: [tr("Your body", "O seu corpo"), tr("Photos, measurements and your nutrition targets.", "Fotos, medidas e as suas metas de nutrição.")],
+        roster: [tr("Chat", "Conversas"), tr("Talk with your coach or your clients.", "Fale com o seu treinador ou com os seus clientes.")]
+      }[tab];
+      if (!t) return "";
+      const initials = ((state.profile && state.profile.name) || "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase() || "🙂";
+      return `
+        <div class="flex items-center gap-3 mb-5">
+          <div class="min-w-0 flex-1">
+            <h1 class="font-display text-2xl font-semibold leading-tight">${escapeHtml(t[0])}</h1>
+            <p class="text-sm mt-0.5" style="color: var(--text-secondary);">${escapeHtml(t[1])}</p>
+          </div>
+          <button onclick="toggleModal('settings-modal', true)" class="avatar-ring flex-shrink-0 cursor-pointer lg:hidden" aria-label="${tr("Settings", "Definições")}">
+            <span class="keep-caps w-11 h-11 rounded-full flex items-center justify-center font-display font-semibold" style="background: var(--surface-solid); color: var(--accent);">${escapeHtml(initials)}</span>
+          </button>
+        </div>`;
     }
 
     // =========================================================================
@@ -5204,20 +5266,34 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     let selectedHistoryDate = null;
 
     function getCoachPrescription(readiness, weeklyLoad) {
-      const isPt = state.lang === "pt";
+      // Written the way a real coach would say it — plain words, no jargon
+      const b = state.biometrics;
+      const why = [];
+      if (b.sleepHours < 6.5) why.push(tr("short sleep", "pouco sono"));
+      if (b.restingHR > 65) why.push(tr("a higher resting heart rate", "frequência cardíaca em repouso mais alta"));
+      if (b.soreness >= 6) why.push(tr("sore muscles", "músculos doridos"));
+      const list = why.join(tr(" and ", " e "));
       if (readiness < 60) {
         return {
-          title: isPt ? "RECUPERAÇÃO ATIVA NA ZONA 2 E MOBILIDADE" : "ZONE 2 ACTIVE RECOVERY & MOBILITY",
-          reason: isPt
-            ? `Prontidão baixa (${readiness}/100). Hoje reduzimos a intensidade para acelerar a recuperação.`
-            : `Readiness dipped to ${readiness}/100. Deloading CNS intensity today to accelerate recovery.`
+          title: tr("Take it easy today", "Hoje vá com calma"),
+          reason: tr(
+            `${list ? "With " + list + ", your" : "Your"} body is still recovering. A walk, light cardio or the cool-down flow will help more than a hard session.`,
+            `${list ? "Com " + list + ", o seu" : "O seu"} corpo ainda está a recuperar. Uma caminhada, cardio leve ou a sequência de retorno à calma ajudam mais do que um treino duro.`)
+        };
+      }
+      if (readiness < 75) {
+        return {
+          title: tr("A steady day", "Um dia equilibrado"),
+          reason: tr(
+            `You're partly recovered${list ? " (watch out for " + list + ")" : ""}. Train, but keep the effort moderate and focus on clean technique.`,
+            `Está parcialmente recuperado${list ? " (atenção a " + list + ")" : ""}. Treine, mas com esforço moderado e foco na técnica.`)
         };
       }
       return {
-        title: isPt ? "POTÊNCIA HÍBRIDA E CONDICIONAMENTO" : "HYBRID POWER & TEMPO CONDITIONING",
-        reason: isPt
-          ? `Prontidão de ${readiness}/100 e carga de ${weeklyLoad} kcal nos últimos 7 dias. Momento ideal para sobrecarga progressiva.`
-          : `Readiness is ${readiness}/100 with ${weeklyLoad} kcal 7-day load. Optimal neuromuscular window for progressive overload.`
+        title: tr("You're ready to push", "Está pronto para dar tudo"),
+        reason: tr(
+          `You slept ${b.sleepHours} h and your body has bounced back. A great day to add a little weight or one extra set.`,
+          `Dormiu ${b.sleepHours} h e o corpo recuperou bem. Ótimo dia para acrescentar um pouco de peso ou mais uma série.`)
       };
     }
 
@@ -5232,7 +5308,49 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       state.selectedRegion = regionId;
       saveState();
       switchTab("strength");
-      showToast(`${tr("LOADED", "CARREGADO")}: ${(tr(BODY_REGIONS[regionId]?.label || regionId, BODY_REGIONS[regionId]?.labelPt || regionId)).toUpperCase()}`);
+      showToast(`${tr("LOADED", "CARREGADO")}: ${(tr(BODY_REGIONS[regionId]?.label || regionId, BODY_REGIONS[regionId]?.labelPt || regionId))}`);
+    }
+
+    // Home "Choose your workout" cards. Photos come from the public-domain exercise database.
+    const HOME_CATEGORIES = [
+      { id: "strength", icon: "💪", en: "Strength", pt: "Força", cards: [
+        { en: "Upper body", pt: "Parte superior", time: "45 min", icon: "💪", photo: "Barbell Bench Press", go: () => quickTrainRegion("upper") },
+        { en: "Lower body", pt: "Parte inferior", time: "45 min", icon: "🦵", photo: "Barbell Back Squat", go: () => quickTrainRegion("lower") },
+        { en: "Full body", pt: "Corpo inteiro", time: "50 min", icon: "⚡", photo: "Conventional Deadlift", go: () => quickTrainRegion("full") }
+      ] },
+      { id: "cardio", icon: "❤️", en: "Cardio", pt: "Cardio", cards: [
+        { en: "HIIT intervals", pt: "Intervalos HIIT", time: "4–10 min", icon: "⚡", photo: "Athletic Push-Up", go: () => openHIITModal() },
+        { en: "Outdoor run", pt: "Corrida ao ar livre", time: tr("Your pace", "Ao seu ritmo"), icon: "👟", photo: "Dumbbell Walking Lunge", go: () => switchTab("endurance") }
+      ] },
+      { id: "warmup", icon: "🧘", en: "Warm-up", pt: "Aquecimento", cards: [
+        { en: "Upper body flow", pt: "Mobilidade superior", time: "5 min", icon: "🧘", photo: "Face Pull (Rope)", go: () => openMobilityModal("upper", "warmup") },
+        { en: "Hips & legs", pt: "Anca e pernas", time: "5 min", icon: "🦵", photo: "Dumbbell Split Squat", go: () => openMobilityModal("lower", "warmup") },
+        { en: "Core wake-up", pt: "Ativar o core", time: "5 min", icon: "🎯", photo: "Forearm Isometric Plank", go: () => openMobilityModal("middle", "warmup") }
+      ] },
+      { id: "core", icon: "🎯", en: "Core", pt: "Core", cards: [
+        { en: "Core session", pt: "Sessão de core", time: "30 min", icon: "🎯", photo: "Hanging Leg Raise", go: () => quickTrainRegion("middle") },
+        { en: "Abs blast", pt: "Abdominais", time: "20 min", icon: "🔥", photo: "Ab-Wheel Rollout", go: () => launchMuscleWorkout("Core") },
+        { en: "Obliques", pt: "Oblíquos", time: "20 min", icon: "🌀", photo: "Side Plank Bridge", go: () => launchMuscleWorkout("Obliques") }
+      ] }
+    ];
+    let homeCategory = "strength";
+    function setHomeCategory(id) {
+      if (!HOME_CATEGORIES.some(c => c.id === id)) return;
+      homeCategory = id;
+      SFX.click();
+      renderWorkspace();
+    }
+    function openHomeCard(catId, idx) {
+      const cat = HOME_CATEGORIES.find(c => c.id === catId);
+      const card = cat && cat.cards[idx];
+      if (!card) return;
+      SFX.click();
+      card.go();
+    }
+    function exerciseImageUrl(exerciseName) {
+      const meta = findExerciseMeta(exerciseName);
+      const id = meta && meta.workout && meta.workout.demoId;
+      return /^[A-Za-z0-9_()\-.]+$/.test(String(id || "")) ? `https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5/exercises/${id}/0.jpg` : "";
     }
 
     function renderOverviewView() {
@@ -5261,7 +5379,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         if (i === 6) return isPt ? "HOJE" : "TODAY";
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        return d.toLocaleDateString(isPt ? "pt-PT" : "en-US", { weekday: "short" }).replace(".", "").toUpperCase().slice(0, 3);
+        return d.toLocaleDateString(isPt ? "pt-PT" : "en-US", { weekday: "short" }).replace(".", "").slice(0, 3).replace(/^./, ch => ch.toUpperCase());
       });
       const streakDays = computeStreakDays();
       // Monthly distance challenge from the runs actually logged this month
@@ -5269,7 +5387,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       const monthMiles = state.runs.filter(r => String(r.date).startsWith(monthPrefix)).reduce((s, r) => s + (r.distMiles || 0), 0);
       const monthGoalMiles = 50;
       const monthPct = Math.min(100, Math.round((monthMiles / monthGoalMiles) * 100));
-      const monthName = new Date().toLocaleDateString(isPt ? "pt-PT" : "en-US", { month: "long" }).toUpperCase();
+      const monthName = new Date().toLocaleDateString(isPt ? "pt-PT" : "en-US", { month: "long" }).replace(/^./, ch => ch.toUpperCase());
       const goalLabel = state.units === "kg" ? `${Math.round(monthGoalMiles * 1.60934)} km` : `${monthGoalMiles} mi`;
 
       // 30-Day Interactive Workout Calendar & Volume History
@@ -5299,50 +5417,82 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
         { icon: "🏃", label: isPt ? "Ritmo abaixo de 4:40/km" : "Sub-7:30 Pace", unlocked: state.runs.some(r => r.paceSecPerMile <= 450) }
       ];
 
+      // Last 3 things you did (workouts and runs), newest first
+      const recentActivity = [
+        ...(state.workoutHistory || []).map(h => ({ kind: "workout", date: h.date, title: h.title, value: fmtWeightNum(h.volumeLbs || 0) + "", unit: tr(`${state.units === "kg" ? "kg" : "lbs"} lifted`, `${state.units === "kg" ? "kg" : "lbs"} levantados`) })),
+        ...(state.runs || []).map(r => ({ kind: "run", date: r.date, title: r.route, value: fmtDist(r.distMiles).split(" ")[0], unit: state.units === "kg" ? "km" : "mi" }))
+      ].filter(a => ISO_DATE_RE.test(String(a.date))).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+
       return `
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 stagger-in">
           <!-- Left 7 cols: Smart Recovery Coach + 7-Day Curve + 30-Day Workout Calendar -->
           <div class="lg:col-span-7 space-y-5">
-            <!-- Smart Coach AI + Muscle Recovery Region Recommendation -->
-            <div class="hud-panel chamfer-card p-5 space-y-4">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <span class="text-[10px] font-mono-num font-extrabold uppercase tracking-widest" style="color: var(--accent);">
-                  🧠 ${tr("SMART COACH // RECOVERY", "TREINADOR INTELIGENTE // RECUPERAÇÃO")}
-                </span>
-                <div class="flex items-center gap-1.5">
-                  <button onclick="openMobilityModal('${rec.best.id}', 'warmup')" class="btn-ghost px-3 py-1.5 rounded-xl border text-[10px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">
-                    🔥 ${tr("5m WARM-UP", "AQUECIMENTO 5 MIN")}
-                  </button>
-                  <button onclick="quickTrainRegion('${rec.best.id}')" class="px-3.5 py-1.5 rounded-xl btn-accent text-[10px] font-mono-num cursor-pointer">
-                    ${isPt ? "TREINAR" : "TRAIN"} ${(isPt ? rec.best.labelPt : rec.best.label).toUpperCase()} →
-                  </button>
+            <!-- Choose a workout: category chips + photo cards -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display text-lg font-semibold">${tr("Choose your workout", "Escolha o seu treino")}</h3>
+              </div>
+              <div class="flex gap-2 overflow-x-auto chip-scroll pb-1">
+                ${HOME_CATEGORIES.map(c => `
+                  <button onclick="setHomeCategory('${c.id}')" class="flex-shrink-0 px-4 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer transition"
+                    style="${homeCategory === c.id ? 'border: 1.5px solid var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent);' : 'border: 1.5px solid transparent; background: var(--surface-2); color: var(--text-primary);'}">
+                    <span>${c.icon}</span><span>${tr(c.en, c.pt)}</span>
+                  </button>`).join("")}
+              </div>
+              <div class="flex gap-3 overflow-x-auto chip-scroll pb-1 -mx-1 px-1">
+                ${(HOME_CATEGORIES.find(c => c.id === homeCategory) || HOME_CATEGORIES[0]).cards.map((card, i) => `
+                  <button onclick="openHomeCard('${homeCategory}', ${i})" class="photo-card flex-shrink-0 w-40 sm:w-44 h-52 text-left cursor-pointer interactive-card">
+                    <span class="absolute inset-0 flex items-center justify-center text-5xl opacity-40">${card.icon}</span>
+                    <img src="${escapeHtml(exerciseImageUrl(card.photo))}" alt="" loading="lazy" onerror="this.remove()" class="absolute inset-0" />
+                    <span class="absolute left-3 right-3 bottom-3 z-10 text-white">
+                      <span class="block font-semibold text-sm leading-tight">${escapeHtml(tr(card.en, card.pt))}</span>
+                      <span class="block text-xs opacity-80 mt-1">⏱ ${escapeHtml(card.time)}</span>
+                    </span>
+                  </button>`).join("")}
+              </div>
+            </div>
+
+            <!-- How your body feels, in plain words -->
+            <div class="hud-panel p-5 space-y-4">
+              <div class="flex items-start gap-3">
+                <span class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-lg" style="background: color-mix(in srgb, var(--accent) 16%, transparent);">🧠</span>
+                <div class="min-w-0">
+                  <h3 id="coach-title" class="font-display text-base font-semibold">${coach.title}</h3>
+                  <p id="coach-reason" class="text-sm leading-relaxed mt-0.5" style="color: var(--text-secondary);">${coach.reason}</p>
                 </div>
               </div>
-              <div>
-                <h2 id="coach-title" class="font-display text-lg sm:text-2xl font-extrabold uppercase">${coach.title}</h2>
-                <p id="coach-reason" class="text-xs leading-relaxed mt-1" style="color: var(--text-secondary);">${coach.reason}</p>
-              </div>
-
-              <!-- Upper / Middle / Lower Recovery Gauges -->
-              <div class="grid grid-cols-3 gap-2.5 pt-2 border-t text-xs font-mono-num" style="border-color: var(--border-hairline);">
+              <div class="grid grid-cols-3 gap-2.5">
                 ${rec.all.map(r => {
                   const statusCol = r.recovery >= 80 ? "var(--accent)" : r.recovery >= 55 ? "#fbbf24" : "var(--accent-3)";
-                  const statusTxt = r.recovery >= 80 ? (isPt ? "PRONTO" : "FRESH") : r.recovery >= 55 ? (isPt ? "EM RECUPERAÇÃO" : "RECOVERING") : (isPt ? "FADIGADO" : "FATIGUED");
-                  const isBest = r.id === rec.best.id;
+                  const statusTxt = r.recovery >= 80 ? tr("Fresh", "Recuperado") : r.recovery >= 55 ? tr("Recovering", "A recuperar") : tr("Tired", "Cansado");
                   return `
-                    <button onclick="quickTrainRegion('${r.id}')" class="interactive-card text-left p-3 rounded-xl border cursor-pointer" style="border-color: ${isBest ? 'var(--accent)' : 'var(--border-hairline)'}; background: var(--surface-solid);">
-                      <div class="flex items-center justify-between gap-1">
-                        <span class="text-[10px] font-extrabold truncate">${r.icon} ${isPt ? r.labelPt.split(" ")[0].toUpperCase() : r.id.toUpperCase()}</span>
-                        <span class="text-[10px] font-extrabold" style="color: ${statusCol};">${r.recovery}%</span>
-                      </div>
+                    <button onclick="quickTrainRegion('${r.id}')" class="interactive-card text-left p-3 rounded-2xl cursor-pointer" style="background: var(--surface-solid);">
+                      <div class="text-sm font-medium truncate">${escapeHtml({ upper: tr("Upper", "Superior"), middle: tr("Core", "Core"), lower: tr("Lower", "Inferior") }[r.id] || r.id)}</div>
+                      <div class="text-xl font-semibold font-mono-num mt-1" style="color: ${statusCol};">${r.recovery}%</div>
                       <div class="w-full h-1.5 rounded-full overflow-hidden mt-2" style="background: var(--border-hairline);">
                         <div class="h-full rounded-full transition-all duration-500" style="width: ${r.recovery}%; background: ${statusCol};"></div>
                       </div>
-                      <div class="text-[9px] mt-1.5 opacity-75" style="color: ${statusCol};">${isBest ? "★ " : ""}${statusTxt}</div>
-                    </button>
-                  `;
+                      <div class="text-xs mt-1.5" style="color: var(--text-secondary);">${statusTxt}</div>
+                    </button>`;
                 }).join("")}
               </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="hud-panel p-5 space-y-3">
+              <h3 class="font-display text-base font-semibold">${tr("Recent activity", "Atividade recente")}</h3>
+              ${recentActivity.length ? recentActivity.map(a => `
+                <div class="flex items-center gap-3 p-3 rounded-3xl" style="background: var(--surface-solid);">
+                  <span class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-xl" style="background: ${a.kind === "run" ? "linear-gradient(135deg, var(--accent-2), #2b7fff)" : "linear-gradient(135deg, var(--accent), var(--accent-deep))"};">${a.kind === "run" ? "👟" : "🏋️"}</span>
+                  <div class="min-w-0 flex-1">
+                    <div class="font-medium truncate">${escapeHtml(a.title)}</div>
+                    <div class="text-xs" style="color: var(--text-secondary);">${escapeHtml(fmtRelDate(a.date))}</div>
+                  </div>
+                  <div class="text-right flex-shrink-0">
+                    <div class="text-lg font-semibold font-mono-num">${escapeHtml(a.value)}</div>
+                    <div class="text-xs" style="color: var(--text-secondary);">${escapeHtml(a.unit)}</div>
+                  </div>
+                </div>`).join("") : `<div class="text-sm opacity-70">${tr("No workouts yet — your first one will show up here.", "Ainda sem treinos — o primeiro vai aparecer aqui.")}</div>`}
             </div>
 
             <!-- 30-Day Interactive Workout Calendar & Volume History -->
@@ -5405,7 +5555,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
                   <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="var(--surface-solid)" stroke="var(--accent)" stroke-width="2.5">
                     <title>${days[idx]}: ${p.v} kcal</title>
                   </circle>
-                  <text x="${p.x}" y="144" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="JetBrains Mono">${days[idx]}</text>
+                  <text x="${p.x}" y="144" text-anchor="middle" fill="var(--text-secondary)" font-size="9" font-family="Outfit">${days[idx]}</text>
                 `).join("")}
               </svg>
             </div>
@@ -5470,7 +5620,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
 
               <div class="p-3.5 rounded-xl border space-y-2 text-xs font-mono-num" style="border-color: var(--border-hairline); background: var(--surface-solid);">
                 <div class="flex justify-between">
-                  <span class="font-bold">🏆 ${isPt ? `DESAFIO ${goalLabel.toUpperCase()} • ${monthName}` : `${monthName} ${goalLabel.toUpperCase()} CLUB`}</span>
+                  <span class="font-bold">🏆 ${isPt ? `DESAFIO ${goalLabel} • ${monthName}` : `${monthName} ${goalLabel} CLUB`}</span>
                   <span style="color: var(--accent);">${fmtDist(monthMiles)} / ${goalLabel}</span>
                 </div>
                 <div class="w-full h-2 rounded-full overflow-hidden" style="background: var(--border-hairline);">
@@ -5590,7 +5740,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       saveState();
       updateHeroHUD();
       renderWorkspace();
-      showToast(`⚡ ${tr("LIVE SESSION STARTED", "SESSÃO AO VIVO INICIADA")}: ${title.toUpperCase()}`);
+      showToast(`⚡ ${tr("LIVE SESSION STARTED", "SESSÃO AO VIVO INICIADA")}: ${title}`);
     }
 
     // ---- Live session persistence: survives reloads, app switches and Android killing the WebView ----
@@ -5775,7 +5925,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       state.biometrics.caloriesBurnt += Math.round(estBurn * 0.4);
       state.biometrics.weeklyBurn[6] += Math.round(estBurn * 0.4);
 
-      document.getElementById("summary-session-title").textContent = liveWorkout.title.toUpperCase();
+      document.getElementById("summary-session-title").textContent = liveWorkout.title;
       document.getElementById("summary-duration").textContent = formatClock(durationSec);
       document.getElementById("summary-sets").textContent = String(completedSets);
       document.getElementById("summary-volume").textContent = fmtWeight(volumeLbs);
@@ -5946,7 +6096,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       triggerHaptic(20);
       saveState();
       renderWorkspace();
-      showToast(`${tr("ADDED TO LOGGER", "ADICIONADO AO REGISTO")}: ${exName(name).toUpperCase()}`);
+      showToast(`${tr("ADDED TO LOGGER", "ADICIONADO AO REGISTO")}: ${exName(name)}`);
     }
 
     function launchMuscleWorkout(muscleKey) {
@@ -6055,8 +6205,8 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
               <stop offset="100%" stop-color="#be123c" stop-opacity="0.97" />
             </linearGradient>
           </defs>
-          <text x="130" y="-4" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="JetBrains Mono" font-weight="700" letter-spacing="1.5">${tr("FRONT", "FRENTE")}</text>
-          <text x="390" y="-4" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="JetBrains Mono" font-weight="700" letter-spacing="1.5">${tr("BACK", "COSTAS")}</text>
+          <text x="130" y="-4" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="Outfit" font-weight="700" letter-spacing="1.5">${tr("FRONT", "FRENTE")}</text>
+          <text x="390" y="-4" text-anchor="middle" fill="var(--text-secondary)" font-size="10" font-family="Outfit" font-weight="700" letter-spacing="1.5">${tr("BACK", "COSTAS")}</text>
           <line x1="260" y1="10" x2="260" y2="400" stroke="var(--border-hairline)" stroke-dasharray="2 5" />
           <g>${figure(FRONT_MUSCLES, FRONT_FIBERS)}</g>
           <g transform="translate(260 0)">${figure(BACK_MUSCLES, BACK_FIBERS)}</g>
@@ -6113,7 +6263,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
           <div class="p-4 rounded-xl border space-y-3" style="border-color: var(--border-strong); background: var(--surface-solid);">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div class="text-[10px] font-mono-num opacity-65">${escapeHtml(muscleName(activeEx.muscle)).toUpperCase()} • ${escapeHtml(eqName(activeEx.eq)).toUpperCase()} • ${escapeHtml(activeEx.setsText)} • ${tr("REST", "DESCANSO")} ${activeEx.restSec}s</div>
+                <div class="text-[10px] font-mono-num opacity-65">${escapeHtml(muscleName(activeEx.muscle))} • ${escapeHtml(eqName(activeEx.eq))} • ${escapeHtml(activeEx.setsText)} • ${tr("REST", "DESCANSO")} ${activeEx.restSec}s</div>
                 <div class="font-display text-base font-extrabold uppercase mt-0.5">${escapeHtml(exName(activeEx.name))}</div>
               </div>
               <div class="flex items-center gap-1.5">
@@ -6197,7 +6347,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
               <div class="hud-panel chamfer-card p-4 sm:p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">🧬 ${tr("81-EXERCISE ANATOMICAL ENGINE", "MOTOR ANATÓMICO · 81 EXERCÍCIOS")}</span>
+                    <span class="text-[10px] font-mono-num uppercase tracking-widest" style="color: var(--accent);">${tr("81 exercises with how-to guides", "81 exercícios com instruções")}</span>
                     <h3 class="font-display text-lg font-extrabold uppercase">
                       ${isMulti
                         ? (isPt ? "CRIAR SESSÃO MULTIMUSCULAR" : "MULTI-MUSCLE TARGET SESSION BUILDER")
@@ -6219,7 +6369,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
                       const active = activeRegion === rId;
                       return `
                         <button onclick="selectBodyRegion('${rId}')" class="interactive-card p-2.5 rounded-xl border text-left cursor-pointer ${active ? 'btn-accent border-transparent' : ''}" style="${!active ? 'border-color: var(--border-hairline); background: var(--surface-solid);' : ''}">
-                          <div class="font-extrabold">${reg.icon} ${isPt ? reg.labelPt.split(" ")[0].toUpperCase() : rId.toUpperCase()}</div>
+                          <div class="font-extrabold">${reg.icon} ${isPt ? reg.labelPt.split(" ")[0] : rId}</div>
                           <div class="text-[9px] opacity-80 mt-0.5">${rId === 'full' ? tr('6 muscles', '6 músculos') : `${rPct}% ${tr("fresh", "recuperado")}`}</div>
                         </button>
                       `;
@@ -6302,7 +6452,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
                       </div>
 
                       <button onclick="launchRegionSession('${activeRegion}')" class="w-full py-2.5 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
-                        ⚡ ${isPt ? `INICIAR SESSÃO GUIADA (${multiPreviewItems.length} EX.)` : `START ${activeRegion.toUpperCase()} GUIDED SESSION (${multiPreviewItems.length} EX)`}
+                        ⚡ ${isPt ? `INICIAR SESSÃO GUIADA (${multiPreviewItems.length} EX.)` : `START ${activeRegion} GUIDED SESSION (${multiPreviewItems.length} EX)`}
                       </button>
                     ` : `
                       <div class="flex items-start justify-between gap-2">
@@ -6504,7 +6654,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       SFX.protein();
       saveState();
       renderWorkspace();
-      showToast(`${tr("EXERCISE ADDED", "EXERCÍCIO ADICIONADO")}: ${name.toUpperCase()}`);
+      showToast(`${tr("EXERCISE ADDED", "EXERCÍCIO ADICIONADO")}: ${name}`);
     }
 
     function startTemplate(tplId) {
@@ -7626,7 +7776,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     function logClientSession(id) {
       const c = getChat(id);
       if (!c || c.role !== "coach") return;
-      const name = (c.peerName || "").toUpperCase();
+      const name = (c.peerName || "");
       if (c.sessionsUsed >= c.sessionsTotal) {
         SFX.warn();
         showToast(tr(`${name} // PACKAGE FULL (${c.sessionsUsed}/${c.sessionsTotal}) — RENEWAL DUE`, `${name} // PACOTE COMPLETO (${c.sessionsUsed}/${c.sessionsTotal}) — RENOVAÇÃO PENDENTE`));
@@ -7849,7 +7999,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
       const curM = state.measurements[0];
       const name = (state.profile && state.profile.name) || tr("Athlete", "Atleta");
       document.getElementById("report-studio-name").textContent = `${state.brand.name} // ${tr("PROGRESS REPORT", "RELATÓRIO DE PROGRESSO")}`;
-      document.getElementById("report-client-name").textContent = name.toUpperCase();
+      document.getElementById("report-client-name").textContent = name;
       document.getElementById("report-client-goal").textContent = `${tr("Generated", "Gerado em")} ${new Date().toLocaleDateString(state.lang === "pt" ? "pt-PT" : "en-US")} • ${(state.workoutHistory || []).length} ${tr("sessions logged", "sessões registadas")}`;
       document.getElementById("report-body-content").innerHTML = `
         <div class="grid grid-cols-3 gap-3 font-mono-num">
@@ -8146,6 +8296,7 @@ grant execute on function public.apex_history(text, text) to anon, authenticated
     }
 
     window.onload = function () {
+      startCapsSoftener();
       initAppLock();
       rollDailyCounters();
       restoreLiveWorkout();
