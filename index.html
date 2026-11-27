@@ -8,12 +8,16 @@
   <meta name="theme-color" content="#06080c" />
   <title>APEXCOACH PRO — Personal Trainer & Client Performance OS</title>
 
-  <!-- Tailwind CSS, Supabase Real-Time SDK & Modern Tactical Typography -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&family=Space+Grotesk:wght@600;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Security policy: scripts only from this app, network only to the Supabase chat server,
+       images only from the app, your own photos (data:/blob:) and the exercise-demo image CDN. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://cdn.jsdelivr.net https://raw.githubusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' data: blob:; object-src 'none'; frame-src 'none'; worker-src 'self' blob:; base-uri 'none'; form-action 'none'" />
+  <meta name="referrer" content="no-referrer" />
+
+  <!-- Bundled, version-pinned libraries (checked with integrity hashes) and local fonts:
+       nothing is fetched from third-party CDNs at start-up, and the app works offline. -->
+  <script src="vendor/tailwind-play-3.4.17.js" integrity="sha384-igm5BeiBt36UU4gqwWS7imYmelpTsZlQ45FZf+XBn9MuJbn4nQr7yx1yFydocC/K"></script>
+  <script src="vendor/supabase-js-2.118.0.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK"></script>
+  <link href="vendor/fonts/fonts.css" rel="stylesheet" />
 
   <style>
     /* =====================================================================
@@ -3284,6 +3288,12 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
       return new Date(Date.now() - hours * 3600 * 1000).toISOString();
     }
 
+    // Built-in placeholder photos (drawn in the app, so no request goes to a third-party image service)
+    function placeholderPhoto(label, bg, fg) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><rect width="600" height="800" fill="${bg}"/><g fill="none" stroke="${fg}" stroke-opacity="0.35" stroke-width="3"><circle cx="300" cy="230" r="70"/><path d="M170 560c0-90 60-170 130-170s130 80 130 170"/></g><text x="300" y="690" fill="${fg}" font-family="monospace" font-size="38" font-weight="700" text-anchor="middle">${label}</text></svg>`;
+      return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    }
+
     const DEFAULT_STATE = {
       theme: "dark",
       lang: "en",
@@ -3366,8 +3376,8 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
       lastActiveDate: isoDaysAgo(0),
       macroProfile: { phase: "recomp" },
       photos: {
-        before: "https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE+WEEK+1",
-        after: "https://placehold.co/600x800/0f172a/a3e635?text=AFTER+WEEK+12"
+        before: placeholderPhoto("BEFORE", "#1e293b", "#94a3b8"),
+        after: placeholderPhoto("AFTER", "#0f172a", "#a3e635")
       },
       // Coach ⇄ client conversations (each id is the private room / invite code)
       chats: [],
@@ -3434,11 +3444,149 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
       delete merged.chatRole;
       if (!getChatFrom(merged, merged.selectedChatId)) merged.selectedChatId = merged.chats[0] ? merged.chats[0].id : null;
 
-      // Uploaded photos used to be saved as temporary blob: URLs that die on reload
-      ["before", "after"].forEach(slot => {
-        if (String(merged.photos[slot] || "").startsWith("blob:")) merged.photos[slot] = base.photos[slot];
+      return sanitizeState(merged, base);
+    }
+
+    // ---------------------------------------------------------------------
+    // SECURITY: every value that comes from storage or a restored backup file is
+    // checked and cleaned here. IDs may only contain safe characters, numbers must be
+    // real numbers, text is length-limited and enums fall back to defaults — so a
+    // booby-trapped backup can no longer inject HTML/JS into the page.
+    // ---------------------------------------------------------------------
+    const SUPABASE_URL_RE = /^https:\/\/[a-z0-9]{10,40}\.supabase\.co$/;
+    const SAFE_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+    const ROOM_CODE_RE = /^[A-Z0-9]{8,64}$/;
+    function sNum(v, def = 0, min = -1e9, max = 1e9) {
+      const n = Number(v);
+      return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+    }
+    function sStr(v, max = 80, def = "") {
+      return typeof v === "string" ? v.slice(0, max) : (typeof v === "number" ? String(v).slice(0, max) : def);
+    }
+    function sId(v, prefix = "id") {
+      return typeof v === "string" && SAFE_ID_RE.test(v) ? v : `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+    }
+    function sEnum(v, allowed, def) {
+      return allowed.includes(v) ? v : def;
+    }
+    function sDate(v) {
+      const s = sStr(v, 40);
+      return ISO_DATE_RE.test(s) ? s : s.replace(/[<>"'`]/g, "");
+    }
+    function sArr(v, max, mapFn) {
+      return Array.isArray(v) ? v.slice(0, max).filter(x => x && typeof x === "object").map(mapFn) : [];
+    }
+
+    function sanitizeState(s, base) {
+      const MUSCLES = Object.keys(MUSCLE_WORKOUT_DB);
+      const REGIONS = ["upper", "middle", "lower", "full"];
+      const EQS = ["All", "Barbell", "Dumbbell", "Cable", "Machine", "Bodyweight"];
+
+      s.theme = sEnum(s.theme, ["dark", "blue", "white"], "dark");
+      s.lang = sEnum(s.lang, ["en", "pt"], "en");
+      s.units = sEnum(s.units, ["lbs", "kg"], "lbs");
+      s.sessionMode = sEnum(s.sessionMode, ["single", "multi"], "single");
+      s.selectedRegion = sEnum(s.selectedRegion, [...REGIONS, "custom"], "upper");
+      s.selectedMuscle = sEnum(s.selectedMuscle, MUSCLES, "Chest");
+      s.customMuscles = (Array.isArray(s.customMuscles) ? s.customMuscles : []).filter(m => MUSCLES.includes(m));
+      if (!s.customMuscles.length) s.customMuscles = ["Chest", "Triceps", "Core"];
+      s.sessionDuration = sEnum(Number(s.sessionDuration), [30, 45, 60], 45);
+      s.sessionEq = sEnum(s.sessionEq, EQS, "All");
+      s.exerciseFilterEq = sEnum(s.exerciseFilterEq, EQS, "All");
+      s.exerciseSearch = sStr(s.exerciseSearch, 60);
+      s.gpsDemoMode = s.gpsDemoMode === true;
+
+      s.prefs = {
+        sfxEnabled: s.prefs.sfxEnabled !== false,
+        sfxVolume: sNum(s.prefs.sfxVolume, 1, 0.2, 2),
+        hapticsEnabled: s.prefs.hapticsEnabled !== false
+      };
+      s.brand.accent = /^#[0-9a-fA-F]{6}$/.test(String(s.brand.accent || "")) ? s.brand.accent : "";
+
+      const b = s.biometrics;
+      ["caloriesBurnt", "calorieGoal", "waterMl", "waterGoal", "proteinG", "proteinGoal", "steps", "liveHR", "sleepHours", "restingHR", "soreness", "streakDays"]
+        .forEach(k => { b[k] = sNum(b[k], base.biometrics[k], 0, 1e6); });
+      if (b.calorieGoal <= 0) b.calorieGoal = base.biometrics.calorieGoal;
+      if (b.waterGoal <= 0) b.waterGoal = base.biometrics.waterGoal;
+      if (b.proteinGoal <= 0) b.proteinGoal = base.biometrics.proteinGoal;
+      b.weeklyBurn = b.weeklyBurn.map(n => sNum(n, 0, 0, 1e5));
+      b.hrZonesMin = Array.from({ length: 5 }, (_, i) => sNum((b.hrZonesMin || [])[i], 0, 0, 1e5));
+
+      const wm = {}, mlt = {};
+      MUSCLES.forEach(m => {
+        wm[m] = sNum(s.workedMuscles[m], base.workedMuscles[m] || 50, 0, 100);
+        const ts = sStr(s.muscleLastTrained[m], 40);
+        mlt[m] = Number.isFinite(Date.parse(ts)) ? ts : base.muscleLastTrained[m];
       });
-      return merged;
+      s.workedMuscles = wm;
+      s.muscleLastTrained = mlt;
+
+      s.workoutHistory = sArr(s.workoutHistory, 1000, h => ({
+        id: sId(h.id, "wh"), date: sDate(h.date), title: sStr(h.title, 80, "Workout"),
+        region: sEnum(h.region, REGIONS, "upper"), durationSec: sNum(h.durationSec, 1800, 0, 86400),
+        sets: Math.round(sNum(h.sets, 0, 0, 1000)), volumeLbs: sNum(h.volumeLbs, 0, 0, 1e7), burn: Math.round(sNum(h.burn, 0, 0, 1e5))
+      }));
+      s.exercises = sArr(s.exercises, 300, e => ({
+        id: sId(e.id, "ex"), name: sStr(e.name, 60, "Exercise"), muscle: sEnum(e.muscle, MUSCLES, "Chest"),
+        bestLbs: sNum(e.bestLbs, 95, 0, 5000), reps: Math.round(sNum(e.reps, 10, 1, 1000)), rpe: sNum(e.rpe, 8, 0, 10),
+        historyLbs: (Array.isArray(e.historyLbs) ? e.historyLbs : []).slice(-500).map(n => sNum(n, 0, 0, 5000))
+      }));
+      if (!s.exercises.length) s.exercises = cloneObj(base.exercises);
+      s.workoutTemplates = sArr(s.workoutTemplates, 20, t => ({
+        id: sId(t.id, "tpl"), title: sStr(t.title, 80, "Plan"), region: sEnum(t.region, REGIONS, "upper"),
+        focus: sStr(t.focus, 80), duration: sStr(t.duration, 10), estBurn: Math.round(sNum(t.estBurn, 0, 0, 1e4))
+      }));
+      if (!s.workoutTemplates.length) s.workoutTemplates = cloneObj(base.workoutTemplates);
+      s.runs = sArr(s.runs, 1000, r => ({
+        id: sId(r.id, "r"), date: sDate(r.date), route: sStr(r.route, 60, "Run"),
+        distMiles: sNum(r.distMiles, 0, 0, 1000), paceSecPerMile: sNum(r.paceSecPerMile, 600, 60, 7200),
+        avgHr: Math.round(sNum(r.avgHr, 0, 0, 250)), bestPace: r.bestPace === true
+      }));
+      s.fitnessTests = sArr(s.fitnessTests, 200, f => ({
+        date: sDate(f.date), run15Mi: sStr(f.run15Mi, 10), pushups: Math.round(sNum(f.pushups, 0, 0, 1000)),
+        situps: Math.round(sNum(f.situps, 0, 0, 1000)), grade: sEnum(f.grade, ["ELITE", "EXCELLENT", "SOLID"], "SOLID")
+      }));
+      s.measurements = sArr(s.measurements, 1000, m => ({
+        date: sDate(m.date), weightLbs: sNum(m.weightLbs, 150, 20, 1500), waistIn: sNum(m.waistIn, 30, 5, 200),
+        chestIn: sNum(m.chestIn, 40, 5, 200), armsIn: sNum(m.armsIn, 14, 2, 100)
+      }));
+      if (!s.measurements.length) s.measurements = cloneObj(base.measurements);
+      s.macroProfile = { phase: sEnum(s.macroProfile.phase, ["cut", "recomp", "bulk"], "recomp") };
+
+      // Photos: only images stored inside the app (data:image/...) or the built-in placeholders
+      ["before", "after"].forEach(slot => {
+        const p = String(s.photos[slot] || "");
+        s.photos[slot] = /^data:image\/(jpeg|png|webp|svg\+xml);/.test(p) && p.length < 3e6 ? p : base.photos[slot];
+      });
+
+      s.chats = sArr(s.chats, 100, c => ({
+        id: ROOM_CODE_RE.test(String(c.id)) ? c.id : null,
+        role: sEnum(c.role, ["coach", "client"], "client"),
+        key: /^[0-9a-f]{64}$/.test(String(c.key || "")) ? c.key : "",
+        status: sEnum(c.status, ["ok", "pending-create", "pending-join", "rejected"], "ok"),
+        peerName: sStr(c.peerName, 60), peerNameAuto: c.peerNameAuto === true, goal: sStr(c.goal, 80),
+        sessionsUsed: Math.round(sNum(c.sessionsUsed, 0, 0, 10000)), sessionsTotal: Math.round(sNum(c.sessionsTotal, 10, 0, 10000)),
+        createdAt: sStr(c.createdAt, 40), lastReadAt: sStr(c.lastReadAt, 40)
+      })).filter(c => c.id);
+      const msgs = {};
+      s.chats.forEach(c => {
+        msgs[c.id] = sArr((s.messages || {})[c.id], 500, m => ({
+          id: typeof m.id === "number" || SAFE_ID_RE.test(String(m.id || "")) ? m.id : undefined,
+          tempId: SAFE_ID_RE.test(String(m.tempId || "")) ? m.tempId : undefined,
+          sender: sEnum(m.sender, ["coach", "client"], "client"), senderName: sStr(m.senderName, 60),
+          text: sStr(m.text, 2000), planId: SAFE_ID_RE.test(String(m.planId || "")) ? m.planId : null,
+          at: sStr(m.at, 40), pending: false, failed: m.failed === true || m.pending === true
+        }));
+      });
+      s.messages = msgs;
+      if (!getChatFrom(s, s.selectedChatId)) s.selectedChatId = s.chats[0] ? s.chats[0].id : null;
+      s.profile = { name: sStr(s.profile && s.profile.name, 40) };
+      s.cloud = {
+        url: SUPABASE_URL_RE.test(String(s.cloud.url || "")) ? s.cloud.url : "",
+        anonKey: /^[A-Za-z0-9._-]{20,600}$/.test(String(s.cloud.anonKey || "")) ? s.cloud.anonKey : ""
+      };
+      if (!s.cloud.url || !s.cloud.anonKey) s.cloud = { url: "", anonKey: "" };
+      return s;
     }
 
     function loadState() {
@@ -6091,8 +6239,8 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
                         <div class="text-[10px] opacity-70 mt-0.5">${escapeHtml(tplFocus(tpl))}</div>
                       </div>
                       <div class="flex items-center justify-between text-[10px] font-mono-num pt-2 border-t" style="border-color: var(--border-hairline);">
-                        <span>⏱ ${tpl.duration} • 🔥 ${tpl.estBurn}</span>
-                        <button onclick="startTemplate('${tpl.id}')" class="px-2.5 py-1 rounded-lg btn-accent cursor-pointer">${isPt ? "INICIAR" : "START"}</button>
+                        <span>⏱ ${escapeHtml(tpl.duration)} • 🔥 ${escapeHtml(tpl.estBurn)}</span>
+                        <button onclick="startTemplate(${jsArg(tpl.id)})" class="px-2.5 py-1 rounded-lg btn-accent cursor-pointer">${isPt ? "INICIAR" : "START"}</button>
                       </div>
                     </div>
                   `).join("")}
@@ -6123,7 +6271,7 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
                           <div class="flex items-center gap-1.5 flex-shrink-0">
                             <button onclick="openExerciseDemo(${jsArg(ex.name)}, ${jsArg(ex.muscle)})" title="${tr("Watch demo", "Ver demonstração")}" class="btn-ghost px-1.5 py-0.5 rounded border text-[9px] font-mono-num font-bold cursor-pointer" style="border-color: var(--accent-2); color: var(--accent-2);">▶</button>
                             <button onclick="openPlateCalculator(${fmtWeightNum(nextTargetLbs)})" title="${tr("Plate calculator", "Calculadora de discos")}" class="btn-ghost px-1.5 py-0.5 rounded border text-[9px] cursor-pointer" style="border-color: var(--border-strong);">🏋️</button>
-                            <button onclick="deleteExercise('${ex.id}')" title="${tr("Remove exercise", "Remover exercício")}" class="text-[10px] opacity-45 hover:opacity-100 cursor-pointer px-1">✕</button>
+                            <button onclick="deleteExercise(${jsArg(ex.id)})" title="${tr("Remove exercise", "Remover exercício")}" class="text-[10px] opacity-45 hover:opacity-100 cursor-pointer px-1">✕</button>
                           </div>
                         </div>
                         <div class="text-[10px] font-mono-num font-extrabold" style="color: var(--accent);">${tr("PR", "RECORDE")}: ${fmtWeight(ex.bestLbs)} × ${ex.reps}</div>
@@ -6131,7 +6279,7 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
                           <input id="w-${ex.id}" type="number" min="1" step="0.5" value="${fmtWeightNum(nextTargetLbs)}" class="hud-input w-24 text-xs font-mono-num" />
                           <span class="text-[10px] font-mono-num opacity-70">${unitLabel} ×</span>
                           <input id="r-${ex.id}" type="number" min="1" value="${ex.reps}" class="hud-input w-16 text-xs font-mono-num" />
-                          <button onclick="logSet('${ex.id}', this)" class="ml-auto px-3 py-2 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
+                          <button onclick="logSet(${jsArg(ex.id)}, this)" class="ml-auto px-3 py-2 rounded-xl btn-accent text-xs font-mono-num cursor-pointer">
                             ✓ ${isPt ? "REGISTAR" : "LOG SET"}
                           </button>
                         </div>
@@ -6705,8 +6853,8 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
               </div>
 
               <div class="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border select-none" style="border-color: var(--border-strong);">
-                <img src="${escapeHtml(state.photos.after)}" onerror="this.src='https://placehold.co/600x800/0f172a/a3e635?text=AFTER'" alt="${tr("After photo", "Foto depois")}" class="absolute inset-0 w-full h-full object-cover" />
-                <img id="wipe-before-img" src="${escapeHtml(state.photos.before)}" onerror="this.src='https://placehold.co/600x800/1e293b/94a3b8?text=BEFORE'" alt="${tr("Before photo", "Foto antes")}" class="absolute inset-0 w-full h-full object-cover" style="clip-path: inset(0 ${100 - sliderPct}% 0 0);" />
+                <img src="${escapeHtml(state.photos.after)}" onerror="this.src=DEFAULT_STATE.photos.after" alt="${tr("After photo", "Foto depois")}" class="absolute inset-0 w-full h-full object-cover" />
+                <img id="wipe-before-img" src="${escapeHtml(state.photos.before)}" onerror="this.src=DEFAULT_STATE.photos.before" alt="${tr("Before photo", "Foto antes")}" class="absolute inset-0 w-full h-full object-cover" style="clip-path: inset(0 ${100 - sliderPct}% 0 0);" />
                 <div id="wipe-divider" class="absolute top-0 bottom-0 w-0.5 shadow-lg pointer-events-none" style="left: ${sliderPct}%; background: var(--accent);">
                   <div class="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center font-mono-num text-xs font-extrabold shadow-xl" style="background: var(--accent); color: var(--accent-contrast);">
                     ⇄
@@ -7493,7 +7641,9 @@ grant execute on function apex_history(text) to anon, authenticated;</pre>
       (state.workoutHistory || []).forEach(h => rows.push(["Workout Session", h.title, fmtWeight(h.volumeLbs || 0), `${h.sets} sets`, h.date]));
       state.runs.forEach(r => rows.push(["GPS Run", r.route, fmtDist(r.distMiles), fmtPace(r.paceSecPerMile), r.date]));
       state.measurements.forEach(m => rows.push(["Body", m.date, fmtWeight(m.weightLbs), `Waist ${fmtLength(m.waistIn)}`, `Chest ${fmtLength(m.chestIn)}`]));
-      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      // Neutralise spreadsheet formulas (CSV injection): cells starting with = + - @ tab or CR become plain text
+      const csvCell = v => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
+      const csv = rows.map(r => r.map(csvCell).join(",")).join("\n");
       downloadBlob(csv, "apexcoach-pro-export.csv", "text/csv;charset=utf-8;");
       showToast(tr("CSV DOWNLOADED", "CSV DESCARREGADO"));
     }
