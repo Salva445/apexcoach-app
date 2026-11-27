@@ -179,3 +179,23 @@ They load from the app's own `vendor/` folder with integrity checks. The Android
 **What:** *Chat server (advanced)* accepted any URL, so a person could be talked into sending their room codes and keys to a look-alike server.
 
 **Fix:** Only `https://<project>.supabase.co` addresses are accepted. The security policy blocks anything else too.
+
+---
+
+## How the fixes were tested
+
+All tests ran in a browser against the fixed app.
+
+| Test | Result |
+|---|---|
+| Booby-trapped backup (issue 1) restored again | No code ran, the Muscle screen no longer crashes, bad values fell back to defaults |
+| PIN lock: set (with a mismatch first), reload, 5 wrong tries, correct PIN during the wait, unlock, remove with a wrong PIN, then with the right one | All behaved as designed; the PIN never appears in storage and isn't in backups |
+| Chat v2 against a stand-in server that follows the same rules as `supabase/chat_schema.sql` | Coach room registered; the server stores only key hashes; roles set by the server |
+| Chat: a second phone or attacker with the leaked invite code | Refused for join, history and sending; the app shows "code invalid or already used" |
+| Chat: forged broadcast with fake message text | Ignored; only server messages are shown |
+| Chat: broadcasts | Contain no message text; the channel name doesn't reveal the code |
+| Chat: 31st message in one minute | Refused (rate limit) |
+| GPS: location permission refused mid-run | Run stopped, location watcher removed, wake lock released |
+| Bundled libraries | Integrity hashes verified locally; the Android build now fails if they don't match |
+
+**Not tested yet:** the real Supabase server (it needs your project) and the APK on a real phone.

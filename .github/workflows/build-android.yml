@@ -23,18 +23,44 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Verify bundled library integrity
+        run: |
+          # Fail the build if a bundled script doesn't match the hash the page expects
+          for f in vendor/*.js; do
+            h="sha384-$(openssl dgst -sha384 -binary "$f" | openssl base64 -A)"
+            grep -q "$h" index.html || { echo "Integrity mismatch for $f ($h)"; exit 1; }
+            echo "OK $f"
+          done
+
       - name: Prepare APEXCOACH Web Bundle & Capacitor Android
         run: |
           mkdir -p www
           cp index.html www/index.html
+          # Bundled, version-pinned libraries and fonts (the page checks their integrity hashes)
+          cp -r vendor www/vendor
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/geolocation@6
-          node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.apexcoach.pro",appName:"APEXCOACH PRO",webDir:"www",server:{androidScheme:"https"}},null,2))'
+          # Security: no WebView remote debugging (chrome://inspect could read all app storage over USB)
+          node -e 'require("fs").writeFileSync("capacitor.config.json", JSON.stringify({appId:"com.apexcoach.pro",appName:"APEXCOACH PRO",webDir:"www",server:{androidScheme:"https"},android:{webContentsDebuggingEnabled:false,allowMixedContent:false}},null,2))'
           npx cap add android
+          # Security: keep app data (incl. chat device keys) out of adb / cloud / device-transfer backups
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/data_extraction_rules.xml << 'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <data-extraction-rules>
+            <cloud-backup><exclude domain="root" /><exclude domain="file" /><exclude domain="database" /><exclude domain="sharedpref" /><exclude domain="external" /></cloud-backup>
+            <device-transfer><exclude domain="root" /><exclude domain="file" /><exclude domain="database" /><exclude domain="sharedpref" /><exclude domain="external" /></device-transfer>
+          </data-extraction-rules>
+          XML
           node << 'EOF'
           const fs = require('fs');
           const p = 'android/app/src/main/AndroidManifest.xml';
           let x = fs.readFileSync(p, 'utf8');
+          x = x.replace(/android:allowBackup="true"/, 'android:allowBackup="false"');
+          if (!x.includes('android:allowBackup')) x = x.replace('<application', '<application\n        android:allowBackup="false"');
+          if (!x.includes('android:fullBackupContent')) x = x.replace('<application', '<application\n        android:fullBackupContent="false"');
+          if (!x.includes('android:dataExtractionRules')) x = x.replace('<application', '<application\n        android:dataExtractionRules="@xml/data_extraction_rules"');
+          if (!x.includes('android:usesCleartextTraffic')) x = x.replace('<application', '<application\n        android:usesCleartextTraffic="false"');
           const perms = [
             '<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />',
             '<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />',

@@ -1,0 +1,2 @@
+# Bundled libraries are checked with integrity hashes: never convert their line endings
+vendor/** -text
